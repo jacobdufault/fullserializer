@@ -179,7 +179,12 @@ namespace FullJson {
             }
 
             if (HasDefaultConstructor == false) {
+#if UNITY_WEBPLAYER
+                throw new InvalidOperationException("WebPlayer deserialization requires " +
+                    ReflectedType.FullName + " to have a default constructor. Please add one.");
+#else
                 return FormatterServices.GetSafeUninitializedObject(ReflectedType);
+#endif
             }
 
             if (ReflectedType.IsArray) {
