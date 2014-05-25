@@ -4,75 +4,69 @@ using System.Text;
 
 namespace FullJson {
     /// <summary>
-    /// Exception thrown when a parsing error has occurred.
+    /// A simple recursive descent parser for JSON.
     /// </summary>
-    public sealed class ParseException : Exception {
-        /// <summary>
-        /// Helper method to create a parsing exception message
-        /// </summary>
-        private static string CreateMessage(string message, JsonParser context) {
-            int start = Math.Max(0, context._start - 10);
-            int length = Math.Min(20, context._input.Length - start);
+    public class JsonParser {
+        private int _start;
+        private string _input;
 
-            return "Error while parsing: " + message + "; context = \"" +
-                context._input.Substring(start, length) + "\"";
+        private JsonFailure MakeFailure(string message) {
+            int start = Math.Max(0, _start - 10);
+            int length = Math.Min(20, _input.Length - start);
+
+            string error = "Error while parsing: " + message + "; context = \"" +
+                _input.Substring(start, length) + "\"";
+            return JsonFailure.Fail(error);
         }
 
-        /// <summary>
-        /// Initializes a new instance of the ParseException class.
-        /// </summary>
-        /// <param name="message">The error message</param>
-        /// <param name="context">The context that the error occurred</param>
-        public ParseException(string message, JsonParser context)
-            : base(CreateMessage(message, context)) {
-        }
-    }
-
-    /// <summary>
-    /// Parses serialized data into instances of SerializedData.
-    /// </summary>
-    public sealed class JsonParser {
-        internal string _input;
-        internal int _start;
-
-        private char CurrentCharacter(int offset = 0) {
-            return _input[_start + offset];
-        }
-
-        private void MoveNext() {
-            ++_start;
-
-            if (_start > _input.Length) {
-                throw new ParseException("Unexpected end of input", this);
+        private bool TryMoveNext() {
+            if (_start < _input.Length) {
+                ++_start;
+                return true;
             }
-        }
 
-        private bool HasNext() {
-            return _start < _input.Length - 1;
+            return false;
         }
 
         private bool HasValue(int offset = 0) {
             return (_start + offset) >= 0 && (_start + offset) < _input.Length;
         }
 
+        private char Character(int offset = 0) {
+            return _input[_start + offset];
+        }
+
+        /// <summary>
+        /// Skips input such that Character() will return a non-whitespace character
+        /// </summary>
         private void SkipSpace() {
             while (HasValue()) {
-                char c = CurrentCharacter();
+                char c = Character();
 
+                // whitespace; fine to skip
                 if (char.IsWhiteSpace(c)) {
-                    MoveNext();
+                    TryMoveNext();
+                    continue;
                 }
-                else if (c == '#') {
-                    while (HasValue() && Environment.NewLine.Contains("" + CurrentCharacter()) == false) {
-                        MoveNext();
+
+                // comment? they begin with //
+                if (HasValue(1) &&
+                    (Character(0) == '/' && Character(1) == '/')) {
+
+                    // skip the rest of the line
+                    while (HasValue() && Environment.NewLine.Contains("" + Character()) == false) {
+                        TryMoveNext();
                     }
+
+                    // we still need to skip whitespace on the next line
+                    continue;
                 }
-                else {
-                    break;
-                }
+
+                break;
             }
         }
 
+        #region Escaping
         private bool IsHex(char c) {
             return ((c >= '0' && c <= '9') ||
                      (c >= 'a' && c <= 'f') ||
@@ -99,237 +93,288 @@ namespace FullJson {
             return p1 + p2 + p3 + p4;
         }
 
-        private char UnescapeChar() {
+        private JsonFailure TryUnescapeChar(out char escaped) {
             /* skip leading backslash '\' */
-            switch (CurrentCharacter()) {
-                case '\\': MoveNext(); return '\\';
-                case '/': MoveNext(); return '/';
-                case '\'': MoveNext(); return '\'';
-                case '"': MoveNext(); return '\"';
-                case 'a': MoveNext(); return '\a';
-                case 'b': MoveNext(); return '\b';
-                case 'f': MoveNext(); return '\f';
-                case 'n': MoveNext(); return '\n';
-                case 'r': MoveNext(); return '\r';
-                case 't': MoveNext(); return '\t';
-                case '0': MoveNext(); return '\0';
+            switch (Character()) {
+                case '\\': TryMoveNext(); escaped = '\\'; return JsonFailure.Success;
+                case '/': TryMoveNext(); escaped = '/'; return JsonFailure.Success;
+                case '\'': TryMoveNext(); escaped = '\''; return JsonFailure.Success;
+                case '"': TryMoveNext(); escaped = '\"'; return JsonFailure.Success;
+                case 'a': TryMoveNext(); escaped = '\a'; return JsonFailure.Success;
+                case 'b': TryMoveNext(); escaped = '\b'; return JsonFailure.Success;
+                case 'f': TryMoveNext(); escaped = '\f'; return JsonFailure.Success;
+                case 'n': TryMoveNext(); escaped = '\n'; return JsonFailure.Success;
+                case 'r': TryMoveNext(); escaped = '\r'; return JsonFailure.Success;
+                case 't': TryMoveNext(); escaped = '\t'; return JsonFailure.Success;
+                case '0': TryMoveNext(); escaped = '\0'; return JsonFailure.Success;
                 case 'u':
-                    MoveNext();
-                    if (IsHex(CurrentCharacter(0))
-                     && IsHex(CurrentCharacter(1))
-                     && IsHex(CurrentCharacter(2))
-                     && IsHex(CurrentCharacter(3))) {
-                        MoveNext();
-                        MoveNext();
-                        MoveNext();
-                        MoveNext();
-                        uint codePoint = ParseUnicode(CurrentCharacter(0), CurrentCharacter(1), CurrentCharacter(2), CurrentCharacter(3));
-                        return (char)codePoint;
+                    TryMoveNext();
+                    if (IsHex(Character(0))
+                     && IsHex(Character(1))
+                     && IsHex(Character(2))
+                     && IsHex(Character(3))) {
+                        TryMoveNext();
+                        TryMoveNext();
+                        TryMoveNext();
+                        TryMoveNext();
+                        uint codePoint = ParseUnicode(Character(0), Character(1), Character(2), Character(3));
+                        escaped = (char)codePoint;
+                        return JsonFailure.Success;
                     }
 
-                    /* invalid hex escape sequence */
-                    throw new ParseException(string.Format("invalid escape sequence '\\u{0}{1}{2}{3}'\n",
-                            CurrentCharacter(0),
-                            CurrentCharacter(1),
-                            CurrentCharacter(2),
-                            CurrentCharacter(3)), this);
+                    // invalid escape sequence
+                    escaped = (char)0;
+                    return MakeFailure(
+                        string.Format("invalid escape sequence '\\u{0}{1}{2}{3}'\n",
+                            Character(0),
+                            Character(1),
+                            Character(2),
+                            Character(3)));
                 default:
-                    throw new ParseException(string.Format("Invalid escape sequence \\{0}", CurrentCharacter()), this);
+                    escaped = (char)0;
+                    return MakeFailure(string.Format("Invalid escape sequence \\{0}", Character()));
             }
         }
+        #endregion
 
-        private JsonData ParseTrue() {
-            if (CurrentCharacter() != 't') throw new ParseException("expected true", this);
-            MoveNext();
-            if (CurrentCharacter() != 'r') throw new ParseException("expected true", this);
-            MoveNext();
-            if (CurrentCharacter() != 'u') throw new ParseException("expected true", this);
-            MoveNext();
-            if (CurrentCharacter() != 'e') throw new ParseException("expected true", this);
-            MoveNext();
+        private JsonFailure TryParseExact(string content) {
+            for (int i = 0; i < content.Length; ++i) {
+                if (Character() != content[i]) {
+                    return MakeFailure("Expected " + content[i]);
+                }
 
-            return new JsonData(true);
-        }
-
-        private JsonData ParseFalse() {
-            if (CurrentCharacter() != 'f') throw new ParseException("expected false", this);
-            MoveNext();
-            if (CurrentCharacter() != 'a') throw new ParseException("expected false", this);
-            MoveNext();
-            if (CurrentCharacter() != 'l') throw new ParseException("expected false", this);
-            MoveNext();
-            if (CurrentCharacter() != 's') throw new ParseException("expected false", this);
-            MoveNext();
-            if (CurrentCharacter() != 'e') throw new ParseException("expected false", this);
-            MoveNext();
-
-            return new JsonData(false);
-        }
-
-        private JsonData ParseNull() {
-            if (CurrentCharacter() != 'n') throw new ParseException("expected null", this);
-            MoveNext();
-            if (CurrentCharacter() != 'u') throw new ParseException("expected null", this);
-            MoveNext();
-            if (CurrentCharacter() != 'l') throw new ParseException("expected null", this);
-            MoveNext();
-            if (CurrentCharacter() != 'l') throw new ParseException("expected null", this);
-            MoveNext();
-
-            return new JsonData();
-        }
-
-        private long ParseSubstring(string baseString, int start, int end) {
-            if (start == end) {
-                return 0;
+                if (TryMoveNext() == false) {
+                    return MakeFailure("Unexpected end of content when parsing " + content);
+                }
             }
 
-            return long.Parse(baseString.Substring(start, end - start));
+            return JsonFailure.Success;
         }
+
+        private JsonFailure TryParseTrue(out JsonData data) {
+            var fail = TryParseExact("true");
+
+            if (fail.Succeeded) {
+                data = new JsonData(true);
+                return JsonFailure.Success;
+            }
+
+            data = null;
+            return fail;
+        }
+
+        private JsonFailure TryParseFalse(out JsonData data) {
+            var fail = TryParseExact("false");
+
+            if (fail.Succeeded) {
+                data = new JsonData(false);
+                return JsonFailure.Success;
+            }
+
+            data = null;
+            return fail;
+        }
+
+        private JsonFailure TryParseNull(out JsonData data) {
+            var fail = TryParseExact("null");
+
+            if (fail.Succeeded) {
+                data = new JsonData();
+                return JsonFailure.Success;
+            }
+
+            data = null;
+            return fail;
+        }
+
 
         /// <summary>
         /// Parses numbers that follow the regular expression [-+](\d+|\d*\.\d*)
         /// </summary>
-        /// <returns></returns>
-        private JsonData ParseNumber() {
+        private JsonFailure TryParseNumber(out JsonData data) {
             int start = _start;
 
-            // read until whitespace
-            while (HasValue() && CurrentCharacter() != ' ') {
-                MoveNext();
+            // read until we get to a whitespace token
+            while (
+                TryMoveNext() &&
+                (HasValue() && char.IsWhiteSpace(Character()) == false)) {
             }
 
+            // try to parse the value
             float floatValue;
             if (float.TryParse(_input.Substring(start, _start - start), out floatValue) == false) {
-                throw new ParseException("Bad float format with " + _input.Substring(start, _start - start), this);
+                data = null;
+                return MakeFailure("Bad float format with " + _input.Substring(start, _start - start));
             }
 
-            return new JsonData(floatValue);
+            data = new JsonData(floatValue);
+            return JsonFailure.Success;
         }
 
-        private string ParseKey() {
+        /// <summary>
+        /// Parses a string
+        /// </summary>
+        private JsonFailure TryParseString(out string str) {
             var result = new StringBuilder();
 
-            while (CurrentCharacter() != ':' && char.IsWhiteSpace(CurrentCharacter()) == false) {
-                char c = CurrentCharacter();
+            // skip the first "
+            if (Character() != '"' || TryMoveNext() == false) {
+                str = string.Empty;
+                return MakeFailure("Expected initial \" when parsing a string");
+            }
 
+            // read until the next "
+            while (Character() != '\"') {
+                char c = Character();
+
+                // escape if necessary
                 if (c == '\\') {
-                    char unescaped = UnescapeChar();
+                    char unescaped;
+                    var fail = TryUnescapeChar(out unescaped);
+                    if (fail.Failed) {
+                        str = string.Empty;
+                        return fail;
+                    }
+
                     result.Append(unescaped);
                 }
+
+                // no escaping necessary
                 else {
                     result.Append(c);
                 }
 
-                MoveNext();
+                // get the next character
+                if (TryMoveNext() == false) {
+                    str = string.Empty;
+                    return MakeFailure("Unexpected end of input when reading a string");
+                }
             }
 
-            SkipSpace();
+            // skip the first "
+            if (Character() != '"' || TryMoveNext() == false) {
+                str = string.Empty;
+                return MakeFailure("No closing \" when parsing a string");
+            }
 
-            return result.ToString();
+            str = result.ToString();
+            return JsonFailure.Success;
         }
 
-        private JsonData ParseString() {
-            if (CurrentCharacter() != '"') {
-                throw new ParseException("Attempt to parse string without leading \"", this);
+        /// <summary>
+        /// Parses an array
+        /// </summary>
+        private JsonFailure TryParseArray(out JsonData arr) {
+            if (Character() != '[') {
+                arr = null;
+                return MakeFailure("Expected initial [ when parsing an array");
             }
 
-            // skip '"'
-            MoveNext();
-
-            StringBuilder result = new StringBuilder();
-
-            while (CurrentCharacter() != '"') {
-                char c = CurrentCharacter();
-
-                if (c == '\\') {
-                    char unescaped = UnescapeChar();
-                    result.Append(unescaped);
-                }
-                else {
-                    result.Append(c);
-                }
-
-                MoveNext();
-            }
-
-            // skip '"'
-            MoveNext();
-
-            return new JsonData(result.ToString());
-        }
-
-        private JsonData ParseArray() {
             // skip '['
-            MoveNext();
+            if (TryMoveNext() == false) {
+                arr = null;
+                return MakeFailure("Unexpected end of input when parsing an array");
+            }
             SkipSpace();
 
             var result = new List<JsonData>();
 
-            while (CurrentCharacter() != ']') {
-                JsonData element = RunParse();
+            while (HasValue() && Character() != ']') {
+                // parse the element
+                JsonData element;
+                var fail = RunParse(out element);
+                if (fail.Failed) {
+                    arr = null;
+                    return fail;
+                }
+
                 result.Add(element);
 
+                // parse the comma
                 SkipSpace();
+                if (HasValue() && Character() == ',') {
+                    if (TryMoveNext() == false) break;
+                    SkipSpace();
+                }
             }
 
-            // skip ']'
-            MoveNext();
+            // skip the final ]
+            if (HasValue() == false || Character() != ']' || TryMoveNext() == false) {
+                arr = null;
+                return MakeFailure("No closing ] for array");
+            }
 
-            return new JsonData(result);
+            arr = new JsonData(result);
+            return JsonFailure.Success;
         }
 
-        private JsonData ParseObject() {
+        private JsonFailure TryParseObject(out JsonData obj) {
+            if (Character() != '{') {
+                obj = null;
+                return MakeFailure("Expected initial { when parsing an object");
+            }
+
             // skip '{'
-            SkipSpace();
-            MoveNext();
+            if (TryMoveNext() == false) {
+                obj = null;
+                return MakeFailure("Unexpected end of input when parsing an object");
+            }
             SkipSpace();
 
             var result = new Dictionary<string, JsonData>();
 
-            while (CurrentCharacter() != '}') {
+            while (HasValue() && Character() != '}') {
+                JsonFailure failure;
+
+                // parse the key
                 SkipSpace();
-                string key = ParseKey();
+                string key;
+                failure = TryParseString(out key);
+                if (failure.Failed) {
+                    obj = null;
+                    return failure;
+                }
                 SkipSpace();
 
-                if (CurrentCharacter() != ':') {
-                    throw new ParseException("Expected : after object key " + key, this);
+                // parse the ':' after the key
+                if (HasValue() == false || Character() != ':' || TryMoveNext() == false) {
+                    obj = null;
+                    return MakeFailure("Expected : after key \"" + key + "\"");
+                }
+                SkipSpace();
+
+                // parse the value
+                JsonData value;
+                failure = RunParse(out value);
+                if (failure.Failed) {
+                    obj = null;
+                    return failure;
                 }
 
-                // skip ':'
-                MoveNext();
-                SkipSpace();
-
-                JsonData value = RunParse();
                 result.Add(key, value);
 
+                // parse the comma
                 SkipSpace();
+                if (HasValue() && Character() == ',') {
+                    if (TryMoveNext() == false) break;
+                    SkipSpace();
+                }
             }
 
-            /* skip '}' */
-            MoveNext();
-            return new JsonData(result);
+            // skip the final }
+            if (HasValue() == false || Character() != '}' || TryMoveNext() == false) {
+                obj = null;
+                return MakeFailure("No closing } for object");
+            }
+
+            obj = new JsonData(result);
+            return JsonFailure.Success;
         }
 
-        /// <summary>
-        /// Parses the specified input. Throws a ParseException if parsing failed.
-        /// </summary>
-        /// <param name="input">The input to parse.</param>
-        /// <returns>The parsed input.</returns>
-        public static JsonData Parse(string input) {
-            var context = new JsonParser(input);
-            return context.RunParse();
-        }
-
-        private JsonParser(string input) {
-            _input = input;
-            _start = 0;
-        }
-
-        private JsonData RunParse() {
+        private JsonFailure RunParse(out JsonData data) {
             SkipSpace();
 
-            switch (CurrentCharacter()) {
+            switch (Character()) {
                 case '.':
                 case '+':
                 case '-':
@@ -342,17 +387,41 @@ namespace FullJson {
                 case '6':
                 case '7':
                 case '8':
-                case '9': return ParseNumber();
-                case '"': return ParseString();
-                case '[': return ParseArray();
-                case '{': return ParseObject();
-                case 't': return ParseTrue();
-                case 'f': return ParseFalse();
-                case 'n': return ParseNull();
-                default: throw new ParseException("unable to parse", this);
+                case '9': return TryParseNumber(out data);
+                case '"': {
+                        string str;
+                        JsonFailure fail = TryParseString(out str);
+                        if (fail.Failed) {
+                            data = null;
+                            return fail;
+                        }
+                        data = new JsonData(str);
+                        return JsonFailure.Success;
+                    }
+                case '[': return TryParseArray(out data);
+                case '{': return TryParseObject(out data);
+                case 't': return TryParseTrue(out data);
+                case 'f': return TryParseFalse(out data);
+                case 'n': return TryParseNull(out data);
+                default:
+                    data = null;
+                    return MakeFailure("unable to parse; invalid initial token \"" + Character() + "\"");
             }
         }
 
-    }
+        /// <summary>
+        /// Parses the specified input. Throws a ParseException if parsing failed.
+        /// </summary>
+        /// <param name="input">The input to parse.</param>
+        /// <returns>The parsed input.</returns>
+        public static JsonFailure Parse(string input, out JsonData data) {
+            var context = new JsonParser(input);
+            return context.RunParse(out data);
+        }
 
+        private JsonParser(string input) {
+            _input = input;
+            _start = 0;
+        }
+    }
 }
