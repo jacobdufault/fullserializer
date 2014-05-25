@@ -25,11 +25,18 @@ public class FullJsonSerializer : BaseSerializer {
     public override object Deserialize(MemberInfo storageType, string serializedState,
         ISerializationOperator serializationOperator) {
 
-        JsonData data = JsonParser.Parse(serializedState);
+        JsonFailure fail;
+
+        JsonData data;
+        fail = JsonParser.Parse(serializedState, out data);
+        if (fail.Failed) {
+            throw new Exception(fail.FailureReason);
+        }
+
         JsonConverter converter = new JsonConverter();
 
         object deserialized = null;
-        var fail = converter.TryDeserialize(data, GetStorageType(storageType), ref deserialized);
+        fail = converter.TryDeserialize(data, GetStorageType(storageType), ref deserialized);
         if (fail.Failed) {
             throw new Exception(fail.FailureReason);
         }
@@ -59,7 +66,7 @@ public abstract class BaseProvider<T> : ITestProvider {
         ComparisonResult result = compare.Compare(original, deserialized);
         return result.AreEqual;
     }
-    
+
     private bool CompareObjects(object a, object b) {
         if (typeof(T).IsAssignableFrom(a.GetType()) == false ||
             typeof(T).IsAssignableFrom(b.GetType()) == false) {
@@ -104,12 +111,18 @@ public class TestRunner : BaseBehavior<FullJsonSerializer> {
     }
 
     public object Deserialize(Type type, string serializedState) {
+        JsonFailure fail;
 
-        JsonData data = JsonParser.Parse(serializedState);
+        JsonData data;
+        fail = JsonParser.Parse(serializedState, out data);
+        if (fail.Failed) {
+            throw new Exception(fail.FailureReason);
+        }
+
         JsonConverter converter = new JsonConverter();
 
         object deserialized = null;
-        var fail = converter.TryDeserialize(data, type, ref deserialized);
+        fail = converter.TryDeserialize(data, type, ref deserialized);
         if (fail.Failed) {
             throw new Exception(fail.FailureReason);
         }
