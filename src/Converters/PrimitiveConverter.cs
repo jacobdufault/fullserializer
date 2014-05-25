@@ -22,9 +22,11 @@ namespace FullJson.Converters {
                 return JsonFailure.Success;
             }
 
-            if (instance is byte || instance is short || instance is int ||
-                instance is long || instance is float || instance is double ||
-                instance is decimal) {
+            if (instance is byte ||
+                instance is short || instance is ushort ||
+                instance is int || instance is uint ||
+                instance is long || instance is ulong ||
+                instance is float || instance is double || instance is decimal) {
 
                 serialized = new JsonData((float)Convert.ChangeType(instance, typeof(float)));
                 return JsonFailure.Success;
