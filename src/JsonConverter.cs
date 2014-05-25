@@ -1,6 +1,7 @@
 ﻿using FullJson.Converters;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace FullJson {
     public class JsonConverter {
@@ -15,8 +16,8 @@ namespace FullJson {
             _converterQueryReferences = new List<ISerializationConverter>();
             _converterTypes = new List<Type>();
 
-            AddConverter(typeof(PrimitiveConverter));
             AddConverter(typeof(EnumConverter));
+            AddConverter(typeof(PrimitiveConverter));
             AddConverter(typeof(ArrayConverter));
             AddConverter(typeof(IEnumerableConverter));
             AddConverter(typeof(ReflectedConverter));
@@ -139,9 +140,7 @@ namespace FullJson {
                 dict.ContainsKey(TypeDataString);
         }
 
-        private JsonFailure InternalDeserialize(JsonData data, ref object result) {
-            Type objectType = result.GetType();
-
+        private JsonFailure InternalDeserialize(JsonData data, Type objectType, ref object result) {
             if (result == null) {
                 throw new InvalidOperationException("InternalDeserialize requires a preconstructed object instance");
             }
@@ -154,7 +153,7 @@ namespace FullJson {
             return converter.TryDeserialize(data, ref result, objectType);
         }
 
-        private JsonFailure ConstructInstance(JsonData data, Type objectType, out object instance) {
+        private JsonFailure ConstructInstance(JsonData data, ref Type objectType, out object instance) {
             if (IsTypeMarker(data)) {
                 string typeName = data.AsDictionary[TypeString].AsString;
                 Type type = TypeLookup.GetType(typeName);
@@ -163,6 +162,7 @@ namespace FullJson {
                     return JsonFailure.Fail("Unable to find type " + typeName);
                 }
 
+                objectType = type;
                 var converter = GetChain(type).FirstConverter;
                 instance = converter.CreateInstance(data, type);
             }
@@ -209,21 +209,21 @@ namespace FullJson {
                     // request back to our _references group... so we just construct an instance
                     // before deserialization so that our _references group resolves correctly.
                     if (result == null) {
-                        failed = ConstructInstance(sourceData, objectType, out result);
+                        failed = ConstructInstance(sourceData, ref objectType, out result);
                         if (failed.Failed) return failed;
 
                         _references.AddReferenceWithId(sourceId, result);
                     }
 
-                    var fail = InternalDeserialize(sourceData, ref result);
+                    var fail = InternalDeserialize(sourceData, objectType, ref result);
                     if (fail.Failed) return fail;
 
                     return JsonFailure.Success;
                 }
 
-                failed = ConstructInstance(data, objectType, out result);
+                failed = ConstructInstance(data, ref objectType, out result);
                 if (failed.Failed) return failed;
-                return InternalDeserialize(data, ref result);
+                return InternalDeserialize(data, objectType, ref result);
             }
             finally {
                 _references.Exit();
