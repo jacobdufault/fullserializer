@@ -288,7 +288,9 @@ namespace FullJson {
             else if (IsDictionary) {
                 builder.Append('{');
                 foreach (var entry in AsDictionary) {
+                    builder.Append('"');
                     builder.Append(entry.Key);
+                    builder.Append('"');
                     builder.Append(":");
                     entry.Value.BuildCompressedString(builder);
                     builder.Append(' ');
@@ -343,7 +345,9 @@ namespace FullJson {
                 builder.AppendLine();
                 foreach (var entry in AsDictionary) {
                     InsertSpacing(builder, depth + 1);
+                    builder.Append('"');
                     builder.Append(entry.Key);
+                    builder.Append('"');
                     builder.Append(": ");
                     entry.Value.BuildPrettyString(builder, depth + 1);
                     builder.AppendLine();
@@ -407,35 +411,78 @@ namespace FullJson {
         /// Determines whether the specified object is equal to the current object.
         /// </summary>
         public override bool Equals(object obj) {
-            if (obj == null) {
-                return false;
-            }
-
-            var v = obj as JsonData;
-            if (v == null) {
-                return false;
-            }
-
-            if (_value == null) {
-                return v._value == null;
-            }
-
-            return _value.Equals(v._value);
+            return Equals(obj as JsonData);
         }
 
         /// <summary>
         /// Determines whether the specified object is equal to the current object.
         /// </summary>
-        public bool Equals(JsonData v) {
-            if (v == null) {
+        public bool Equals(JsonData other) {
+            if (other == null) {
                 return false;
             }
 
-            if (_value == null) {
-                return v._value == null;
+            if (IsNull) {
+                return other.IsNull;
             }
 
-            return _value.Equals(v._value);
+            if (IsFloat) {
+                return
+                    other.IsFloat &&
+                    AsFloat == other.AsFloat;
+            }
+
+            if (IsBool) {
+                return
+                    other.IsBool &&
+                    AsBool == other.AsBool;
+            }
+
+            if (IsString) {
+                return
+                    other.IsString &&
+                    AsString == other.AsString;
+            }
+
+            if (IsList) {
+                if (other.IsList == false) return false;
+
+                var thisList = AsList;
+                var otherList = other.AsList;
+
+                if (thisList.Count != otherList.Count) return false;
+
+                for (int i = 0; i < thisList.Count; ++i) {
+                    if (thisList[i].Equals(otherList[i]) == false) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            if (IsDictionary) {
+                if (other.IsDictionary == false) return false;
+
+                var thisDict = AsDictionary;
+                var otherDict = other.AsDictionary;
+
+                if (thisDict.Count != otherDict.Count) return false;
+
+                foreach (string key in thisDict.Keys) {
+                    if (otherDict.ContainsKey(key) == false) {
+                        return false;
+                    }
+
+                    if (thisDict[key].Equals(otherDict[key]) == false) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            throw new Exception("Unknown data type");
         }
 
         /// <summary>
