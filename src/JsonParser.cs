@@ -195,13 +195,13 @@ namespace FullJson {
             int start = _start;
 
             // read until whitespace
-            while (HasNext() && CurrentCharacter() != ' ') {
+            while (HasValue() && CurrentCharacter() != ' ') {
                 MoveNext();
             }
 
             float floatValue;
             if (float.TryParse(_input.Substring(start, _start - start), out floatValue) == false) {
-                throw new ParseException("Bad float format", this);
+                throw new ParseException("Bad float format with " + _input.Substring(start, _start - start), this);
             }
 
             return new JsonData(floatValue);
@@ -210,8 +210,7 @@ namespace FullJson {
         private string ParseKey() {
             var result = new StringBuilder();
 
-            while (CurrentCharacter() != ':' && CurrentCharacter() != '`' &&
-                char.IsWhiteSpace(CurrentCharacter()) == false) {
+            while (CurrentCharacter() != ':' && char.IsWhiteSpace(CurrentCharacter()) == false) {
                 char c = CurrentCharacter();
 
                 if (c == '\\') {
