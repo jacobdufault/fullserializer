@@ -13,7 +13,7 @@ namespace FullJson.Converters {
         }
 
         public bool CanProcess(Type type) {
-            return type.IsPrimitive || type == typeof(string);
+            return type.IsPrimitive || type == typeof(string) || type == typeof(decimal);
         }
 
         public JsonFailure TrySerialize(object instance, out JsonData serialized, Type storageType) {
