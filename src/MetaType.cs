@@ -38,7 +38,8 @@ namespace FullJson {
 
             var properties = new List<MetaProperty>();
 
-            foreach (MemberInfo member in reflectedType.GetMembers(flags)) {
+            MemberInfo[] members = reflectedType.GetMembers(flags);
+            foreach (MemberInfo member in members) {
                 // We don't serialize members annotated with [JsonIgnore].
                 if (Attribute.IsDefined(member, typeof(JsonIgnoreAttribute))) {
                     continue;
@@ -48,7 +49,7 @@ namespace FullJson {
                 FieldInfo field = member as FieldInfo;
 
                 if (property != null) {
-                    if (CanSerializeProperty(property)) {
+                    if (CanSerializeProperty(property, members)) {
                         properties.Add(new MetaProperty(property));
                     }
                 }
@@ -63,41 +64,55 @@ namespace FullJson {
             return properties;
         }
 
-        private static bool CanSerializeProperty(PropertyInfo property) {
+        public static bool IsAutoProperty(PropertyInfo property, MemberInfo[] members) {
+            if (!property.CanWrite || !property.CanRead) {
+                return false;
+            }
+
+            string backingFieldName = "<" + property.Name + ">k__BackingField";
+            for (int i = 0; i < members.Length; ++i) {
+                if (members[i].Name == backingFieldName) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool CanSerializeProperty(PropertyInfo property, MemberInfo[] members) {
             // We don't serialize delegates
             if (typeof(Delegate).IsAssignableFrom(property.PropertyType)) {
                 return false;
             }
 
-            // If the property cannot be both read and written to, we don't serialize it
+            // If the property cannot be both read and written to, we cannot serialize it
             if (property.CanRead == false || property.CanWrite == false) {
                 return false;
             }
 
-            // If the property is named "Item", it might be the this[int] indexer, which in that
-            // case we don't serialize it We cannot just compare with "Item" because of explicit
-            // interfaces, where the name of the property will be the full method name.
-            if (property.Name.EndsWith("Item")) {
-                ParameterInfo[] parameters = property.GetIndexParameters();
-                if (parameters.Length > 0) {
-                    return false;
-                }
+            // If it has a JsonIgnore attribute, we also should not serialize it
+            if (Attribute.IsDefined(property, typeof(JsonIgnoreAttribute))) {
+                return false;
             }
 
-            // One of the get or set methods is private, so we need to have a [SerializeField]
-            // attribute. We use !IsPublic because that also checks for internal, protected, and
-            // private.
+            // If a property is annotated with SerializeField, it should definitely be serialized
+            if (Attribute.IsDefined(property, typeof(SerializeField))) {
+                return true;
+            }
+
             var getMethod = property.GetGetMethod();
             var setMethod = property.GetSetMethod();
-            if ((getMethod != null && !getMethod.IsPublic) ||
-                (setMethod != null && !setMethod.IsPublic)) {
 
-                if (Attribute.IsDefined(property, typeof(SerializeField), inherit: true) == false) {
-                    return false;
-                }
+            // If it's an auto-property and it has either a public get or a public set method,
+            // then we serialize it
+            if (IsAutoProperty(property, members) &&
+                ((getMethod != null && getMethod.IsPublic) ||
+                 (setMethod != null && setMethod.IsPublic))) {
+                return true;
             }
 
-            return true;
+            // Otherwise, we don't bother with serialization
+            return false;
         }
 
         private static bool CanSerializeField(FieldInfo field) {
@@ -106,8 +121,7 @@ namespace FullJson {
                 return false;
             }
 
-            // We don't serialize compiler generated fields (an example would be a backing field for
-            // an automatically generated property).
+            // We don't serialize compiler generated fields.
             if (field.IsDefined(typeof(CompilerGeneratedAttribute), false)) {
                 return false;
             }
