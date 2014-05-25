@@ -193,7 +193,7 @@ namespace FullJson {
             }
 
             if (HasDefaultConstructor == false) {
-#if UNITY_WEBPLAYER
+#if !UNITY_EDITOR && UNITY_WEBPLAYER
                 throw new InvalidOperationException("WebPlayer deserialization requires " +
                     ReflectedType.FullName + " to have a default constructor. Please add one.");
 #else
