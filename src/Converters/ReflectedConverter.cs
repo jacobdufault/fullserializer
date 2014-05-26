@@ -59,7 +59,7 @@ namespace FullJson {
                     property.Write(instance, deserializedValue);
                 }
                 else {
-                    Debug.LogWarning("No data for " + property.Name + " in " + data.PrettyPrintedJson);
+                    Debug.LogWarning("No data for " + property.Name + " in " + data.PrettyJson);
                 }
             }
 
