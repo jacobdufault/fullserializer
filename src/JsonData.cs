@@ -231,6 +231,79 @@ namespace FullJson {
             }
         }
 
+        /// <summary>
+        /// Escapes a string.
+        /// </summary>
+        private string EscapeString(string str) {
+            // Escaping a string is pretty allocation heavy, so we try hard to not do it.
+
+            bool needsEscape = false;
+            for (int i = 0; i < str.Length; ++i) {
+                char c = str[i];
+
+                // unicode code point
+                int intChar = Convert.ToInt32(c);
+                if (intChar < 0 || intChar > 127) {
+                    needsEscape = true;
+                    break;
+                }
+
+                // standard escape character
+                switch (c) {
+                    case '"':
+                    case '\\':
+                    case '\a':
+                    case '\b':
+                    case '\f':
+                    case '\n':
+                    case '\r':
+                    case '\t':
+                    case '\0':
+                        needsEscape = true;
+                        break;
+                }
+
+                if (needsEscape) {
+                    break;
+                }
+            }
+
+            if (needsEscape == false) {
+                return str;
+            }
+
+
+            StringBuilder result = new StringBuilder();
+
+            for (int i = 0; i < str.Length; ++i) {
+                char c = str[i];
+
+                // unicode code point
+                int intChar = Convert.ToInt32(c);
+                if (intChar < 0 || intChar > 127) {
+                    result.Append(string.Format("\\u{0:x4} ", intChar).Trim());
+                    continue;
+                }
+
+                // standard escape character
+                switch (c) {
+                    case '"': result.Append("\\\""); continue;
+                    case '\\': result.Append(@"\"); continue;
+                    case '\a': result.Append(@"\a"); continue;
+                    case '\b': result.Append(@"\b"); continue;
+                    case '\f': result.Append(@"\f"); continue;
+                    case '\n': result.Append(@"\n"); continue;
+                    case '\r': result.Append(@"\r"); continue;
+                    case '\t': result.Append(@"\t"); continue;
+                    case '\0': result.Append(@"\0"); continue;
+                }
+
+                // no escaping needed
+                result.Append(c);
+            }
+            return result.ToString();
+        }
+
         private void BuildCompressedString(StringBuilder builder) {
             switch (Type) {
                 case JsonType.Null:
@@ -247,9 +320,8 @@ namespace FullJson {
                     break;
 
                 case JsonType.String:
-                    // we don't support escaping
                     builder.Append('"');
-                    builder.Append(AsString);
+                    builder.Append(EscapeString(AsString));
                     builder.Append('"');
                     break;
 
@@ -298,7 +370,7 @@ namespace FullJson {
                 case JsonType.String:
                     // we don't support escaping
                     builder.Append('"');
-                    builder.Append(AsString);
+                    builder.Append(EscapeString(AsString));
                     builder.Append('"');
                     break;
 
