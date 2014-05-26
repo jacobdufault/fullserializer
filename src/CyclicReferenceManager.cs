@@ -28,7 +28,11 @@ namespace FullJson.Internal {
 
         public object GetReferenceObject(long id) {
             if (_marked.ContainsKey(id) == false) {
-                throw new InvalidOperationException("Internal Error - Unable to find reference for id = " + id);
+                throw new InvalidOperationException("Internal Deserialization Error - Object " +
+                    "definition has not been encountered for object with id=" + id +
+                    "; have you reordered or modified the serialized data? If this is an issue " +
+                    "with an unmodified Full Json implementation and unmodified serialization " +
+                    "data, please report an issue with an included test case.");
             }
 
             return _marked[id];
