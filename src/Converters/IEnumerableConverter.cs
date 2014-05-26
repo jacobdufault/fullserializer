@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace FullJson {
+namespace FullJson.Internal {
     public interface IEnumerableSerializationAdapter {
         bool IsValid(Type objectType);
         IEnumerable Iterate(object collection);

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FullJson.Converters {
+namespace FullJson.Internal {
     public class PrimitiveConverter : ISerializationConverter {
         public JsonConverter Converter {
             get;

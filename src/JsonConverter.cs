@@ -1,7 +1,6 @@
-﻿using FullJson.Converters;
+﻿using FullJson.Internal;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace FullJson {
     public class JsonConverter {
@@ -11,24 +10,19 @@ namespace FullJson {
 
         public JsonConverter() {
             _cachedConverters = new Dictionary<Type, ISerializationConverter>();
-            _converters = new List<ISerializationConverter>();
             _references = new CyclicReferenceManager();
 
-            AddConverter(typeof(EnumConverter));
-            AddConverter(typeof(PrimitiveConverter));
-            AddConverter(typeof(ArrayConverter));
-            AddConverter(typeof(IEnumerableConverter));
-            AddConverter(typeof(ReflectedConverter));
+            _converters = new List<ISerializationConverter>() {
+                new EnumConverter(),
+                new PrimitiveConverter(),
+                new ArrayConverter(),
+                new IEnumerableConverter(),
+                new ReflectedConverter()
+            };
         }
 
-        private ISerializationConverter GetConverterInstance(Type type) {
-            var converter = (ISerializationConverter)Activator.CreateInstance(type);
-            converter.Converter = this;
-            return converter;
-        }
-
-        public void AddConverter(Type type) {
-            _converters.Add(GetConverterInstance(type));
+        public void AddConverter(ISerializationConverter converter) {
+            _converters.Insert(0, converter);
         }
 
         private ISerializationConverter GetConverter(Type type) {

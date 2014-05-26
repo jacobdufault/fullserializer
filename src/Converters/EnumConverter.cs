@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FullJson {
+namespace FullJson.Internal {
     /// <summary>
     /// Serializes and deserializes enums by their current name.
     /// </summary>

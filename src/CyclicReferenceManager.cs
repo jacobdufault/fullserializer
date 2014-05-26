@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
-using UnityEngine;
 
-namespace FullJson {
+namespace FullJson.Internal {
     public class CyclicReferenceManager {
         private ObjectIDGenerator _objectIds = new ObjectIDGenerator();
         private Dictionary<long, object> _marked = new Dictionary<long, object>();
@@ -23,13 +22,13 @@ namespace FullJson {
 
             if (_depth < 0) {
                 _depth = 0;
-                throw new InvalidOperationException("Mismatched Enter/Exit");
+                throw new InvalidOperationException("Internal Error - Mismatched Enter/Exit");
             }
         }
 
         public object GetReferenceObject(long id) {
             if (_marked.ContainsKey(id) == false) {
-                Debug.LogError("unable to find reference for id = " + id);
+                throw new InvalidOperationException("Internal Error - Unable to find reference for id = " + id);
             }
 
             return _marked[id];
@@ -53,7 +52,8 @@ namespace FullJson {
             long referenceId = GetReferenceId(item);
 
             if (_marked.ContainsKey(referenceId)) {
-                throw new InvalidOperationException(item + " has already been marked as serialized");
+                throw new InvalidOperationException("Internal Error - " + item +
+                    " has already been marked as serialized");
             }
 
             _marked[referenceId] = item;

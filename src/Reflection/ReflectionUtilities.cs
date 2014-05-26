@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using UnityEngine;
 
-namespace FullJson {
+namespace FullJson.Internal {
     public static class ReflectionUtilities {
         /// <summary>
         /// Searches for a particular implementation of the given interface type inside of the type.

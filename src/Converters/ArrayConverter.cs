@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace FullJson {
+namespace FullJson.Internal {
     public class ArrayConverter : ISerializationConverter {
         public JsonConverter Converter {
             get;

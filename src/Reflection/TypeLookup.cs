@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace FullJson {
+namespace FullJson.Internal {
     /// <summary>
     /// Provides APIs for looking up types based on their name.
     /// </summary>

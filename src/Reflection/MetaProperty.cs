@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace FullJson {
+namespace FullJson.Internal {
     /// <summary>
     /// A property or field on a MetaType.
     /// </summary>

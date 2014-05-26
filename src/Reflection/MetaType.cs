@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using UnityEngine;
 
-namespace FullJson {
+namespace FullJson.Internal {
     /// <summary>
     /// MetaType contains metadata about a type. This is used by the reflection serializer.
     /// </summary>

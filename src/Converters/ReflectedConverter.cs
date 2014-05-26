@@ -2,7 +2,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace FullJson {
+namespace FullJson.Internal {
     public class ReflectedConverter : ISerializationConverter {
         public JsonConverter Converter {
             get;
