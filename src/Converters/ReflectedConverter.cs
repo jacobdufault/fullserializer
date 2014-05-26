@@ -4,11 +4,6 @@ using UnityEngine;
 
 namespace FullJson {
     public class ReflectedConverter : ISerializationConverter {
-        public SerializationConverterChain Converters {
-            get;
-            set;
-        }
-
         public JsonConverter Converter {
             get;
             set;

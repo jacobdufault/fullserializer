@@ -5,15 +5,6 @@ namespace FullJson {
     /// The serialization converter allows for customization of the serialization process.
     /// </summary>
     public interface ISerializationConverter {
-        /// <summary>
-        /// The conversion chain. Use this to delegate / continue serialization for the current
-        /// object being serialized.
-        /// </summary>
-        SerializationConverterChain Converters {
-            get;
-            set;
-        }
-
         JsonConverter Converter {
             get;
             set;

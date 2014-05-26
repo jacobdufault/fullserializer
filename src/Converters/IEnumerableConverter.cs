@@ -128,11 +128,6 @@ namespace FullJson {
             throw new InvalidOperationException("No adapter found for " + type);
         }
 
-        public SerializationConverterChain Converters {
-            get;
-            set;
-        }
-
         public JsonConverter Converter {
             get;
             set;

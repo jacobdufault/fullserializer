@@ -2,11 +2,6 @@
 
 namespace FullJson.Converters {
     public class PrimitiveConverter : ISerializationConverter {
-        public SerializationConverterChain Converters {
-            get;
-            set;
-        }
-
         public JsonConverter Converter {
             get;
             set;

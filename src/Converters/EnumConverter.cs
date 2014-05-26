@@ -5,11 +5,6 @@ namespace FullJson {
     /// Serializes and deserializes enums by their current name.
     /// </summary>
     public class EnumConverter : ISerializationConverter {
-        public SerializationConverterChain Converters {
-            get;
-            set;
-        }
-
         public JsonConverter Converter {
             get;
             set;

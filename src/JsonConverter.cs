@@ -5,16 +5,14 @@ using UnityEngine;
 
 namespace FullJson {
     public class JsonConverter {
-        private Dictionary<Type, SerializationConverterChain> _chains;
-        private List<ISerializationConverter> _converterQueryReferences;
-        private List<Type> _converterTypes;
-        private CyclicReferenceManager _references = new CyclicReferenceManager();
+        private Dictionary<Type, ISerializationConverter> _cachedConverters;
+        private List<ISerializationConverter> _converters;
+        private CyclicReferenceManager _references;
 
         public JsonConverter() {
-            _chains = new Dictionary<Type, SerializationConverterChain>();
-
-            _converterQueryReferences = new List<ISerializationConverter>();
-            _converterTypes = new List<Type>();
+            _cachedConverters = new Dictionary<Type, ISerializationConverter>();
+            _converters = new List<ISerializationConverter>();
+            _references = new CyclicReferenceManager();
 
             AddConverter(typeof(EnumConverter));
             AddConverter(typeof(PrimitiveConverter));
@@ -30,28 +28,26 @@ namespace FullJson {
         }
 
         public void AddConverter(Type type) {
-            _converterTypes.Add(type);
-            _converterQueryReferences.Add(GetConverterInstance(type));
+            _converters.Add(GetConverterInstance(type));
         }
 
-        private SerializationConverterChain GetChain(Type type) {
-            SerializationConverterChain converterChain;
+        private ISerializationConverter GetConverter(Type type) {
+            ISerializationConverter converter = null;
 
-            if (_chains.TryGetValue(type, out converterChain) == false) {
-                var chain = new List<ISerializationConverter>();
-
-                for (int i = 0; i < _converterQueryReferences.Count; ++i) {
-                    ISerializationConverter converter = _converterQueryReferences[i];
-                    if (converter.CanProcess(type)) {
-                        chain.Add(GetConverterInstance(_converterTypes[i]));
+            if (_cachedConverters.TryGetValue(type, out converter) == false) {
+                for (int i = 0; i < _converters.Count; ++i) {
+                    if (_converters[i].CanProcess(type)) {
+                        converter = _converters[i];
+                        _cachedConverters[type] = converter;
+                        break;
                     }
                 }
-
-                converterChain = new SerializationConverterChain(chain.ToArray());
-                _chains[type] = converterChain;
             }
 
-            return converterChain;
+            if (converter == null) {
+                throw new InvalidOperationException("Internal error -- could not find a converter for " + type);
+            }
+            return converter;
         }
 
         public bool ShouldCheckForReferences(object instance) {
@@ -111,7 +107,7 @@ namespace FullJson {
                 return JsonFailure.Success;
             }
 
-            return GetChain(type).FirstConverter.TrySerialize(instance, out data, type);
+            return GetConverter(type).TrySerialize(instance, out data, type);
         }
 
         private bool IsObjectReference(JsonData data) {
@@ -149,8 +145,7 @@ namespace FullJson {
                 data = data.AsDictionary[TypeDataString];
             }
 
-            var converter = GetChain(objectType).FirstConverter;
-            return converter.TryDeserialize(data, ref result, objectType);
+            return GetConverter(objectType).TryDeserialize(data, ref result, objectType);
         }
 
         private JsonFailure ConstructInstance(JsonData data, ref Type objectType, out object instance) {
@@ -163,13 +158,11 @@ namespace FullJson {
                 }
 
                 objectType = type;
-                var converter = GetChain(type).FirstConverter;
-                instance = converter.CreateInstance(data, type);
+                instance = GetConverter(type).CreateInstance(data, type);
             }
 
             else {
-                var converter = GetChain(objectType).FirstConverter;
-                instance = converter.CreateInstance(data, objectType);
+                instance = GetConverter(objectType).CreateInstance(data, objectType);
             }
 
             return JsonFailure.Success;
