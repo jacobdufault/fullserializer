@@ -88,13 +88,19 @@ namespace FullJson {
             uint p1 = ParseSingleChar(c1, 0x1000);
             uint p2 = ParseSingleChar(c2, 0x100);
             uint p3 = ParseSingleChar(c3, 0x10);
-            uint p4 = ParseSingleChar(c4, 1);
+            uint p4 = ParseSingleChar(c4, 0x1);
 
             return p1 + p2 + p3 + p4;
         }
 
         private JsonFailure TryUnescapeChar(out char escaped) {
-            /* skip leading backslash '\' */
+            // skip leading backslash '\'
+            TryMoveNext();
+            if (HasValue() == false) {
+                escaped = ' ';
+                return MakeFailure("Unexpected end of input after \\");
+            }
+
             switch (Character()) {
                 case '\\': TryMoveNext(); escaped = '\\'; return JsonFailure.Success;
                 case '/': TryMoveNext(); escaped = '/'; return JsonFailure.Success;
@@ -113,11 +119,13 @@ namespace FullJson {
                      && IsHex(Character(1))
                      && IsHex(Character(2))
                      && IsHex(Character(3))) {
-                        TryMoveNext();
-                        TryMoveNext();
-                        TryMoveNext();
-                        TryMoveNext();
+
                         uint codePoint = ParseUnicode(Character(0), Character(1), Character(2), Character(3));
+
+                        TryMoveNext();
+                        TryMoveNext();
+                        TryMoveNext();
+
                         escaped = (char)codePoint;
                         return JsonFailure.Success;
                     }
