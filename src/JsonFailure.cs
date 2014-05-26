@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace FullJson {
     public class JsonFailure {
@@ -16,13 +14,10 @@ namespace FullJson {
         };
 
         public static JsonFailure Fail(string reason) {
-            throw new InvalidOperationException("JsonFailure: " + reason);
-            /*
             return new JsonFailure() {
                 _success = false,
                 _reason = reason
             };
-            */
         }
 
         public bool Failed {
@@ -40,8 +35,7 @@ namespace FullJson {
         public string FailureReason {
             get {
                 if (Succeeded) {
-                    throw new InvalidOperationException("Successful operations have no failure " +
-                        "reason");
+                    throw new InvalidOperationException("Successful operations have no failure reason");
                 }
 
                 return _reason;
