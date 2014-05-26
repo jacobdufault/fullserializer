@@ -188,16 +188,20 @@ namespace FullJson {
         }
 
 
+        private bool IsSeparator(char c) {
+            return char.IsWhiteSpace(c) || c == ',';
+        }
+
         /// <summary>
         /// Parses numbers that follow the regular expression [-+](\d+|\d*\.\d*)
         /// </summary>
         private JsonFailure TryParseNumber(out JsonData data) {
             int start = _start;
 
-            // read until we get to a whitespace token
+            // read until we get to a separator
             while (
                 TryMoveNext() &&
-                (HasValue() && char.IsWhiteSpace(Character()) == false)) {
+                (HasValue() && IsSeparator(Character()) == false)) {
             }
 
             // try to parse the value
