@@ -14,8 +14,8 @@ namespace FullJson {
             int start = Math.Max(0, _start - 10);
             int length = Math.Min(20, _input.Length - start);
 
-            string error = "Error while parsing: " + message + "; context = \"" +
-                _input.Substring(start, length) + "\"";
+            string error = "Error while parsing: " + message + "; context = <" +
+                _input.Substring(start, length) + ">";
             return JsonFailure.Fail(error);
         }
 
@@ -103,8 +103,6 @@ namespace FullJson {
 
             switch (Character()) {
                 case '\\': TryMoveNext(); escaped = '\\'; return JsonFailure.Success;
-                case '/': TryMoveNext(); escaped = '/'; return JsonFailure.Success;
-                case '\'': TryMoveNext(); escaped = '\''; return JsonFailure.Success;
                 case '"': TryMoveNext(); escaped = '\"'; return JsonFailure.Success;
                 case 'a': TryMoveNext(); escaped = '\a'; return JsonFailure.Success;
                 case 'b': TryMoveNext(); escaped = '\b'; return JsonFailure.Success;
@@ -122,6 +120,7 @@ namespace FullJson {
 
                         uint codePoint = ParseUnicode(Character(0), Character(1), Character(2), Character(3));
 
+                        TryMoveNext();
                         TryMoveNext();
                         TryMoveNext();
                         TryMoveNext();
@@ -236,7 +235,7 @@ namespace FullJson {
             }
 
             // read until the next "
-            while (Character() != '\"') {
+            while (HasValue() && Character() != '\"') {
                 char c = Character();
 
                 // escape if necessary
@@ -254,17 +253,17 @@ namespace FullJson {
                 // no escaping necessary
                 else {
                     result.Append(c);
-                }
 
-                // get the next character
-                if (TryMoveNext() == false) {
-                    str = string.Empty;
-                    return MakeFailure("Unexpected end of input when reading a string");
+                    // get the next character
+                    if (TryMoveNext() == false) {
+                        str = string.Empty;
+                        return MakeFailure("Unexpected end of input when reading a string");
+                    }
                 }
             }
 
             // skip the first "
-            if (Character() != '"' || TryMoveNext() == false) {
+            if (HasValue() == false || Character() != '"' || TryMoveNext() == false) {
                 str = string.Empty;
                 return MakeFailure("No closing \" when parsing a string");
             }
