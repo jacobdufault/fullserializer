@@ -56,7 +56,7 @@ public interface ITestProvider {
 
 public abstract class BaseProvider<T> : ITestProvider {
     public abstract IEnumerable<T> GetValues();
-    public bool Compare(T original, T deserialized) {
+    public virtual bool Compare(T original, T deserialized) {
         var customCompare = deserialized as ICustomCompareRequested;
         if (customCompare != null) {
             return customCompare.AreEqual(original);
@@ -165,13 +165,13 @@ public class TestRunner : BaseBehavior<FullSerializerSerializer> {
 
         for (int i = 0; i < TestValues.Count; ++i) {
             TestObject testObj = TestValues[i];
-
-            testObj.Serialized = Serialize(testObj.Original.GetType(), testObj.Original);
-            testObj.Deserialized = Deserialize(testObj.Original.GetType(), testObj.Serialized);
-
-            TestValues[i] = testObj;
-
             try {
+
+                testObj.Serialized = Serialize(testObj.Original.GetType(), testObj.Original);
+                testObj.Deserialized = Deserialize(testObj.Original.GetType(), testObj.Serialized);
+
+                TestValues[i] = testObj;
+
                 var afterDeserialize = testObj.Deserialized as IAfterDeserializeCallback;
                 if (afterDeserialize != null) {
                     afterDeserialize.VerifyDeserialize();
