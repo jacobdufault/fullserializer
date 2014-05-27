@@ -53,5 +53,19 @@ namespace FullSerializer {
 
             return storageType;
         }
+
+        protected fsFailure CheckType(fsData data, fsDataType type) {
+            if (data.Type != type) {
+                return fsFailure.Fail("BoundsConverter expected " + type + " but got " + data.Type);
+            }
+            return fsFailure.Success;
+        }
+
+        protected fsFailure CheckKey(fsData data, string key, out fsData subitem) {
+            if (data.AsDictionary.TryGetValue(key, out subitem) == false) {
+                return fsFailure.Fail(GetType().Name + " requires a <" + key + "> key in the data " + data);
+            }
+            return fsFailure.Success;
+        }
     }
 }
