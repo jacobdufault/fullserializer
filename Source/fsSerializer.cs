@@ -49,6 +49,7 @@ namespace FullSerializer {
             _references = new fsCyclicReferenceManager();
 
             _converters = new List<fsConverter>() {
+                new fsDateConverter() { Serializer = this },
                 new fsEnumConverter() { Serializer = this },
                 new fsPrimitiveConverter() { Serializer = this },
                 new fsArrayConverter() { Serializer = this },
