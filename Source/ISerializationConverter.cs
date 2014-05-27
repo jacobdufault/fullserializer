@@ -6,9 +6,9 @@ namespace FullJson {
     /// </summary>
     public abstract class SerializationConverter {
         /// <summary>
-        /// The JsonConverter that was owns this converter.
+        /// The serializer that was owns this converter.
         /// </summary>
-        public JsonConverter Converter;
+        public fsSerializer Serializer;
 
         /// <summary>
         /// Can this converter serialize and deserialize the given object type?

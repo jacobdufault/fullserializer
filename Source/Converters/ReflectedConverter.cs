@@ -21,7 +21,7 @@ namespace FullJson.Internal {
 
                 JsonData serializedData;
 
-                var failed = Converter.TrySerialize(property.StorageType, property.Read(instance), out serializedData);
+                var failed = Serializer.TrySerialize(property.StorageType, property.Read(instance), out serializedData);
                 if (failed.Failed) return failed;
 
                 serialized.AsDictionary[property.Name] = serializedData;
@@ -43,7 +43,7 @@ namespace FullJson.Internal {
                 JsonData propertyData;
                 if (data.AsDictionary.TryGetValue(property.Name, out propertyData)) {
                     object deserializedValue = null;
-                    var failed = Converter.TryDeserialize(propertyData, property.StorageType, ref deserializedValue);
+                    var failed = Serializer.TryDeserialize(propertyData, property.StorageType, ref deserializedValue);
                     if (failed.Failed) return failed;
 
                     property.Write(instance, deserializedValue);

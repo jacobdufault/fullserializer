@@ -12,9 +12,9 @@ public class FullJsonSerializer : BaseSerializer {
     public override string Serialize(MemberInfo storageType, object value,
         ISerializationOperator serializationOperator) {
 
-        JsonConverter converter = new JsonConverter();
+        var serializer = new fsSerializer();
         JsonData data;
-        var fail = converter.TrySerialize(GetStorageType(storageType), value, out data);
+        var fail = serializer.TrySerialize(GetStorageType(storageType), value, out data);
         if (fail.Failed) {
             throw new Exception(fail.FailureReason);
         }
@@ -33,10 +33,10 @@ public class FullJsonSerializer : BaseSerializer {
             throw new Exception(fail.FailureReason);
         }
 
-        JsonConverter converter = new JsonConverter();
+        var serializer = new fsSerializer();
 
         object deserialized = null;
-        fail = converter.TryDeserialize(data, GetStorageType(storageType), ref deserialized);
+        fail = serializer.TryDeserialize(data, GetStorageType(storageType), ref deserialized);
         if (fail.Failed) {
             throw new Exception(fail.FailureReason);
         }
@@ -100,9 +100,9 @@ public interface ICustomCompareRequested {
 
 public class TestRunner : BaseBehavior<FullJsonSerializer> {
     public string Serialize(Type type, object value) {
-        JsonConverter converter = new JsonConverter();
+        var serializer = new fsSerializer();
         JsonData data;
-        var fail = converter.TrySerialize(type, value, out data);
+        var fail = serializer.TrySerialize(type, value, out data);
         if (fail.Failed) {
             throw new Exception(fail.FailureReason);
         }
@@ -119,10 +119,10 @@ public class TestRunner : BaseBehavior<FullJsonSerializer> {
             throw new Exception(fail.FailureReason);
         }
 
-        JsonConverter converter = new JsonConverter();
+        var serializer = new fsSerializer();
 
         object deserialized = null;
-        fail = converter.TryDeserialize(data, type, ref deserialized);
+        fail = serializer.TryDeserialize(data, type, ref deserialized);
         if (fail.Failed) {
             throw new Exception(fail.FailureReason);
         }

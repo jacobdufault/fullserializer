@@ -141,7 +141,7 @@ namespace FullJson.Internal {
             foreach (object item in adapter.Iterate(instance)) {
                 JsonData serializedItem;
 
-                var fail = Converter.TrySerialize(elementType, item, out serializedItem);
+                var fail = Serializer.TrySerialize(elementType, item, out serializedItem);
                 if (fail.Failed) return fail;
 
                 serialized.AsList.Add(serializedItem);
@@ -160,7 +160,7 @@ namespace FullJson.Internal {
                 var serializedItem = serializedList[i];
                 object deserialized = null;
 
-                var fail = Converter.TryDeserialize(serializedItem, elementType, ref deserialized);
+                var fail = Serializer.TryDeserialize(serializedItem, elementType, ref deserialized);
                 if (fail.Failed) return fail;
 
                 adapter.Add(instance, deserialized);

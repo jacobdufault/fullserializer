@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 
 namespace FullJson {
-    public class JsonConverter {
+    public class fsSerializer {
         /// <summary>
         /// Key used after a cycle has been encountered.
         /// </summary>
@@ -44,16 +44,16 @@ namespace FullJson {
         /// </summary>
         private CyclicReferenceManager _references;
 
-        public JsonConverter() {
+        public fsSerializer() {
             _cachedConverters = new Dictionary<Type, SerializationConverter>();
             _references = new CyclicReferenceManager();
 
             _converters = new List<SerializationConverter>() {
-                new EnumConverter() { Converter = this },
-                new PrimitiveConverter() { Converter = this },
-                new ArrayConverter() { Converter = this },
-                new IEnumerableConverter() { Converter = this },
-                new ReflectedConverter() { Converter = this }
+                new EnumConverter() { Serializer = this },
+                new PrimitiveConverter() { Serializer = this },
+                new ArrayConverter() { Serializer = this },
+                new IEnumerableConverter() { Serializer = this },
+                new ReflectedConverter() { Serializer = this }
             };
         }
 
@@ -62,13 +62,13 @@ namespace FullJson {
         /// deserialized.
         /// </summary>
         public void AddConverter(SerializationConverter converter) {
-            if (converter.Converter != null) {
+            if (converter.Serializer != null) {
                 throw new InvalidOperationException("Cannot add a single converter instance to " +
                     "multiple JsonConverters -- please construct a new instance for " + converter);
             }
 
             _converters.Insert(0, converter);
-            converter.Converter = this;
+            converter.Serializer = this;
 
             // We need to reset our cached converter set, as it could be invalid with the new
             // converter. Ideally, _cachedConverters should be empty, but there is no guarantee.
