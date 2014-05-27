@@ -106,27 +106,33 @@ namespace FullSerializer {
                     builder.Append('"');
                     break;
 
-                case fsDataType.Object:
-                    builder.Append('{');
-                    foreach (var entry in data.AsDictionary) {
-                        builder.Append('"');
-                        builder.Append(entry.Key);
-                        builder.Append('"');
-                        builder.Append(":");
-                        BuildCompressedString(entry.Value, builder);
-                        builder.Append(',');
+                case fsDataType.Object: {
+                        builder.Append('{');
+                        bool comma = false;
+                        foreach (var entry in data.AsDictionary) {
+                            if (comma) builder.Append(',');
+                            comma = true;
+                            builder.Append('"');
+                            builder.Append(entry.Key);
+                            builder.Append('"');
+                            builder.Append(":");
+                            BuildCompressedString(entry.Value, builder);
+                        }
+                        builder.Append('}');
+                        break;
                     }
-                    builder.Append('}');
-                    break;
 
-                case fsDataType.Array:
-                    builder.Append('[');
-                    foreach (var entry in data.AsList) {
-                        BuildCompressedString(entry, builder);
-                        builder.Append(',');
+                case fsDataType.Array: {
+                        builder.Append('[');
+                        bool comma = false;
+                        foreach (var entry in data.AsList) {
+                            if (comma) builder.Append(',');
+                            comma = true;
+                            BuildCompressedString(entry, builder);
+                        }
+                        builder.Append(']');
+                        break;
                     }
-                    builder.Append(']');
-                    break;
             }
         }
 
@@ -154,22 +160,28 @@ namespace FullSerializer {
                     builder.Append('"');
                     break;
 
-                case fsDataType.Object:
-                    builder.Append('{');
-                    builder.AppendLine();
-                    foreach (var entry in data.AsDictionary) {
-                        InsertSpacing(builder, depth + 1);
-                        builder.Append('"');
-                        builder.Append(entry.Key);
-                        builder.Append('"');
-                        builder.Append(": ");
-                        BuildPrettyString(entry.Value, builder, depth + 1);
-                        builder.Append(',');
+                case fsDataType.Object: {
+                        builder.Append('{');
                         builder.AppendLine();
+                        bool comma = false;
+                        foreach (var entry in data.AsDictionary) {
+                            if (comma) {
+                                builder.Append(',');
+                                builder.AppendLine();
+                            }
+                            comma = true;
+                            InsertSpacing(builder, depth + 1);
+                            builder.Append('"');
+                            builder.Append(entry.Key);
+                            builder.Append('"');
+                            builder.Append(": ");
+                            BuildPrettyString(entry.Value, builder, depth + 1);
+                        }
+                        builder.AppendLine();
+                        InsertSpacing(builder, depth);
+                        builder.Append('}');
+                        break;
                     }
-                    InsertSpacing(builder, depth);
-                    builder.Append('}');
-                    break;
 
                 case fsDataType.Array:
                     // special case for empty lists; we don't put an empty line between the brackets
@@ -178,14 +190,20 @@ namespace FullSerializer {
                     }
 
                     else {
+                        bool comma = false;
+
                         builder.Append('[');
                         builder.AppendLine();
                         foreach (var entry in data.AsList) {
+                            if (comma) {
+                                builder.Append(',');
+                                builder.AppendLine();
+                            }
+                            comma = true;
                             InsertSpacing(builder, depth + 1);
                             BuildPrettyString(entry, builder, depth + 1);
-                            builder.Append(',');
-                            builder.AppendLine();
                         }
+                        builder.AppendLine();
                         InsertSpacing(builder, depth);
                         builder.Append(']');
                     }

@@ -196,7 +196,7 @@ namespace FullSerializer {
 
 
         private bool IsSeparator(char c) {
-            return char.IsWhiteSpace(c) || c == ',';
+            return char.IsWhiteSpace(c) || c == ',' || c == '}' || c == ']';
         }
 
         /// <summary>
