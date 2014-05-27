@@ -145,6 +145,9 @@ public class MyTypeConverter : fsConverter {
     // instance of the expected type here, then just return any non-null value
     // and construct the proper instance in TryDeserialize (though cycles will
     // *not* be handled properly).
+    //
+    // You do not need to override this method if your converted type is a
+    // struct.
     public override object CreateInstance(fsData data, Type storageType) {
         return new MyType();
     }
