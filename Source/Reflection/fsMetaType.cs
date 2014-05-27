@@ -1,11 +1,12 @@
-﻿using System;
+﻿using FullSerializer.Internal;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using UnityEngine;
 
-namespace FullSerializer.Internal {
+namespace FullSerializer {
     /// <summary>
     /// MetaType contains metadata about a type. This is used by the reflection serializer.
     /// </summary>
@@ -17,7 +18,7 @@ namespace FullSerializer.Internal {
             BindingFlags.NonPublic |
             BindingFlags.Public |
             BindingFlags.Instance |
-            BindingFlags.FlattenHierarchy; 
+            BindingFlags.FlattenHierarchy;
 
         private static Dictionary<Type, fsMetaType> _metaTypes = new Dictionary<Type, fsMetaType>();
         public static fsMetaType Get(Type type) {
@@ -149,10 +150,12 @@ namespace FullSerializer.Internal {
                 MemberInfo[] members = ReflectedType.GetMember(propertyNames[i], PropertyLookupFlags);
 
                 if (members.Length == 0) {
-                    throw new InvalidOperationException("Unable to find property " + propertyNames[i] + " on " + ReflectedType.Name);
+                    throw new InvalidOperationException("Unable to find property " +
+                        propertyNames[i] + " on " + ReflectedType.Name);
                 }
                 if (members.Length > 1) {
-                    throw new InvalidOperationException("More than one property matches " + propertyNames[i] + " on " + ReflectedType.Name);
+                    throw new InvalidOperationException("More than one property matches " +
+                        propertyNames[i] + " on " + ReflectedType.Name);
                 }
 
                 MemberInfo member = members[0];
