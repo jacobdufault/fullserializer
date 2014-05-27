@@ -99,14 +99,13 @@ namespace FullSerializer {
                 return true;
             }
 
-            var getMethod = property.GetGetMethod();
-            var setMethod = property.GetSetMethod();
+            var publicGetMethod = property.GetGetMethod(nonPublic: false);
+            var publicSetMethod = property.GetSetMethod(nonPublic: false);
 
             // If it's an auto-property and it has either a public get or a public set method,
             // then we serialize it
             if (IsAutoProperty(property, members) &&
-                ((getMethod != null && getMethod.IsPublic) ||
-                 (setMethod != null && setMethod.IsPublic))) {
+                (publicGetMethod != null || publicSetMethod != null)) {
                 return true;
             }
 
