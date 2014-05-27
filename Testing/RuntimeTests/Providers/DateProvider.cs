@@ -42,7 +42,7 @@ public class TimeSpanProvider : BaseProvider<TimeSpan> {
     public override IEnumerable<TimeSpan> GetValues() {
         yield return TimeSpan.MaxValue;
         yield return TimeSpan.MinValue;
-        
+
         yield return new TimeSpan();
 
         yield return new TimeSpan()
@@ -52,5 +52,16 @@ public class TimeSpanProvider : BaseProvider<TimeSpan> {
             .Add(TimeSpan.FromSeconds(35))
             .Add(TimeSpan.FromMilliseconds(35))
             .Add(TimeSpan.FromTicks(250));
+    }
+}
+
+public class NullableDatesProvider : BaseProvider<object> {
+    public override IEnumerable<object> GetValues() {
+        yield return new ValueHolder<DateTime?>(null);
+        yield return new ValueHolder<DateTime?>(DateTime.UtcNow);
+        yield return new ValueHolder<DateTimeOffset?>(null);
+        yield return new ValueHolder<DateTimeOffset?>(DateTimeOffset.UtcNow);
+        yield return new ValueHolder<TimeSpan?>(null);
+        yield return new ValueHolder<TimeSpan?>(TimeSpan.FromSeconds(35));
     }
 }
