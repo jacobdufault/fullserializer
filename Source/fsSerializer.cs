@@ -56,7 +56,14 @@ namespace FullSerializer {
                 new fsIEnumerableConverter() { Serializer = this },
                 new fsReflectedConverter() { Serializer = this }
             };
+
+            Context = new fsContext();
         }
+
+        /// <summary>
+        /// A context object that fsConverters can use to customize how they operate.
+        /// </summary>
+        public fsContext Context;
 
         /// <summary>
         /// Adds a new converter that can be used to customize how an object is serialized and
