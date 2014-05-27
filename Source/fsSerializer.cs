@@ -106,6 +106,25 @@ namespace FullSerializer {
         }
 
         /// <summary>
+        /// Helper method that simply forwards the call to TrySerialize(typeof(T), instance, out data);
+        /// </summary>
+        public fsFailure TrySerialize<T>(T instance, out fsData data) {
+            return TrySerialize(typeof(T), instance, out data);
+        }
+
+        /// <summary>
+        /// Generic wrapper around TryDeserialize that simply forwards the call.
+        /// </summary>
+        public fsFailure TryDeserialize<T>(fsData data, ref T instance) {
+            object boxed = instance;
+            var fail = TryDeserialize(data, typeof(T), ref boxed);
+            if (fail.Succeeded) {
+                instance = (T)boxed;
+            }
+            return fail;
+        }
+
+        /// <summary>
         /// Serialize the given value.
         /// </summary>
         /// <param name="storageType">The type of field/property that stores the object instance. This is
