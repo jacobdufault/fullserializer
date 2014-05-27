@@ -158,7 +158,7 @@ var serializer = new fsSerializer();
 serializer.AddConverter(new MyTypeConverter());
 ```
 
-After registration, use your converter like normal and when it comes time to serialize or deserialize, your custom `MyTypeConverter` will automatically be invoked to serialize/deserialize `MyType` objects.
+After registration, use your serializer like normal and when it comes time to serialize or deserialize, your custom `MyTypeConverter` will automatically be invoked to serialize/deserialize `MyType` objects.
 
 # Limitations
 
