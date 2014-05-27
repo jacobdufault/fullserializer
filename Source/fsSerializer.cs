@@ -98,19 +98,6 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Returns true if the object can be part of a cyclic graph. If this is false, then
-        /// graph tracking will be disabled which will cause less serialization data to be emitted
-        /// and the serializer will run a little bit faster.
-        /// </summary>
-        private bool CanBeCyclic(object instance) {
-            var instanceType = instance.GetType();
-
-            if (instanceType == typeof(string)) return false;
-
-            return instanceType.IsClass || instanceType.IsInterface;
-        }
-
-        /// <summary>
         /// Serialize the given value.
         /// </summary>
         /// <param name="storageType">The type of field/property that stores the object instance. This is
@@ -126,7 +113,7 @@ namespace FullSerializer {
             }
 
             // Not a cyclic type, ignore cycles
-            if (CanBeCyclic(instance) == false) {
+            if (fsReflectionUtility.CanContainCycles(instance.GetType()) == false) {
                 return InternalSerialize(storageType, instance, out data);
             }
 

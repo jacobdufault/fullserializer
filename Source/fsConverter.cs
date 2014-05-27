@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FullSerializer.Internal;
+using System;
 
 namespace FullSerializer {
     /// <summary>
@@ -42,6 +43,15 @@ namespace FullSerializer {
         /// <param name="data">The data the object was serialized with.</param>
         /// <param name="storageType">The field/property type that is storing the instance.</param>
         /// <returns>An object instance</returns>
-        public abstract object CreateInstance(fsData data, Type storageType);
+        public virtual object CreateInstance(fsData data, Type storageType) {
+            if (fsReflectionUtility.CanContainCycles(storageType)) {
+                throw new InvalidOperationException("Please override CreateInstance for " +
+                    this.GetType().FullName + "; the object graph for " + storageType +
+                    " can contain potentially contain cycles, so separated instance creation " +
+                    "is needed");
+            }
+
+            return storageType;
+        }
     }
 }

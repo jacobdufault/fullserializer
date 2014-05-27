@@ -3,6 +3,17 @@
 namespace FullSerializer.Internal {
     public static class fsReflectionUtility {
         /// <summary>
+        /// Returns true if the object can be part of a cyclic graph. If this is false, then
+        /// graph tracking will be disabled which will cause less serialization data to be emitted
+        /// and the serializer will run a little bit faster.
+        /// </summary>
+        public static bool CanContainCycles(Type type) {
+            if (type == typeof(string)) return false;
+
+            return type.IsClass || type.IsInterface;
+        }
+
+        /// <summary>
         /// Searches for a particular implementation of the given interface type inside of the type.
         /// This is particularly useful if the interface type is an open type, ie, typeof(IFace{}),
         /// because this method will then return IFace{} but with appropriate type parameters

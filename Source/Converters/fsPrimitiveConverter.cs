@@ -49,14 +49,6 @@ namespace FullSerializer.Internal {
 
             return fsFailure.Fail("Bad JsonData " + storage);
         }
-
-        public override object CreateInstance(fsData data, Type storageType) {
-            if (storageType == typeof(string)) {
-                return string.Empty;
-            }
-
-            return Activator.CreateInstance(storageType);
-        }
     }
 }
 
