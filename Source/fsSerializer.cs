@@ -49,6 +49,7 @@ namespace FullSerializer {
             _references = new fsCyclicReferenceManager();
 
             _converters = new List<fsConverter>() {
+                new fsNullableConverter() { Serializer = this },
                 new fsDateConverter() { Serializer = this },
                 new fsEnumConverter() { Serializer = this },
                 new fsPrimitiveConverter() { Serializer = this },
@@ -188,7 +189,7 @@ namespace FullSerializer {
             // We need to add type information - the field type and the instance type are different
             // so we will not be able to recover the correct instance type from the field type when
             // we deserialize the object.
-            if (type != instance.GetType()) {
+            if (!type.IsValueType && type != instance.GetType()) {
                 data = fsData.CreateDictionary();
 
                 // Serialize the actual object with the field type being the same as the object
