@@ -10,6 +10,15 @@ namespace FullSerializer.Internal {
     /// MetaType contains metadata about a type. This is used by the reflection serializer.
     /// </summary>
     public class fsMetaType {
+        /// <summary>
+        /// The binding flags that we use when looking up properties.
+        /// </summary>
+        private static BindingFlags PropertyLookupFlags =
+            BindingFlags.NonPublic |
+            BindingFlags.Public |
+            BindingFlags.Instance |
+            BindingFlags.FlattenHierarchy; 
+
         private static Dictionary<Type, fsMetaType> _metaTypes = new Dictionary<Type, fsMetaType>();
         public static fsMetaType Get(Type type) {
             fsMetaType metaType;
@@ -29,16 +38,9 @@ namespace FullSerializer.Internal {
         public Type ReflectedType;
 
         private static List<fsMetaProperty> CollectProperties(Type reflectedType) {
-            // The binding flags that we use when scanning for properties.
-            var flags =
-                BindingFlags.NonPublic |
-                BindingFlags.Public |
-                BindingFlags.Instance |
-                BindingFlags.FlattenHierarchy;
-
             var properties = new List<fsMetaProperty>();
 
-            MemberInfo[] members = reflectedType.GetMembers(flags);
+            MemberInfo[] members = reflectedType.GetMembers(PropertyLookupFlags);
             foreach (MemberInfo member in members) {
                 // We don't serialize members annotated with [fsIgnore] or [NonSerialized].
                 if (Attribute.IsDefined(member, typeof(fsIgnoreAttribute)) ||
@@ -65,7 +67,7 @@ namespace FullSerializer.Internal {
             return properties;
         }
 
-        public static bool IsAutoProperty(PropertyInfo property, MemberInfo[] members) {
+        private static bool IsAutoProperty(PropertyInfo property, MemberInfo[] members) {
             if (!property.CanWrite || !property.CanRead) {
                 return false;
             }
@@ -135,6 +137,32 @@ namespace FullSerializer.Internal {
         public fsMetaProperty[] Properties {
             get;
             private set;
+        }
+
+        /// <summary>
+        /// Override the default property names and use the given ones instead of serialization.
+        /// </summary>
+        public void SetProperties(params string[] propertyNames) {
+            Properties = new fsMetaProperty[propertyNames.Length];
+
+            for (int i = 0; i < propertyNames.Length; ++i) {
+                MemberInfo[] members = ReflectedType.GetMember(propertyNames[i], PropertyLookupFlags);
+
+                if (members.Length == 0) {
+                    throw new InvalidOperationException("Unable to find property " + propertyNames[i] + " on " + ReflectedType.Name);
+                }
+                if (members.Length > 1) {
+                    throw new InvalidOperationException("More than one property matches " + propertyNames[i] + " on " + ReflectedType.Name);
+                }
+
+                MemberInfo member = members[0];
+                if (member is FieldInfo) {
+                    Properties[i] = new fsMetaProperty((FieldInfo)member);
+                }
+                else {
+                    Properties[i] = new fsMetaProperty((PropertyInfo)member);
+                }
+            }
         }
 
         /// <summary>
