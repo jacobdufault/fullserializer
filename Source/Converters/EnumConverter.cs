@@ -4,17 +4,12 @@ namespace FullJson.Internal {
     /// <summary>
     /// Serializes and deserializes enums by their current name.
     /// </summary>
-    public class EnumConverter : ISerializationConverter {
-        public JsonConverter Converter {
-            get;
-            set;
-        }
-
-        public bool CanProcess(Type type) {
+    public class EnumConverter : SerializationConverter {
+        public override bool CanProcess(Type type) {
             return type.IsEnum;
         }
 
-        public JsonFailure TrySerialize(object instance, out JsonData serialized, Type storageType) {
+        public override JsonFailure TrySerialize(object instance, out JsonData serialized, Type storageType) {
             if (Attribute.IsDefined(storageType, typeof(FlagsAttribute))) {
                 serialized = new JsonData(Convert.ToInt32(instance));
             }
@@ -24,7 +19,7 @@ namespace FullJson.Internal {
             return JsonFailure.Success;
         }
 
-        public JsonFailure TryDeserialize(JsonData data, ref object instance, Type storageType) {
+        public override JsonFailure TryDeserialize(JsonData data, ref object instance, Type storageType) {
             if (data.IsString) {
                 string enumValue = data.AsString;
                 instance = Enum.Parse(storageType, enumValue);
@@ -39,8 +34,8 @@ namespace FullJson.Internal {
             return JsonFailure.Fail("EnumConverter encountered an unknown JSON data type");
         }
 
-        public object CreateInstance(JsonData data, Type storageType) {
-            return 0;
+        public override object CreateInstance(JsonData data, Type storageType) {
+            return Enum.ToObject(storageType, 0);
         }
     }
 }

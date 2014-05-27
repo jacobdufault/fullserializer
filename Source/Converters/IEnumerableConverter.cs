@@ -114,7 +114,7 @@ namespace FullJson.Internal {
         }
     }
 
-    public class IEnumerableConverter : ISerializationConverter {
+    public class IEnumerableConverter : SerializationConverter {
         private IEnumerableSerializationAdapter[] _adaptors = new IEnumerableSerializationAdapter[] {
             new IDictionaryAdapter(),
             new ReflectedAdapter()
@@ -128,16 +128,11 @@ namespace FullJson.Internal {
             throw new InvalidOperationException("No adapter found for " + type);
         }
 
-        public JsonConverter Converter {
-            get;
-            set;
-        }
-
-        public bool CanProcess(Type type) {
+        public override bool CanProcess(Type type) {
             return typeof(IEnumerable).IsAssignableFrom(type);
         }
 
-        public JsonFailure TrySerialize(object instance, out JsonData serialized, Type storageType) {
+        public override JsonFailure TrySerialize(object instance, out JsonData serialized, Type storageType) {
             serialized = JsonData.CreateList();
 
             IEnumerableSerializationAdapter adapter = GetAdapter(storageType);
@@ -155,7 +150,7 @@ namespace FullJson.Internal {
             return JsonFailure.Success;
         }
 
-        public JsonFailure TryDeserialize(JsonData data, ref object instance, Type storageType) {
+        public override JsonFailure TryDeserialize(JsonData data, ref object instance, Type storageType) {
             IEnumerableSerializationAdapter adapter = GetAdapter(storageType);
 
             Type elementType = adapter.GetElementType(storageType);
@@ -174,7 +169,7 @@ namespace FullJson.Internal {
             return JsonFailure.Success;
         }
 
-        public object CreateInstance(JsonData data, Type storageType) {
+        public override object CreateInstance(JsonData data, Type storageType) {
             return MetaType.Get(storageType).CreateInstance();
         }
     }

@@ -32,12 +32,12 @@ namespace FullJson {
         /// <summary>
         /// A cache from type to it's converter.
         /// </summary>
-        private Dictionary<Type, ISerializationConverter> _cachedConverters;
+        private Dictionary<Type, SerializationConverter> _cachedConverters;
 
         /// <summary>
         /// Converters that are available.
         /// </summary>
-        private List<ISerializationConverter> _converters;
+        private List<SerializationConverter> _converters;
 
         /// <summary>
         /// Reference manager for cycle detection.
@@ -45,10 +45,10 @@ namespace FullJson {
         private CyclicReferenceManager _references;
 
         public JsonConverter() {
-            _cachedConverters = new Dictionary<Type, ISerializationConverter>();
+            _cachedConverters = new Dictionary<Type, SerializationConverter>();
             _references = new CyclicReferenceManager();
 
-            _converters = new List<ISerializationConverter>() {
+            _converters = new List<SerializationConverter>() {
                 new EnumConverter() { Converter = this },
                 new PrimitiveConverter() { Converter = this },
                 new ArrayConverter() { Converter = this },
@@ -61,7 +61,7 @@ namespace FullJson {
         /// Adds a new converter that can be used to customize how an object is serialized and
         /// deserialized.
         /// </summary>
-        public void AddConverter(ISerializationConverter converter) {
+        public void AddConverter(SerializationConverter converter) {
             if (converter.Converter != null) {
                 throw new InvalidOperationException("Cannot add a single converter instance to " +
                     "multiple JsonConverters -- please construct a new instance for " + converter);
@@ -72,14 +72,14 @@ namespace FullJson {
 
             // We need to reset our cached converter set, as it could be invalid with the new
             // converter. Ideally, _cachedConverters should be empty, but there is no guarantee.
-            _cachedConverters = new Dictionary<Type, ISerializationConverter>();
+            _cachedConverters = new Dictionary<Type, SerializationConverter>();
         }
 
         /// <summary>
         /// Fetches a converter that can serialize/deserialize the given type.
         /// </summary>
-        private ISerializationConverter GetConverter(Type type) {
-            ISerializationConverter converter = null;
+        private SerializationConverter GetConverter(Type type) {
+            SerializationConverter converter = null;
 
             if (_cachedConverters.TryGetValue(type, out converter) == false) {
                 for (int i = 0; i < _converters.Count; ++i) {

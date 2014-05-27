@@ -1,17 +1,12 @@
 ﻿using System;
 
 namespace FullJson.Internal {
-    public class PrimitiveConverter : ISerializationConverter {
-        public JsonConverter Converter {
-            get;
-            set;
-        }
-
-        public bool CanProcess(Type type) {
+    public class PrimitiveConverter : SerializationConverter {
+        public override bool CanProcess(Type type) {
             return type.IsPrimitive || type == typeof(string) || type == typeof(decimal);
         }
 
-        public JsonFailure TrySerialize(object instance, out JsonData serialized, Type storageType) {
+        public override JsonFailure TrySerialize(object instance, out JsonData serialized, Type storageType) {
             if (instance is bool) {
                 serialized = new JsonData((bool)instance);
                 return JsonFailure.Success;
@@ -36,7 +31,7 @@ namespace FullJson.Internal {
             return JsonFailure.Fail("Unhandled primitive type " + instance.GetType());
         }
 
-        public JsonFailure TryDeserialize(JsonData storage, ref object instance, Type storageType) {
+        public override JsonFailure TryDeserialize(JsonData storage, ref object instance, Type storageType) {
             if (storage.IsBool) {
                 instance = storage.AsBool;
                 return JsonFailure.Success;
@@ -55,7 +50,7 @@ namespace FullJson.Internal {
             return JsonFailure.Fail("Bad JsonData " + storage);
         }
 
-        public object CreateInstance(JsonData data, Type storageType) {
+        public override object CreateInstance(JsonData data, Type storageType) {
             if (storageType == typeof(string)) {
                 return string.Empty;
             }

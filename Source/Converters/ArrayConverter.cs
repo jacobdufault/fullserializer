@@ -4,17 +4,12 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace FullJson.Internal {
-    public class ArrayConverter : ISerializationConverter {
-        public JsonConverter Converter {
-            get;
-            set;
-        }
-
-        public bool CanProcess(Type type) {
+    public class ArrayConverter : SerializationConverter {
+        public override bool CanProcess(Type type) {
             return type.IsArray;
         }
 
-        public JsonFailure TrySerialize(object instance, out JsonData serialized, Type storageType) {
+        public override JsonFailure TrySerialize(object instance, out JsonData serialized, Type storageType) {
             serialized = JsonData.CreateList();
 
             Array arr = (Array)instance;
@@ -32,7 +27,7 @@ namespace FullJson.Internal {
             return JsonFailure.Success;
         }
 
-        public JsonFailure TryDeserialize(JsonData data, ref object instance, Type storageType) {
+        public override JsonFailure TryDeserialize(JsonData data, ref object instance, Type storageType) {
             Type elementType = storageType.GetElementType();
 
             var list = new ArrayList();
@@ -51,7 +46,7 @@ namespace FullJson.Internal {
             return JsonFailure.Success;
         }
 
-        public object CreateInstance(JsonData data, Type storageType) {
+        public override object CreateInstance(JsonData data, Type storageType) {
             return MetaType.Get(storageType).CreateInstance();
         }
     }

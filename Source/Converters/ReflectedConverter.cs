@@ -3,13 +3,8 @@ using System.Collections;
 using UnityEngine;
 
 namespace FullJson.Internal {
-    public class ReflectedConverter : ISerializationConverter {
-        public JsonConverter Converter {
-            get;
-            set;
-        }
-
-        public bool CanProcess(Type type) {
+    public class ReflectedConverter : SerializationConverter {
+        public override bool CanProcess(Type type) {
             if (type.IsArray || typeof(ICollection).IsAssignableFrom(type)) {
                 return false;
             }
@@ -17,7 +12,7 @@ namespace FullJson.Internal {
             return true;
         }
 
-        public JsonFailure TrySerialize(object instance, out JsonData serialized, Type storageType) {
+        public override JsonFailure TrySerialize(object instance, out JsonData serialized, Type storageType) {
             serialized = JsonData.CreateDictionary();
 
             MetaType metaType = MetaType.Get(instance.GetType());
@@ -35,7 +30,7 @@ namespace FullJson.Internal {
             return JsonFailure.Success;
         }
 
-        public JsonFailure TryDeserialize(JsonData data, ref object instance, Type storageType) {
+        public override JsonFailure TryDeserialize(JsonData data, ref object instance, Type storageType) {
             if (data.IsDictionary == false) {
                 return JsonFailure.Fail("Reflected converter requires a dictionary for data");
             }
@@ -61,7 +56,7 @@ namespace FullJson.Internal {
             return JsonFailure.Success;
         }
 
-        public object CreateInstance(JsonData data, Type storageType) {
+        public override object CreateInstance(JsonData data, Type storageType) {
             MetaType metaType = MetaType.Get(storageType);
             return metaType.CreateInstance();
         }
