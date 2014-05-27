@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace FullJson.Internal {
-    public class CyclicReferenceManager {
+namespace FullSerializer.Internal {
+    public class fsCyclicReferenceManager {
         private ObjectIDGenerator _objectIds = new ObjectIDGenerator();
         private Dictionary<long, object> _marked = new Dictionary<long, object>();
         private int _depth;

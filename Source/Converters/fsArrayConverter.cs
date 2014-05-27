@@ -3,20 +3,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace FullJson.Internal {
-    public class ArrayConverter : SerializationConverter {
+namespace FullSerializer.Internal {
+    public class fsArrayConverter : fsConverter {
         public override bool CanProcess(Type type) {
             return type.IsArray;
         }
 
-        public override JsonFailure TrySerialize(object instance, out JsonData serialized, Type storageType) {
-            serialized = JsonData.CreateList();
+        public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
+            serialized = fsData.CreateList();
 
             Array arr = (Array)instance;
             Type elementType = storageType.GetElementType();
             for (int i = 0; i < arr.Length; ++i) {
                 object item = arr.GetValue(i);
-                JsonData serializedItem;
+                fsData serializedItem;
 
                 var fail = Serializer.TrySerialize(elementType, item, out serializedItem);
                 if (fail.Failed) return fail;
@@ -24,10 +24,10 @@ namespace FullJson.Internal {
                 serialized.AsList.Add(serializedItem);
             }
 
-            return JsonFailure.Success;
+            return fsFailure.Success;
         }
 
-        public override JsonFailure TryDeserialize(JsonData data, ref object instance, Type storageType) {
+        public override fsFailure TryDeserialize(fsData data, ref object instance, Type storageType) {
             Type elementType = storageType.GetElementType();
 
             var list = new ArrayList();
@@ -43,11 +43,11 @@ namespace FullJson.Internal {
             }
 
             instance = list.ToArray(elementType);
-            return JsonFailure.Success;
+            return fsFailure.Success;
         }
 
-        public override object CreateInstance(JsonData data, Type storageType) {
-            return MetaType.Get(storageType).CreateInstance();
+        public override object CreateInstance(fsData data, Type storageType) {
+            return fsMetaType.Get(storageType).CreateInstance();
         }
     }
 }

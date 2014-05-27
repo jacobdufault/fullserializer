@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SortedListContainer : BaseBehavior<FullJsonSerializer> {
+public class SortedListContainer : BaseBehavior<FullSerializerSerializer> {
     public IDictionary<int, string> SortedList;
 
     public void Reset() {

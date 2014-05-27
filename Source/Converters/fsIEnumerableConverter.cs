@@ -3,15 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace FullJson.Internal {
-    public interface IEnumerableSerializationAdapter {
+namespace FullSerializer.Internal {
+    public interface fsIEnumerableSerializationAdapter {
         bool IsValid(Type objectType);
         IEnumerable Iterate(object collection);
         void Add(object collection, object item);
         Type GetElementType(Type objectType);
     }
 
-    public class IDictionaryAdapter : IEnumerableSerializationAdapter {
+    public class fsIDictionaryAdapter : fsIEnumerableSerializationAdapter {
         // The mono dictionary implementations have lots of bugs w.r.t. iteration types. They don't
         // always return the type we expect, so we get around that by creating our own iteration
         // type that we convert everything to.
@@ -58,7 +58,7 @@ namespace FullJson.Internal {
                 // fetch the ICollection<> type with the proper generic arguments, and then we take
                 // the KeyValuePair<> generic argument, and whola! we have our proper generic type.
 
-                var collectionType = ReflectionUtilities.GetInterface(collection.GetType(), typeof(ICollection<>));
+                var collectionType = fsReflectionUtility.GetInterface(collection.GetType(), typeof(ICollection<>));
                 if (collectionType != null) {
                     var keyValuePairType = collectionType.GetGenericArguments()[0];
                     object keyValueInstance = Activator.CreateInstance(keyValuePairType, pair.Key, pair.Value);
@@ -76,7 +76,7 @@ namespace FullJson.Internal {
         }
     }
 
-    public class ReflectedAdapter : IEnumerableSerializationAdapter {
+    public class fsReflectedAdapter : fsIEnumerableSerializationAdapter {
         public bool IsValid(Type objectType) {
             return true;
         }
@@ -92,7 +92,7 @@ namespace FullJson.Internal {
         public Type GetElementType(Type objectType) {
             if (objectType.HasElementType) return objectType.GetElementType();
 
-            Type enumerableList = ReflectionUtilities.GetInterface(objectType, typeof(IEnumerable<>));
+            Type enumerableList = fsReflectionUtility.GetInterface(objectType, typeof(IEnumerable<>));
             if (enumerableList != null) return enumerableList.GetGenericArguments()[0];
 
             return typeof(object);
@@ -103,7 +103,7 @@ namespace FullJson.Internal {
             // the add method we want. Just doing type.GetMethod() may return the incorrect one --
             // for example, with dictionaries, it'll return Add(TKey, TValue), and we want
             // Add(KeyValuePair<TKey, TValue>).
-            Type collectionInterface = ReflectionUtilities.GetInterface(type, typeof(ICollection<>));
+            Type collectionInterface = fsReflectionUtility.GetInterface(type, typeof(ICollection<>));
             if (collectionInterface != null) {
                 MethodInfo add = collectionInterface.GetMethod("Add");
                 if (add != null) return add;
@@ -114,13 +114,13 @@ namespace FullJson.Internal {
         }
     }
 
-    public class IEnumerableConverter : SerializationConverter {
-        private IEnumerableSerializationAdapter[] _adaptors = new IEnumerableSerializationAdapter[] {
-            new IDictionaryAdapter(),
-            new ReflectedAdapter()
+    public class fsIEnumerableConverter : fsConverter {
+        private fsIEnumerableSerializationAdapter[] _adaptors = new fsIEnumerableSerializationAdapter[] {
+            new fsIDictionaryAdapter(),
+            new fsReflectedAdapter()
         };
 
-        private IEnumerableSerializationAdapter GetAdapter(Type type) {
+        private fsIEnumerableSerializationAdapter GetAdapter(Type type) {
             for (int i = 0; i < _adaptors.Length; ++i) {
                 if (_adaptors[i].IsValid(type)) return _adaptors[i];
             }
@@ -132,14 +132,14 @@ namespace FullJson.Internal {
             return typeof(IEnumerable).IsAssignableFrom(type);
         }
 
-        public override JsonFailure TrySerialize(object instance, out JsonData serialized, Type storageType) {
-            serialized = JsonData.CreateList();
+        public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
+            serialized = fsData.CreateList();
 
-            IEnumerableSerializationAdapter adapter = GetAdapter(storageType);
+            fsIEnumerableSerializationAdapter adapter = GetAdapter(storageType);
             Type elementType = adapter.GetElementType(storageType);
 
             foreach (object item in adapter.Iterate(instance)) {
-                JsonData serializedItem;
+                fsData serializedItem;
 
                 var fail = Serializer.TrySerialize(elementType, item, out serializedItem);
                 if (fail.Failed) return fail;
@@ -147,11 +147,11 @@ namespace FullJson.Internal {
                 serialized.AsList.Add(serializedItem);
             }
 
-            return JsonFailure.Success;
+            return fsFailure.Success;
         }
 
-        public override JsonFailure TryDeserialize(JsonData data, ref object instance, Type storageType) {
-            IEnumerableSerializationAdapter adapter = GetAdapter(storageType);
+        public override fsFailure TryDeserialize(fsData data, ref object instance, Type storageType) {
+            fsIEnumerableSerializationAdapter adapter = GetAdapter(storageType);
 
             Type elementType = adapter.GetElementType(storageType);
 
@@ -166,11 +166,11 @@ namespace FullJson.Internal {
                 adapter.Add(instance, deserialized);
             }
 
-            return JsonFailure.Success;
+            return fsFailure.Success;
         }
 
-        public override object CreateInstance(JsonData data, Type storageType) {
-            return MetaType.Get(storageType).CreateInstance();
+        public override object CreateInstance(fsData data, Type storageType) {
+            return fsMetaType.Get(storageType).CreateInstance();
         }
     }
 }

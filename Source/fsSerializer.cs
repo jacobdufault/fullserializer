@@ -1,8 +1,8 @@
-﻿using FullJson.Internal;
+﻿using FullSerializer.Internal;
 using System;
 using System.Collections.Generic;
 
-namespace FullJson {
+namespace FullSerializer {
     public class fsSerializer {
         /// <summary>
         /// Key used after a cycle has been encountered.
@@ -32,28 +32,28 @@ namespace FullJson {
         /// <summary>
         /// A cache from type to it's converter.
         /// </summary>
-        private Dictionary<Type, SerializationConverter> _cachedConverters;
+        private Dictionary<Type, fsConverter> _cachedConverters;
 
         /// <summary>
         /// Converters that are available.
         /// </summary>
-        private List<SerializationConverter> _converters;
+        private List<fsConverter> _converters;
 
         /// <summary>
         /// Reference manager for cycle detection.
         /// </summary>
-        private CyclicReferenceManager _references;
+        private fsCyclicReferenceManager _references;
 
         public fsSerializer() {
-            _cachedConverters = new Dictionary<Type, SerializationConverter>();
-            _references = new CyclicReferenceManager();
+            _cachedConverters = new Dictionary<Type, fsConverter>();
+            _references = new fsCyclicReferenceManager();
 
-            _converters = new List<SerializationConverter>() {
-                new EnumConverter() { Serializer = this },
-                new PrimitiveConverter() { Serializer = this },
-                new ArrayConverter() { Serializer = this },
-                new IEnumerableConverter() { Serializer = this },
-                new ReflectedConverter() { Serializer = this }
+            _converters = new List<fsConverter>() {
+                new fsEnumConverter() { Serializer = this },
+                new fsPrimitiveConverter() { Serializer = this },
+                new fsArrayConverter() { Serializer = this },
+                new fsIEnumerableConverter() { Serializer = this },
+                new fsReflectedConverter() { Serializer = this }
             };
         }
 
@@ -61,7 +61,7 @@ namespace FullJson {
         /// Adds a new converter that can be used to customize how an object is serialized and
         /// deserialized.
         /// </summary>
-        public void AddConverter(SerializationConverter converter) {
+        public void AddConverter(fsConverter converter) {
             if (converter.Serializer != null) {
                 throw new InvalidOperationException("Cannot add a single converter instance to " +
                     "multiple JsonConverters -- please construct a new instance for " + converter);
@@ -72,14 +72,14 @@ namespace FullJson {
 
             // We need to reset our cached converter set, as it could be invalid with the new
             // converter. Ideally, _cachedConverters should be empty, but there is no guarantee.
-            _cachedConverters = new Dictionary<Type, SerializationConverter>();
+            _cachedConverters = new Dictionary<Type, fsConverter>();
         }
 
         /// <summary>
         /// Fetches a converter that can serialize/deserialize the given type.
         /// </summary>
-        private SerializationConverter GetConverter(Type type) {
-            SerializationConverter converter = null;
+        private fsConverter GetConverter(Type type) {
+            fsConverter converter = null;
 
             if (_cachedConverters.TryGetValue(type, out converter) == false) {
                 for (int i = 0; i < _converters.Count; ++i) {
@@ -119,10 +119,10 @@ namespace FullJson {
         /// <param name="instance">The actual object instance to serialize.</param>
         /// <param name="data">The serialized state of the object.</param>
         /// <returns>If serialization was successful.</returns>
-        public JsonFailure TrySerialize(Type storageType, object instance, out JsonData data) {
+        public fsFailure TrySerialize(Type storageType, object instance, out fsData data) {
             if (instance == null) {
-                data = new JsonData();
-                return JsonFailure.Success;
+                data = new fsData();
+                return fsFailure.Success;
             }
 
             // Not a cyclic type, ignore cycles
@@ -140,26 +140,26 @@ namespace FullJson {
                 // note: We serialize the long as a string to so that we don't lose any information
                 //       in a conversion to/from floats.
                 if (_references.IsReference(instance)) {
-                    data = JsonData.CreateDictionary();
-                    data.AsDictionary[ReferenceIdString] = new JsonData(_references.GetReferenceId(instance).ToString());
-                    return JsonFailure.Success;
+                    data = fsData.CreateDictionary();
+                    data.AsDictionary[ReferenceIdString] = new fsData(_references.GetReferenceId(instance).ToString());
+                    return fsFailure.Success;
                 }
 
                 // Mark inside the object graph that we've serialized the instance. We do this
                 // *before* serialization so that if we get back here, it'll already be marked and
                 // we can handle the cycle properly without going into an infinite loop.
                 _references.MarkSerialized(instance);
-                data = JsonData.CreateDictionary();
-                data.AsDictionary[SourceIdString] = new JsonData(_references.GetReferenceId(instance).ToString());
+                data = fsData.CreateDictionary();
+                data.AsDictionary[SourceIdString] = new fsData(_references.GetReferenceId(instance).ToString());
 
                 // We've created the cycle metadata, so we can now serialize the actual object.
                 // InternalSerialize will handle inheritance correctly for us.
-                JsonData sourceData;
+                fsData sourceData;
                 var fail = InternalSerialize(storageType, instance, out sourceData);
                 if (fail.Failed) return fail;
                 data.AsDictionary[SourceDataString] = sourceData;
 
-                return JsonFailure.Success;
+                return fsFailure.Success;
             }
             finally {
                 _references.Exit();
@@ -170,23 +170,23 @@ namespace FullJson {
         /// Actually serializes an object instance. This does *not* handle cycles but *does* handle
         /// inheritance.
         /// </summary>
-        private JsonFailure InternalSerialize(Type type, object instance, out JsonData data) {
+        private fsFailure InternalSerialize(Type type, object instance, out fsData data) {
             // We need to add type information - the field type and the instance type are different
             // so we will not be able to recover the correct instance type from the field type when
             // we deserialize the object.
             if (type != instance.GetType()) {
-                data = JsonData.CreateDictionary();
+                data = fsData.CreateDictionary();
 
                 // Serialize the actual object with the field type being the same as the object
                 // type so that we won't go into an infinite loop.
-                JsonData state;
+                fsData state;
                 var fail = InternalSerialize(instance.GetType(), instance, out state);
                 if (fail.Failed) return fail;
 
                 // Add the inheritance metadata
-                data.AsDictionary[TypeString] = new JsonData(instance.GetType().FullName);
+                data.AsDictionary[TypeString] = new fsData(instance.GetType().FullName);
                 data.AsDictionary[TypeDataString] = state;
-                return JsonFailure.Success;
+                return fsFailure.Success;
             }
 
             return GetConverter(type).TrySerialize(instance, out data, type);
@@ -195,7 +195,7 @@ namespace FullJson {
         /// <summary>
         /// Returns true if the data represents an object reference.
         /// </summary>
-        private bool IsObjectReference(JsonData data) {
+        private bool IsObjectReference(fsData data) {
             if (data.IsDictionary == false) return false;
             var dict = data.AsDictionary;
             return
@@ -206,7 +206,7 @@ namespace FullJson {
         /// <summary>
         /// Returns true if the data represents an object definition.
         /// </summary>
-        private bool IsObjectDefinition(JsonData data) {
+        private bool IsObjectDefinition(fsData data) {
             if (data.IsDictionary == false) return false;
             var dict = data.AsDictionary;
             return
@@ -220,7 +220,7 @@ namespace FullJson {
         /// created? This is used for inheritance when the field type is not the same as the object
         /// type.
         /// </summary>
-        private bool IsTypeMarker(JsonData data) {
+        private bool IsTypeMarker(fsData data) {
             if (data.IsDictionary == false) return false;
             var dict = data.AsDictionary;
             return
@@ -237,7 +237,7 @@ namespace FullJson {
         /// fetching the converter to use when deserializing.</param>
         /// <param name="result">The deserialized result. This cannot be null.</param>
         /// <returns>If deserialization was successful.</returns>
-        private JsonFailure InternalDeserialize(JsonData data, Type storageType, ref object result) {
+        private fsFailure InternalDeserialize(fsData data, Type storageType, ref object result) {
             if (result == null) {
                 throw new InvalidOperationException("InternalDeserialize requires a preconstructed object instance");
             }
@@ -261,16 +261,16 @@ namespace FullJson {
         /// serialized data has more information.</param>
         /// <param name="instance">The constructed object instance.</param>
         /// <returns>Any errors that occurred while constructing the instance.</returns>
-        private JsonFailure ConstructInstance(ref JsonData data, ref Type objectType, out object instance) {
+        private fsFailure ConstructInstance(ref fsData data, ref Type objectType, out object instance) {
             // It looks like the data *does* contain more type information. This likely means that
             // the field type and the object type are going to be different (ie, inheritance), so
             // we need to make sure to update our objectType variable as well.
             if (IsTypeMarker(data)) {
                 string typeName = data.AsDictionary[TypeString].AsString;
-                Type type = TypeLookup.GetType(typeName);
+                Type type = fsTypeLookup.GetType(typeName);
                 if (type == null) {
                     instance = null;
-                    return JsonFailure.Fail("Unable to find type " + typeName);
+                    return fsFailure.Fail("Unable to find type " + typeName);
                 }
 
                 objectType = type;
@@ -278,7 +278,7 @@ namespace FullJson {
             }
 
             instance = GetConverter(objectType).CreateInstance(data, objectType);
-            return JsonFailure.Success;
+            return fsFailure.Success;
         }
 
         /// <summary>
@@ -288,12 +288,12 @@ namespace FullJson {
         /// <param name="objectType"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        public JsonFailure TryDeserialize(JsonData data, Type objectType, ref object result) {
-            JsonFailure failed;
+        public fsFailure TryDeserialize(fsData data, Type objectType, ref object result) {
+            fsFailure failed;
 
             if (data.IsNull) {
                 result = null;
-                return JsonFailure.Success;
+                return fsFailure.Success;
             }
 
             try {
@@ -308,7 +308,7 @@ namespace FullJson {
                 if (IsObjectReference(data)) {
                     long refId = long.Parse(data.AsDictionary[ReferenceIdString].AsString);
                     result = _references.GetReferenceObject(refId);
-                    return JsonFailure.Success;
+                    return fsFailure.Success;
                 }
 
                 // We have an object definition, so deserialize it with the additional metadata
@@ -332,7 +332,7 @@ namespace FullJson {
                     var fail = InternalDeserialize(sourceData, objectType, ref result);
                     if (fail.Failed) return fail;
 
-                    return JsonFailure.Success;
+                    return fsFailure.Success;
                 }
 
                 // Nothing special, go through the standard deserialization logic.

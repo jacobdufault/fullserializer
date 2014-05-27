@@ -1,7 +1,7 @@
 ﻿using System;
 
-namespace FullJson.Internal {
-    public static class ReflectionUtilities {
+namespace FullSerializer.Internal {
+    public static class fsReflectionUtility {
         /// <summary>
         /// Searches for a particular implementation of the given interface type inside of the type.
         /// This is particularly useful if the interface type is an open type, ie, typeof(IFace{}),

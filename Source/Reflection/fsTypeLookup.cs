@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Reflection;
 
-namespace FullJson.Internal {
+namespace FullSerializer.Internal {
     /// <summary>
     /// Provides APIs for looking up types based on their name.
     /// </summary>
-    internal static class TypeLookup {
+    internal static class fsTypeLookup {
         public static Type GetType(string typeName) {
             //--
             // see

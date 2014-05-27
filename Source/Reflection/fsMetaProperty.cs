@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Reflection;
 
-namespace FullJson.Internal {
+namespace FullSerializer.Internal {
     /// <summary>
     /// A property or field on a MetaType.
     /// </summary>
-    public class MetaProperty {
-        internal MetaProperty(FieldInfo field) {
+    public class fsMetaProperty {
+        internal fsMetaProperty(FieldInfo field) {
             _memberInfo = field;
             StorageType = field.FieldType;
             Name = GetName(field);
         }
 
-        internal MetaProperty(PropertyInfo property) {
+        internal fsMetaProperty(PropertyInfo property) {
             _memberInfo = property;
             StorageType = property.PropertyType;
             Name = GetName(property);
@@ -78,7 +78,7 @@ namespace FullJson.Internal {
         /// Returns the name the given member wants to use for JSON serialization.
         /// </summary>
         private static string GetName(MemberInfo member) {
-            var attr = (JsonPropertyAttribute)Attribute.GetCustomAttribute(member, typeof(JsonPropertyAttribute));
+            var attr = (fsPropertyAttribute)Attribute.GetCustomAttribute(member, typeof(fsPropertyAttribute));
             if (attr != null && string.IsNullOrEmpty(attr.Name) == false) {
                 return attr.Name;
             }

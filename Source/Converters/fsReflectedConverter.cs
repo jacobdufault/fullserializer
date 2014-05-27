@@ -2,8 +2,8 @@
 using System.Collections;
 using UnityEngine;
 
-namespace FullJson.Internal {
-    public class ReflectedConverter : SerializationConverter {
+namespace FullSerializer.Internal {
+    public class fsReflectedConverter : fsConverter {
         public override bool CanProcess(Type type) {
             if (type.IsArray || typeof(ICollection).IsAssignableFrom(type)) {
                 return false;
@@ -12,14 +12,14 @@ namespace FullJson.Internal {
             return true;
         }
 
-        public override JsonFailure TrySerialize(object instance, out JsonData serialized, Type storageType) {
-            serialized = JsonData.CreateDictionary();
+        public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
+            serialized = fsData.CreateDictionary();
 
-            MetaType metaType = MetaType.Get(instance.GetType());
+            fsMetaType metaType = fsMetaType.Get(instance.GetType());
             for (int i = 0; i < metaType.Properties.Length; ++i) {
-                MetaProperty property = metaType.Properties[i];
+                fsMetaProperty property = metaType.Properties[i];
 
-                JsonData serializedData;
+                fsData serializedData;
 
                 var failed = Serializer.TrySerialize(property.StorageType, property.Read(instance), out serializedData);
                 if (failed.Failed) return failed;
@@ -27,20 +27,20 @@ namespace FullJson.Internal {
                 serialized.AsDictionary[property.Name] = serializedData;
             }
 
-            return JsonFailure.Success;
+            return fsFailure.Success;
         }
 
-        public override JsonFailure TryDeserialize(JsonData data, ref object instance, Type storageType) {
+        public override fsFailure TryDeserialize(fsData data, ref object instance, Type storageType) {
             if (data.IsDictionary == false) {
-                return JsonFailure.Fail("Reflected converter requires a dictionary for data");
+                return fsFailure.Fail("Reflected converter requires a dictionary for data");
             }
 
-            MetaType metaType = MetaType.Get(storageType);
+            fsMetaType metaType = fsMetaType.Get(storageType);
 
             for (int i = 0; i < metaType.Properties.Length; ++i) {
-                MetaProperty property = metaType.Properties[i];
+                fsMetaProperty property = metaType.Properties[i];
 
-                JsonData propertyData;
+                fsData propertyData;
                 if (data.AsDictionary.TryGetValue(property.Name, out propertyData)) {
                     object deserializedValue = null;
                     var failed = Serializer.TryDeserialize(propertyData, property.StorageType, ref deserializedValue);
@@ -49,15 +49,15 @@ namespace FullJson.Internal {
                     property.Write(instance, deserializedValue);
                 }
                 else {
-                    Debug.LogWarning("No data for " + property.Name + " in " + data.PrettyJson);
+                    Debug.LogWarning("No data for " + property.Name + " in " + fsJsonPrinter.PrettyJson(data));
                 }
             }
 
-            return JsonFailure.Success;
+            return fsFailure.Success;
         }
 
-        public override object CreateInstance(JsonData data, Type storageType) {
-            MetaType metaType = MetaType.Get(storageType);
+        public override object CreateInstance(fsData data, Type storageType) {
+            fsMetaType metaType = fsMetaType.Get(storageType);
             return metaType.CreateInstance();
         }
     }

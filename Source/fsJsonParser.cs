@@ -2,21 +2,21 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace FullJson {
+namespace FullSerializer {
     /// <summary>
     /// A simple recursive descent parser for JSON.
     /// </summary>
-    public class JsonParser {
+    public class fsJsonParser {
         private int _start;
         private string _input;
 
-        private JsonFailure MakeFailure(string message) {
+        private fsFailure MakeFailure(string message) {
             int start = Math.Max(0, _start - 10);
             int length = Math.Min(20, _input.Length - start);
 
             string error = "Error while parsing: " + message + "; context = <" +
                 _input.Substring(start, length) + ">";
-            return JsonFailure.Fail(error);
+            return fsFailure.Fail(error);
         }
 
         private bool TryMoveNext() {
@@ -93,7 +93,7 @@ namespace FullJson {
             return p1 + p2 + p3 + p4;
         }
 
-        private JsonFailure TryUnescapeChar(out char escaped) {
+        private fsFailure TryUnescapeChar(out char escaped) {
             // skip leading backslash '\'
             TryMoveNext();
             if (HasValue() == false) {
@@ -102,15 +102,15 @@ namespace FullJson {
             }
 
             switch (Character()) {
-                case '\\': TryMoveNext(); escaped = '\\'; return JsonFailure.Success;
-                case '"': TryMoveNext(); escaped = '\"'; return JsonFailure.Success;
-                case 'a': TryMoveNext(); escaped = '\a'; return JsonFailure.Success;
-                case 'b': TryMoveNext(); escaped = '\b'; return JsonFailure.Success;
-                case 'f': TryMoveNext(); escaped = '\f'; return JsonFailure.Success;
-                case 'n': TryMoveNext(); escaped = '\n'; return JsonFailure.Success;
-                case 'r': TryMoveNext(); escaped = '\r'; return JsonFailure.Success;
-                case 't': TryMoveNext(); escaped = '\t'; return JsonFailure.Success;
-                case '0': TryMoveNext(); escaped = '\0'; return JsonFailure.Success;
+                case '\\': TryMoveNext(); escaped = '\\'; return fsFailure.Success;
+                case '"': TryMoveNext(); escaped = '\"'; return fsFailure.Success;
+                case 'a': TryMoveNext(); escaped = '\a'; return fsFailure.Success;
+                case 'b': TryMoveNext(); escaped = '\b'; return fsFailure.Success;
+                case 'f': TryMoveNext(); escaped = '\f'; return fsFailure.Success;
+                case 'n': TryMoveNext(); escaped = '\n'; return fsFailure.Success;
+                case 'r': TryMoveNext(); escaped = '\r'; return fsFailure.Success;
+                case 't': TryMoveNext(); escaped = '\t'; return fsFailure.Success;
+                case '0': TryMoveNext(); escaped = '\0'; return fsFailure.Success;
                 case 'u':
                     TryMoveNext();
                     if (IsHex(Character(0))
@@ -126,7 +126,7 @@ namespace FullJson {
                         TryMoveNext();
 
                         escaped = (char)codePoint;
-                        return JsonFailure.Success;
+                        return fsFailure.Success;
                     }
 
                     // invalid escape sequence
@@ -144,7 +144,7 @@ namespace FullJson {
         }
         #endregion
 
-        private JsonFailure TryParseExact(string content) {
+        private fsFailure TryParseExact(string content) {
             for (int i = 0; i < content.Length; ++i) {
                 if (Character() != content[i]) {
                     return MakeFailure("Expected " + content[i]);
@@ -155,39 +155,39 @@ namespace FullJson {
                 }
             }
 
-            return JsonFailure.Success;
+            return fsFailure.Success;
         }
 
-        private JsonFailure TryParseTrue(out JsonData data) {
+        private fsFailure TryParseTrue(out fsData data) {
             var fail = TryParseExact("true");
 
             if (fail.Succeeded) {
-                data = new JsonData(true);
-                return JsonFailure.Success;
+                data = new fsData(true);
+                return fsFailure.Success;
             }
 
             data = null;
             return fail;
         }
 
-        private JsonFailure TryParseFalse(out JsonData data) {
+        private fsFailure TryParseFalse(out fsData data) {
             var fail = TryParseExact("false");
 
             if (fail.Succeeded) {
-                data = new JsonData(false);
-                return JsonFailure.Success;
+                data = new fsData(false);
+                return fsFailure.Success;
             }
 
             data = null;
             return fail;
         }
 
-        private JsonFailure TryParseNull(out JsonData data) {
+        private fsFailure TryParseNull(out fsData data) {
             var fail = TryParseExact("null");
 
             if (fail.Succeeded) {
-                data = new JsonData();
-                return JsonFailure.Success;
+                data = new fsData();
+                return fsFailure.Success;
             }
 
             data = null;
@@ -202,7 +202,7 @@ namespace FullJson {
         /// <summary>
         /// Parses numbers that follow the regular expression [-+](\d+|\d*\.\d*)
         /// </summary>
-        private JsonFailure TryParseNumber(out JsonData data) {
+        private fsFailure TryParseNumber(out fsData data) {
             int start = _start;
 
             // read until we get to a separator
@@ -218,14 +218,14 @@ namespace FullJson {
                 return MakeFailure("Bad float format with " + _input.Substring(start, _start - start));
             }
 
-            data = new JsonData(floatValue);
-            return JsonFailure.Success;
+            data = new fsData(floatValue);
+            return fsFailure.Success;
         }
 
         /// <summary>
         /// Parses a string
         /// </summary>
-        private JsonFailure TryParseString(out string str) {
+        private fsFailure TryParseString(out string str) {
             var result = new StringBuilder();
 
             // skip the first "
@@ -269,13 +269,13 @@ namespace FullJson {
             }
 
             str = result.ToString();
-            return JsonFailure.Success;
+            return fsFailure.Success;
         }
 
         /// <summary>
         /// Parses an array
         /// </summary>
-        private JsonFailure TryParseArray(out JsonData arr) {
+        private fsFailure TryParseArray(out fsData arr) {
             if (Character() != '[') {
                 arr = null;
                 return MakeFailure("Expected initial [ when parsing an array");
@@ -288,11 +288,11 @@ namespace FullJson {
             }
             SkipSpace();
 
-            var result = new List<JsonData>();
+            var result = new List<fsData>();
 
             while (HasValue() && Character() != ']') {
                 // parse the element
-                JsonData element;
+                fsData element;
                 var fail = RunParse(out element);
                 if (fail.Failed) {
                     arr = null;
@@ -315,11 +315,11 @@ namespace FullJson {
                 return MakeFailure("No closing ] for array");
             }
 
-            arr = new JsonData(result);
-            return JsonFailure.Success;
+            arr = new fsData(result);
+            return fsFailure.Success;
         }
 
-        private JsonFailure TryParseObject(out JsonData obj) {
+        private fsFailure TryParseObject(out fsData obj) {
             if (Character() != '{') {
                 obj = null;
                 return MakeFailure("Expected initial { when parsing an object");
@@ -332,10 +332,10 @@ namespace FullJson {
             }
             SkipSpace();
 
-            var result = new Dictionary<string, JsonData>();
+            var result = new Dictionary<string, fsData>();
 
             while (HasValue() && Character() != '}') {
-                JsonFailure failure;
+                fsFailure failure;
 
                 // parse the key
                 SkipSpace();
@@ -355,7 +355,7 @@ namespace FullJson {
                 SkipSpace();
 
                 // parse the value
-                JsonData value;
+                fsData value;
                 failure = RunParse(out value);
                 if (failure.Failed) {
                     obj = null;
@@ -378,11 +378,11 @@ namespace FullJson {
                 return MakeFailure("No closing } for object");
             }
 
-            obj = new JsonData(result);
-            return JsonFailure.Success;
+            obj = new fsData(result);
+            return fsFailure.Success;
         }
 
-        private JsonFailure RunParse(out JsonData data) {
+        private fsFailure RunParse(out fsData data) {
             SkipSpace();
 
             switch (Character()) {
@@ -401,13 +401,13 @@ namespace FullJson {
                 case '9': return TryParseNumber(out data);
                 case '"': {
                         string str;
-                        JsonFailure fail = TryParseString(out str);
+                        fsFailure fail = TryParseString(out str);
                         if (fail.Failed) {
                             data = null;
                             return fail;
                         }
-                        data = new JsonData(str);
-                        return JsonFailure.Success;
+                        data = new fsData(str);
+                        return fsFailure.Success;
                     }
                 case '[': return TryParseArray(out data);
                 case '{': return TryParseObject(out data);
@@ -425,12 +425,12 @@ namespace FullJson {
         /// </summary>
         /// <param name="input">The input to parse.</param>
         /// <returns>The parsed input.</returns>
-        public static JsonFailure Parse(string input, out JsonData data) {
-            var context = new JsonParser(input);
+        public static fsFailure Parse(string input, out fsData data) {
+            var context = new fsJsonParser(input);
             return context.RunParse(out data);
         }
 
-        private JsonParser(string input) {
+        private fsJsonParser(string input) {
             _input = input;
             _start = 0;
         }

@@ -1,10 +1,10 @@
 ﻿using System;
 
-namespace FullJson {
+namespace FullSerializer {
     /// <summary>
     /// The serialization converter allows for customization of the serialization process.
     /// </summary>
-    public abstract class SerializationConverter {
+    public abstract class fsConverter {
         /// <summary>
         /// The serializer that was owns this converter.
         /// </summary>
@@ -24,7 +24,7 @@ namespace FullJson {
         /// <param name="serialized">The serialized state.</param>
         /// <param name="storageType">The field/property type that is storing this instance.</param>
         /// <returns>If serialization was successful.</returns>
-        public abstract JsonFailure TrySerialize(object instance, out JsonData serialized, Type storageType);
+        public abstract fsFailure TrySerialize(object instance, out fsData serialized, Type storageType);
 
         /// <summary>
         /// Deserialize data into the object instance.
@@ -33,7 +33,7 @@ namespace FullJson {
         /// <param name="instance">The object instance to deserialize into.</param>
         /// <param name="storageType">The field/property type that is storing the instance.</param>
         /// <returns>True if serialization was successful, false otherwise.</returns>
-        public abstract JsonFailure TryDeserialize(JsonData data, ref object instance, Type storageType);
+        public abstract fsFailure TryDeserialize(fsData data, ref object instance, Type storageType);
 
         /// <summary>
         /// Construct an object instance that will be passed to TryDeserialize. This should **not**
@@ -42,6 +42,6 @@ namespace FullJson {
         /// <param name="data">The data the object was serialized with.</param>
         /// <param name="storageType">The field/property type that is storing the instance.</param>
         /// <returns>An object instance</returns>
-        public abstract object CreateInstance(JsonData data, Type storageType);
+        public abstract object CreateInstance(fsData data, Type storageType);
     }
 }

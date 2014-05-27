@@ -6,9 +6,9 @@ using UnityEngine;
 // It may not look like it, but at last check there were 17915 test cases. Combinatorics is used
 // to test a huge number of different variants, mainly dealing with whitespace.
 
-namespace FullJson {
+namespace FullSerializer {
     public class ParseTests {
-        private static IEnumerable<string> Permutations(List<JsonData> items, int depth) {
+        private static IEnumerable<string> Permutations(List<fsData> items, int depth) {
             if (items.Count == 0) {
                 yield return "";
                 yield break;
@@ -28,7 +28,7 @@ namespace FullJson {
             }
         }
 
-        private static IEnumerable<string> Permutations(List<KeyValuePair<string, JsonData>> items, int depth) {
+        private static IEnumerable<string> Permutations(List<KeyValuePair<string, fsData>> items, int depth) {
             if (items.Count == 0) {
                 yield return "";
                 yield break;
@@ -48,7 +48,7 @@ namespace FullJson {
             }
         }
 
-        private static IEnumerable<string> Print(JsonData data) {
+        private static IEnumerable<string> Print(fsData data) {
             if (data.IsBool) {
                 yield return "" + data.AsBool.ToString().ToLower() + "";
                 yield return "  " + data.AsBool.ToString().ToLower() + "";
@@ -101,9 +101,9 @@ namespace FullJson {
             }
         }
         private static int ParseCount = 0;
-        private static JsonData Parse(string json) {
-            JsonData data;
-            JsonFailure fail = JsonParser.Parse(json, out data);
+        private static fsData Parse(string json) {
+            fsData data;
+            fsFailure fail = fsJsonParser.Parse(json, out data);
             if (fail.Failed) {
                 Assert.Fail(fail.FailureReason);
             }
@@ -111,7 +111,7 @@ namespace FullJson {
             return data;
         }
 
-        private static void VerifyData(JsonData data) {
+        private static void VerifyData(fsData data) {
             foreach (string permutation in Print(data)) {
                 var parsedData = Parse(permutation);
                 Assert.AreEqual(data, parsedData);
@@ -120,26 +120,26 @@ namespace FullJson {
 
         [Test]
         public void ParseNumbers() {
-            VerifyData(new JsonData(0));
-            VerifyData(new JsonData(3f));
-            VerifyData(new JsonData(-3f));
-            VerifyData(new JsonData(3.5f));
-            VerifyData(new JsonData(-3.5f));
+            VerifyData(new fsData(0));
+            VerifyData(new fsData(3f));
+            VerifyData(new fsData(-3f));
+            VerifyData(new fsData(3.5f));
+            VerifyData(new fsData(-3.5f));
         }
 
 
         [Test]
         public void ParseObjects() {
-            VerifyData(JsonData.CreateDictionary());
+            VerifyData(fsData.CreateDictionary());
 
-            VerifyData(new JsonData(new Dictionary<string, JsonData> {
-                { "ok", new JsonData(1) },
-                { "null", new JsonData() },
-                { " yes ", JsonData.CreateList() },
+            VerifyData(new fsData(new Dictionary<string, fsData> {
+                { "ok", new fsData(1) },
+                { "null", new fsData() },
+                { " yes ", fsData.CreateList() },
                 { 
                     "something",
-                    new JsonData(new Dictionary<string, JsonData> {
-                        { "nested", new JsonData("yes") }
+                    new fsData(new Dictionary<string, fsData> {
+                        { "nested", new fsData("yes") }
                     })
                 }
             }));
@@ -147,39 +147,38 @@ namespace FullJson {
 
         [Test]
         public void ParseLists() {
-            VerifyData(JsonData.CreateList());
+            VerifyData(fsData.CreateList());
 
-            VerifyData(new JsonData(new List<JsonData>() {
-                new JsonData(1),
-                new JsonData(5),
-                JsonData.CreateDictionary()
+            VerifyData(new fsData(new List<fsData>() {
+                new fsData(1),
+                new fsData(5),
+                fsData.CreateDictionary()
             }));
         }
 
         [Test]
         public void ParseBooleans() {
-            VerifyData(new JsonData(true));
-            VerifyData(new JsonData(false));
+            VerifyData(new fsData(true));
+            VerifyData(new fsData(false));
         }
 
         [Test]
         public void ParseNull() {
-            VerifyData(new JsonData());
+            VerifyData(new fsData());
         }
 
         [Test]
         public void ParseStrings() {
-            VerifyData(new JsonData(string.Empty));
-            VerifyData(new JsonData("ok"));
-            VerifyData(new JsonData("yes one two three"));
+            VerifyData(new fsData(string.Empty));
+            VerifyData(new fsData("ok"));
+            VerifyData(new fsData("yes one two three"));
         }
 
         [Test]
         public void TestEscaping() {
-            JsonData data = new JsonData("ok");
-            JsonData escapeRequired = new JsonData(data.PrettyJson);
-            Debug.Log(escapeRequired.PrettyJson);
-            Assert.AreEqual(escapeRequired, Parse(escapeRequired.PrettyJson));
+            fsData data = new fsData("ok");
+            fsData escapeRequired = new fsData(fsJsonPrinter.PrettyJson(data));
+            Assert.AreEqual(escapeRequired, Parse(fsJsonPrinter.PrettyJson(escapeRequired)));
         }
     }
 }

@@ -1,20 +1,20 @@
 ﻿using System;
 
-namespace FullJson {
-    public class JsonFailure {
+namespace FullSerializer {
+    public class fsFailure {
         private bool _success;
         private string _reason;
 
-        private JsonFailure() {
+        private fsFailure() {
         }
 
-        public static JsonFailure Success = new JsonFailure() {
+        public static fsFailure Success = new fsFailure() {
             _success = true,
             _reason = string.Empty
         };
 
-        public static JsonFailure Fail(string reason) {
-            return new JsonFailure() {
+        public static fsFailure Fail(string reason) {
+            return new fsFailure() {
                 _success = false,
                 _reason = reason
             };

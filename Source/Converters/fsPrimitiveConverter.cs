@@ -1,15 +1,15 @@
 ﻿using System;
 
-namespace FullJson.Internal {
-    public class PrimitiveConverter : SerializationConverter {
+namespace FullSerializer.Internal {
+    public class fsPrimitiveConverter : fsConverter {
         public override bool CanProcess(Type type) {
             return type.IsPrimitive || type == typeof(string) || type == typeof(decimal);
         }
 
-        public override JsonFailure TrySerialize(object instance, out JsonData serialized, Type storageType) {
+        public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
             if (instance is bool) {
-                serialized = new JsonData((bool)instance);
-                return JsonFailure.Success;
+                serialized = new fsData((bool)instance);
+                return fsFailure.Success;
             }
 
             if (instance is byte ||
@@ -18,39 +18,39 @@ namespace FullJson.Internal {
                 instance is long || instance is ulong ||
                 instance is float || instance is double || instance is decimal) {
 
-                serialized = new JsonData((float)Convert.ChangeType(instance, typeof(float)));
-                return JsonFailure.Success;
+                serialized = new fsData((float)Convert.ChangeType(instance, typeof(float)));
+                return fsFailure.Success;
             }
 
             if (instance is string || instance is char) {
-                serialized = new JsonData((string)Convert.ChangeType(instance, typeof(string)));
-                return JsonFailure.Success;
+                serialized = new fsData((string)Convert.ChangeType(instance, typeof(string)));
+                return fsFailure.Success;
             }
 
             serialized = null;
-            return JsonFailure.Fail("Unhandled primitive type " + instance.GetType());
+            return fsFailure.Fail("Unhandled primitive type " + instance.GetType());
         }
 
-        public override JsonFailure TryDeserialize(JsonData storage, ref object instance, Type storageType) {
+        public override fsFailure TryDeserialize(fsData storage, ref object instance, Type storageType) {
             if (storage.IsBool) {
                 instance = storage.AsBool;
-                return JsonFailure.Success;
+                return fsFailure.Success;
             }
 
             if (storage.IsFloat) {
                 instance = Convert.ChangeType(storage.AsFloat, storageType);
-                return JsonFailure.Success;
+                return fsFailure.Success;
             }
 
             if (storage.IsString) {
                 instance = storage.AsString;
-                return JsonFailure.Success;
+                return fsFailure.Success;
             }
 
-            return JsonFailure.Fail("Bad JsonData " + storage);
+            return fsFailure.Fail("Bad JsonData " + storage);
         }
 
-        public override object CreateInstance(JsonData data, Type storageType) {
+        public override object CreateInstance(fsData data, Type storageType) {
             if (storageType == typeof(string)) {
                 return string.Empty;
             }

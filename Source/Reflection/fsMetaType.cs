@@ -5,30 +5,30 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using UnityEngine;
 
-namespace FullJson.Internal {
+namespace FullSerializer.Internal {
     /// <summary>
     /// MetaType contains metadata about a type. This is used by the reflection serializer.
     /// </summary>
-    public class MetaType {
-        private static Dictionary<Type, MetaType> _metaTypes = new Dictionary<Type, MetaType>();
-        public static MetaType Get(Type type) {
-            MetaType metaType;
+    public class fsMetaType {
+        private static Dictionary<Type, fsMetaType> _metaTypes = new Dictionary<Type, fsMetaType>();
+        public static fsMetaType Get(Type type) {
+            fsMetaType metaType;
             if (_metaTypes.TryGetValue(type, out metaType) == false) {
-                metaType = new MetaType(type);
+                metaType = new fsMetaType(type);
                 _metaTypes[type] = metaType;
             }
 
             return metaType;
         }
 
-        private MetaType(Type reflectedType) {
+        private fsMetaType(Type reflectedType) {
             ReflectedType = reflectedType;
             Properties = CollectProperties(reflectedType).ToArray();
         }
 
         public Type ReflectedType;
 
-        private static List<MetaProperty> CollectProperties(Type reflectedType) {
+        private static List<fsMetaProperty> CollectProperties(Type reflectedType) {
             // The binding flags that we use when scanning for properties.
             var flags =
                 BindingFlags.NonPublic |
@@ -36,12 +36,12 @@ namespace FullJson.Internal {
                 BindingFlags.Instance |
                 BindingFlags.FlattenHierarchy;
 
-            var properties = new List<MetaProperty>();
+            var properties = new List<fsMetaProperty>();
 
             MemberInfo[] members = reflectedType.GetMembers(flags);
             foreach (MemberInfo member in members) {
                 // We don't serialize members annotated with [JsonIgnore].
-                if (Attribute.IsDefined(member, typeof(JsonIgnoreAttribute))) {
+                if (Attribute.IsDefined(member, typeof(fsIgnoreAttribute))) {
                     continue;
                 }
 
@@ -50,13 +50,13 @@ namespace FullJson.Internal {
 
                 if (property != null) {
                     if (CanSerializeProperty(property, members)) {
-                        properties.Add(new MetaProperty(property));
+                        properties.Add(new fsMetaProperty(property));
                     }
                 }
 
                 else if (field != null) {
                     if (CanSerializeField(field)) {
-                        properties.Add(new MetaProperty(field));
+                        properties.Add(new fsMetaProperty(field));
                     }
                 }
             }
@@ -91,7 +91,7 @@ namespace FullJson.Internal {
             }
 
             // If it has a JsonIgnore attribute, we also should not serialize it
-            if (Attribute.IsDefined(property, typeof(JsonIgnoreAttribute))) {
+            if (Attribute.IsDefined(property, typeof(fsIgnoreAttribute))) {
                 return false;
             }
 
@@ -136,7 +136,7 @@ namespace FullJson.Internal {
             return true;
         }
 
-        public MetaProperty[] Properties {
+        public fsMetaProperty[] Properties {
             get;
             private set;
         }

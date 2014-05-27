@@ -1,6 +1,6 @@
 ﻿using FullInspector;
 using FullInspector.Internal;
-using FullJson;
+using FullSerializer;
 using KellermanSoftware.CompareNetObjects;
 using System;
 using System.Collections;
@@ -8,27 +8,27 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-public class FullJsonSerializer : BaseSerializer {
+public class FullSerializerSerializer : BaseSerializer {
     public override string Serialize(MemberInfo storageType, object value,
         ISerializationOperator serializationOperator) {
 
         var serializer = new fsSerializer();
-        JsonData data;
+        fsData data;
         var fail = serializer.TrySerialize(GetStorageType(storageType), value, out data);
         if (fail.Failed) {
             throw new Exception(fail.FailureReason);
         }
 
-        return data.CompressedJson;
+        return fsJsonPrinter.CompressedJson(data);
     }
 
     public override object Deserialize(MemberInfo storageType, string serializedState,
         ISerializationOperator serializationOperator) {
 
-        JsonFailure fail;
+        fsFailure fail;
 
-        JsonData data;
-        fail = JsonParser.Parse(serializedState, out data);
+        fsData data;
+        fail = fsJsonParser.Parse(serializedState, out data);
         if (fail.Failed) {
             throw new Exception(fail.FailureReason);
         }
@@ -98,23 +98,23 @@ public interface ICustomCompareRequested {
     bool AreEqual(object original);
 }
 
-public class TestRunner : BaseBehavior<FullJsonSerializer> {
+public class TestRunner : BaseBehavior<FullSerializerSerializer> {
     public string Serialize(Type type, object value) {
         var serializer = new fsSerializer();
-        JsonData data;
+        fsData data;
         var fail = serializer.TrySerialize(type, value, out data);
         if (fail.Failed) {
             throw new Exception(fail.FailureReason);
         }
 
-        return data.CompressedJson;
+        return fsJsonPrinter.CompressedJson(data);
     }
 
     public object Deserialize(Type type, string serializedState) {
-        JsonFailure fail;
+        fsFailure fail;
 
-        JsonData data;
-        fail = JsonParser.Parse(serializedState, out data);
+        fsData data;
+        fail = fsJsonParser.Parse(serializedState, out data);
         if (fail.Failed) {
             throw new Exception(fail.FailureReason);
         }
