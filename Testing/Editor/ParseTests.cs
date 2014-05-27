@@ -105,7 +105,7 @@ namespace FullJson {
             JsonData data;
             JsonFailure fail = JsonParser.Parse(json, out data);
             if (fail.Failed) {
-                Assert.Fail("When parsing " + json + ", failed because of " + fail.FailureReason);
+                Assert.Fail(fail.FailureReason);
             }
             ++ParseCount;
             return data;
@@ -172,6 +172,14 @@ namespace FullJson {
             VerifyData(new JsonData(string.Empty));
             VerifyData(new JsonData("ok"));
             VerifyData(new JsonData("yes one two three"));
+        }
+
+        [Test]
+        public void TestEscaping() {
+            JsonData data = new JsonData("ok");
+            JsonData escapeRequired = new JsonData(data.PrettyJson);
+            Debug.Log(escapeRequired.PrettyJson);
+            Assert.AreEqual(escapeRequired, Parse(escapeRequired.PrettyJson));
         }
     }
 }

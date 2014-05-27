@@ -20,7 +20,7 @@ namespace FullJson {
         /// <summary>
         /// Serialize the actual object into the given data storage.
         /// </summary>
-        /// <param name="instance">The object instance to serialize.</param>
+        /// <param name="instance">The object instance to serialize. This will never be null.</param>
         /// <param name="serialized">The serialized state.</param>
         /// <param name="storageType">The field/property type that is storing this instance.</param>
         /// <returns>If serialization was successful.</returns>
