@@ -40,8 +40,9 @@ namespace FullSerializer.Internal {
 
             MemberInfo[] members = reflectedType.GetMembers(flags);
             foreach (MemberInfo member in members) {
-                // We don't serialize members annotated with [JsonIgnore].
-                if (Attribute.IsDefined(member, typeof(fsIgnoreAttribute))) {
+                // We don't serialize members annotated with [fsIgnore] or [NonSerialized].
+                if (Attribute.IsDefined(member, typeof(fsIgnoreAttribute)) ||
+                    Attribute.IsDefined(member, typeof(NonSerializedAttribute))) {
                     continue;
                 }
 
@@ -87,11 +88,6 @@ namespace FullSerializer.Internal {
 
             // If the property cannot be both read and written to, we cannot serialize it
             if (property.CanRead == false || property.CanWrite == false) {
-                return false;
-            }
-
-            // If it has a JsonIgnore attribute, we also should not serialize it
-            if (Attribute.IsDefined(property, typeof(fsIgnoreAttribute))) {
                 return false;
             }
 
