@@ -10,6 +10,10 @@ Best of all, Full Serializer is completely free to use and available under the M
 
 There were no serializers that just work in Unity that are free and target all export platforms. [Full Inspector](http://forum.unity3d.com/threads/224270-Full-Inspector-Inspector-and-serialization-for-structs-dicts-generics-interfaces) needed one, so here it is.
 
+## Installation
+
+Import the `Source` folder into your Unity project! You're good to go!
+
 # Usage
 
 ## Annotations and Default Behavior
@@ -163,6 +167,19 @@ Full Serializer has minimal limitations, however, there are as follows:
 - The WebPlayer build target requires all deserialized types to have a default constructor
 - No multidimensional array support (this can be added with a custom converter, however)
 - Delegates are not serialized (how? If you have any ideas, please let me know!)
+
+# Adding Full Serializer to my project
+
+Import the `Source` folder into your Unity project! You're good to go!
+
+## How do I run the tests?
+
+To run automated tests, please also import [Unity Test Tools](https://www.assetstore.unity3d.com/en/#!/content/13802) into your project. Then you can run the NUnit tests via the standard unit test menu `Unity Test Tools\Unit Tests\Run all unit tests`.
+
+There are also a set of manual tests; simply add `Testing\RuntimeTests\RuntimeTestObject.prefab` to an empty scene and enter play-mode.
+
+> note: You need [Full Inspector](http://forum.unity3d.com/threads/224270-Full-Inspector-Inspector-and-serialization-for-structs-dicts-generics-interfaces) to run the manual tests. You can use the trial for in-editor testing, but to actually test on export platforms you need the full version.
+
 
 # License
 
