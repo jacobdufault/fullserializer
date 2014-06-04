@@ -142,7 +142,7 @@ namespace FullSerializer {
             }
 
             // Not a cyclic type, ignore cycles
-            if (GetConverter(storageType).RequestCycleSupport(storageType) == false) {
+            if (GetConverter(instance.GetType()).RequestCycleSupport(instance.GetType()) == false) {
                 return InternalSerialize(storageType, instance, out data);
             }
 
