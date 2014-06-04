@@ -50,6 +50,7 @@ namespace FullSerializer {
 
             _converters = new List<fsConverter>() {
                 new fsNullableConverter() { Serializer = this },
+                new fsTypeConverter() { Serializer = this },
                 new fsDateConverter() { Serializer = this },
                 new fsEnumConverter() { Serializer = this },
                 new fsPrimitiveConverter() { Serializer = this },

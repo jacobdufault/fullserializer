@@ -136,7 +136,7 @@ public class TestRunner : BaseBehavior<FullSerializerSerializer> {
     public void PopulateProviders() {
         TestProviders = new List<ITestProvider>();
 
-        foreach (var type in RuntimeReflectionUtilities.AllSimpleTypesDerivingFrom(typeof(ITestProvider))) {
+        foreach (var type in fiRuntimeReflectionUtility.AllSimpleTypesDerivingFrom(typeof(ITestProvider))) {
             var provider = (ITestProvider)Activator.CreateInstance(type);
             TestProviders.Add(provider);
         }
@@ -218,8 +218,10 @@ public class TestRunner : BaseBehavior<FullSerializerSerializer> {
 
     public struct TestObject {
         public Func<object, object, bool> EqualityComparer;
+        [InspectorSkipInheritance]
         public object Original;
         public string Serialized;
+        [InspectorSkipInheritance]
         public object Deserialized;
     }
 
