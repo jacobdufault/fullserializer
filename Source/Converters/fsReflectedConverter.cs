@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using UnityEngine;
 
 namespace FullSerializer.Internal {
     public class fsReflectedConverter : fsConverter {
@@ -47,9 +46,6 @@ namespace FullSerializer.Internal {
                     if (failed.Failed) return failed;
 
                     property.Write(instance, deserializedValue);
-                }
-                else {
-                    Debug.LogWarning("No data for " + property.Name + " in " + fsJsonPrinter.PrettyJson(data));
                 }
             }
 
