@@ -142,7 +142,7 @@ namespace FullSerializer {
             }
 
             // Not a cyclic type, ignore cycles
-            if (fsReflectionUtility.CanContainCycles(instance.GetType()) == false) {
+            if (GetConverter(storageType).RequestCycleSupport(storageType) == false) {
                 return InternalSerialize(storageType, instance, out data);
             }
 
@@ -190,7 +190,9 @@ namespace FullSerializer {
             // We need to add type information - the field type and the instance type are different
             // so we will not be able to recover the correct instance type from the field type when
             // we deserialize the object.
-            if (!type.IsValueType && type != instance.GetType()) {
+            if (type != instance.GetType() &&
+                GetConverter(type).RequestInheritanceSupport(type)) {
+
                 data = fsData.CreateDictionary();
 
                 // Serialize the actual object with the field type being the same as the object

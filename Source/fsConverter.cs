@@ -19,6 +19,27 @@ namespace FullSerializer {
         public abstract bool CanProcess(Type type);
 
         /// <summary>
+        /// If true, then the serializer will support cyclic references with the given converted
+        /// type.
+        /// </summary>
+        /// <param name="storageType">The field/property type that is currently storing the object
+        /// that is being serialized.</param>
+        public virtual bool RequestCycleSupport(Type storageType) {
+            if (storageType == typeof(string)) return false;
+
+            return storageType.IsClass || storageType.IsInterface;
+        }
+
+        /// <summary>
+        /// If true, then the serializer will include inheritance data for the given converter.
+        /// </summary>
+        /// <param name="storageType">The field/property type that is currently storing the object
+        /// that is being serialized.</param>
+        public virtual bool RequestInheritanceSupport(Type storageType) {
+            return storageType.IsSealed == false;
+        }
+
+        /// <summary>
         /// Serialize the actual object into the given data storage.
         /// </summary>
         /// <param name="instance">The object instance to serialize. This will never be null.</param>
@@ -44,7 +65,7 @@ namespace FullSerializer {
         /// <param name="storageType">The field/property type that is storing the instance.</param>
         /// <returns>An object instance</returns>
         public virtual object CreateInstance(fsData data, Type storageType) {
-            if (fsReflectionUtility.CanContainCycles(storageType)) {
+            if (RequestCycleSupport(storageType)) {
                 throw new InvalidOperationException("Please override CreateInstance for " +
                     this.GetType().FullName + "; the object graph for " + storageType +
                     " can contain potentially contain cycles, so separated instance creation " +

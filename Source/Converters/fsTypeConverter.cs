@@ -8,6 +8,14 @@ namespace FullSerializer.Internal {
             return typeof(Type).IsAssignableFrom(type);
         }
 
+        public override bool RequestCycleSupport(Type type) {
+            return false;
+        }
+
+        public override bool RequestInheritanceSupport(Type type) {
+            return false;
+        }
+
         public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
             var type = (Type)instance;
             serialized = new fsData(type.FullName);
