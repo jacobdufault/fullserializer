@@ -9,6 +9,14 @@ namespace FullSerializer.Internal {
             return type.IsArray;
         }
 
+        public override bool RequestCycleSupport(Type storageType) {
+            return false;
+        }
+
+        public override bool RequestInheritanceSupport(Type storageType) {
+            return false;
+        }
+
         public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
             serialized = fsData.CreateList();
 
