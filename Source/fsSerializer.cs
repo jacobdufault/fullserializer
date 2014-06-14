@@ -137,7 +137,7 @@ namespace FullSerializer {
         /// <param name="data">The serialized state of the object.</param>
         /// <returns>If serialization was successful.</returns>
         public fsFailure TrySerialize(Type storageType, object instance, out fsData data) {
-            if (instance == null) {
+            if (ReferenceEquals(instance, null)) {
                 data = new fsData();
                 return fsFailure.Success;
             }
@@ -257,7 +257,7 @@ namespace FullSerializer {
         /// <param name="result">The deserialized result. This cannot be null.</param>
         /// <returns>If deserialization was successful.</returns>
         private fsFailure InternalDeserialize(fsData data, Type storageType, ref object result) {
-            if (result == null) {
+            if (ReferenceEquals(result, null)) {
                 throw new InvalidOperationException("InternalDeserialize requires a preconstructed object instance");
             }
 
@@ -341,7 +341,7 @@ namespace FullSerializer {
                     // to get the reference object, we need to deserialize it, but doing so sends a
                     // request back to our _references group... so we just construct an instance
                     // before deserialization so that our _references group resolves correctly.
-                    if (result == null) {
+                    if (ReferenceEquals(result, null)) {
                         failed = ConstructInstance(ref sourceData, ref objectType, out result);
                         if (failed.Failed) return failed;
 
