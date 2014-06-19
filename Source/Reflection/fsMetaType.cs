@@ -205,9 +205,7 @@ namespace FullSerializer {
         /// </summary>
         public object CreateInstance() {
             // Unity requires special construction logic for types that derive from
-            // ScriptableObject. The normal inspector reflection logic will create ScriptableObject
-            // instances if FullInspectorSettings.AutomaticReferenceInstantation has been set to
-            // true.
+            // ScriptableObject.
             if (typeof(ScriptableObject).IsAssignableFrom(ReflectedType)) {
                 return ScriptableObject.CreateInstance(ReflectedType);
             }
