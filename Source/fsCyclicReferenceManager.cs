@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 
 namespace FullSerializer.Internal {
     public class fsCyclicReferenceManager {
-        private ObjectIDGenerator _objectIds = new ObjectIDGenerator();
-        private Dictionary<long, object> _marked = new Dictionary<long, object>();
+        private Dictionary<object, int> _objectIds = new Dictionary<object, int>();
+        private int _nextId;
+
+        private Dictionary<int, object> _marked = new Dictionary<int, object>();
         private int _depth;
 
         public void Enter() {
@@ -16,8 +17,9 @@ namespace FullSerializer.Internal {
             _depth--;
 
             if (_depth == 0) {
-                _objectIds = new ObjectIDGenerator();
-                _marked = new Dictionary<long, object>();
+                _objectIds = new Dictionary<object, int>();
+                _nextId = 0;
+                _marked = new Dictionary<int, object>();
             }
 
             if (_depth < 0) {
@@ -26,7 +28,7 @@ namespace FullSerializer.Internal {
             }
         }
 
-        public object GetReferenceObject(long id) {
+        public object GetReferenceObject(int id) {
             if (_marked.ContainsKey(id) == false) {
                 throw new InvalidOperationException("Internal Deserialization Error - Object " +
                     "definition has not been encountered for object with id=" + id +
@@ -38,13 +40,16 @@ namespace FullSerializer.Internal {
             return _marked[id];
         }
 
-        public void AddReferenceWithId(long id, object reference) {
+        public void AddReferenceWithId(int id, object reference) {
             _marked[id] = reference;
         }
 
-        public long GetReferenceId(object item) {
-            bool firstTime;
-            long id = _objectIds.GetId(item, out firstTime);
+        public int GetReferenceId(object item) {
+            int id;
+            if (_objectIds.TryGetValue(item, out id) == false) {
+                id = _nextId++;
+                _objectIds[item] = id;
+            }
             return id;
         }
 
@@ -53,7 +58,7 @@ namespace FullSerializer.Internal {
         }
 
         public void MarkSerialized(object item) {
-            long referenceId = GetReferenceId(item);
+            int referenceId = GetReferenceId(item);
 
             if (_marked.ContainsKey(referenceId)) {
                 throw new InvalidOperationException("Internal Error - " + item +

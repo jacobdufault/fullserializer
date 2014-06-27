@@ -154,7 +154,7 @@ namespace FullSerializer {
                 // This is the second time we've encountered this object instance. Just serialize a
                 // reference to it to escape the cycle.
                 // 
-                // note: We serialize the long as a string to so that we don't lose any information
+                // note: We serialize the int as a string to so that we don't lose any information
                 //       in a conversion to/from floats.
                 if (_references.IsReference(instance)) {
                     data = fsData.CreateDictionary();
@@ -325,7 +325,7 @@ namespace FullSerializer {
                 // it will be a reference. Because of this, if we encounter a reference then we
                 // will have *always* already encountered the definition for it.
                 if (IsObjectReference(data)) {
-                    long refId = long.Parse(data.AsDictionary[ReferenceIdString].AsString);
+                    int refId = int.Parse(data.AsDictionary[ReferenceIdString].AsString);
                     result = _references.GetReferenceObject(refId);
                     return fsFailure.Success;
                 }
@@ -335,7 +335,7 @@ namespace FullSerializer {
                 if (IsObjectDefinition(data)) {
                     var dict = data.AsDictionary;
 
-                    long sourceId = long.Parse(dict[SourceIdString].AsString);
+                    int sourceId = int.Parse(dict[SourceIdString].AsString);
                     var sourceData = dict[SourceDataString];
 
                     // to get the reference object, we need to deserialize it, but doing so sends a
