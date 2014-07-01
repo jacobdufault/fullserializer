@@ -78,7 +78,7 @@ namespace FullSerializer.Internal {
 
     public class fsReflectedAdapter : fsIEnumerableSerializationAdapter {
         public bool IsValid(Type objectType) {
-            return true;
+            return GetAddMethod(objectType) != null;
         }
 
         public IEnumerable Iterate(object collection) {
@@ -129,7 +129,17 @@ namespace FullSerializer.Internal {
         }
 
         public override bool CanProcess(Type type) {
-            return typeof(IEnumerable).IsAssignableFrom(type);
+            if (typeof(IEnumerable).IsAssignableFrom(type) == false) return false;
+
+            // Just because the type extends IEnumerable does not necessarily mean that
+            // an adaptor can convert it. For example, user types can extend IEnumerable but
+            // not have an Add method, which means that the reflected property editor will
+            // need to be used.
+            for (int i = 0; i < _adaptors.Length; ++i) {
+                if (_adaptors[i].IsValid(type)) return true;
+            }
+
+            return false;
         }
 
         public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {

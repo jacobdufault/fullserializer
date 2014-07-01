@@ -226,9 +226,9 @@ public class TestRunner : BaseBehavior<FullSerializerSerializer> {
     }
 
     public List<ITestProvider> TestProviders;
-    [NonSerialized]
+    [ShowInInspector, NonSerialized]
     public List<TestObject> Failed;
-    [NotSerialized]
+    [ShowInInspector, NotSerialized]
     public List<TestObject> TestValues;
 
     public void OnEnable() {
