@@ -44,7 +44,11 @@ namespace FullSerializer.Internal {
 
             else if (data.IsFloat) {
                 int enumValue = (int)data.AsFloat;
-                instance = Enum.ToObject(storageType, enumValue);
+
+                // In .NET compact, Enum.ToObject(Type, Object) is defined but the overloads like
+                // Enum.ToObject(Type, int) are not -- so we get around this by boxing the value.
+                instance = Enum.ToObject(storageType, (object)enumValue);
+                
                 return fsFailure.Success;
             }
 
@@ -52,7 +56,9 @@ namespace FullSerializer.Internal {
         }
 
         public override object CreateInstance(fsData data, Type storageType) {
-            return Enum.ToObject(storageType, 0);
+            // In .NET compact, Enum.ToObject(Type, Object) is defined but the overloads like
+            // Enum.ToObject(Type, int) are not -- so we get around this by boxing the value.
+            return Enum.ToObject(storageType, (object)0);
         }
 
         /// <summary>

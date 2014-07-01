@@ -33,6 +33,7 @@ public class SortedDictionaryProvider : BaseProvider<IDictionary> {
     }
 
     public override IEnumerable<IDictionary> GetValues() {
+#if !(UNITY_WP8 || UNITY_WINRT)
         yield return new SortedDictionary<double, float>();
 
         yield return new SortedList<int, string> {
@@ -77,5 +78,7 @@ public class SortedDictionaryProvider : BaseProvider<IDictionary> {
             { FlagsEnum.C, 2 },
             { FlagsEnum.D | FlagsEnum.E | FlagsEnum.F, 3 },
         };
+#endif
+        yield break;
     }
 }

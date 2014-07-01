@@ -4,22 +4,22 @@ using System.Collections.Generic;
 
 public class PropertiesProvider : BaseProvider<object> {
     public struct PublicGetPublicSet {
-        public PublicGetPublicSet(int value) { Value = value; }
+        public PublicGetPublicSet(int value) : this() { Value = value; }
         public int Value { get; set; }
     }
 
     public struct PrivateGetPublicSet {
-        public PrivateGetPublicSet(int value) { Value = value; }
+        public PrivateGetPublicSet(int value) : this() { Value = value; }
         public int Value { private get; set; }
     }
 
     public struct PublicGetPrivateSet {
-        public PublicGetPrivateSet(int value) { Value = value; }
+        public PublicGetPrivateSet(int value) : this() { Value = value; }
         public int Value { get; private set; }
     }
 
     public struct PrivateGetPrivateSet : ICustomCompareRequested {
-        public PrivateGetPrivateSet(int value) { Value = value; }
+        public PrivateGetPrivateSet(int value) : this() { Value = value; }
         [ShowInInspector]
         private int Value { get; set; }
 

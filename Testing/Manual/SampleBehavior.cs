@@ -6,6 +6,7 @@ using System.Reflection;
 using UnityEngine;
 
 public class SampleBehavior : BaseBehavior<FullSerializerSerializer> {
+#if !UNITY_WINRT
     [Serializable]
     public struct MyStruct<T1, T2> {
         public T1 Field1;
@@ -70,4 +71,5 @@ public class SampleBehavior : BaseBehavior<FullSerializerSerializer> {
     //    GetComponent<TextMesh>().text = MyInterface.ToString();
     //    Debug.LogError(MyInterface);
     //}
+#endif
 }

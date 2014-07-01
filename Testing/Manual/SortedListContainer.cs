@@ -7,7 +7,9 @@ public class SortedListContainer : BaseBehavior<FullSerializerSerializer> {
     public IDictionary<int, string> SortedList;
 
     public void Reset() {
+#if !(UNITY_WP8 || UNITY_WINRT)
         SortedList = new SortedList<int, string>();
+#endif
     }
 
     [InspectorButton]

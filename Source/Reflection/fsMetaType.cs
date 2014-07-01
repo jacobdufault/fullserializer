@@ -217,8 +217,8 @@ namespace FullSerializer {
             }
 
             if (HasDefaultConstructor == false) {
-#if !UNITY_EDITOR && UNITY_WEBPLAYER
-                throw new InvalidOperationException("WebPlayer deserialization requires " +
+#if !UNITY_EDITOR && (UNITY_WEBPLAYER || UNITY_WP8)
+                throw new InvalidOperationException("The selected Unity platform requires " +
                     ReflectedType.FullName + " to have a default constructor. Please add one.");
 #else
                 return FormatterServices.GetSafeUninitializedObject(ReflectedType);

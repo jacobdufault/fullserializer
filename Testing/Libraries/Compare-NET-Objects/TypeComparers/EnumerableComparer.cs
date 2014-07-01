@@ -59,7 +59,7 @@ namespace KellermanSoftware.CompareNetObjects.TypeComparers
                 return source;
 
             var genArgs = type.GetGenericArguments();
-            var toList = typeof(Enumerable).GetMethod("ToList");
+            var toList = Cache.GetMethod(typeof(Enumerable), "ToList");
             var constructedToList = toList.MakeGenericMethod(genArgs[0]);
             var resultList = constructedToList.Invoke(null, new[] { source });
 

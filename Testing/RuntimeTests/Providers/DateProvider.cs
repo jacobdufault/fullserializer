@@ -24,7 +24,9 @@ public class DateTimeOffsetProvider : BaseProvider<DateTimeOffset> {
     }
 
     public override IEnumerable<DateTimeOffset> GetValues() {
+#if !UNITY_WINRT
         yield return new DateTimeOffset(5500, 2, 15, 0, 0, 0, 5, new HebrewCalendar(), new TimeSpan());
+#endif
         yield return DateTimeOffset.Now;
         yield return DateTimeOffset.MaxValue.Subtract(TimeSpan.FromTicks(1));
         yield return DateTimeOffset.MinValue;
