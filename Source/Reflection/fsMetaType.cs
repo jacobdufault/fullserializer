@@ -11,6 +11,16 @@ namespace FullSerializer {
     /// MetaType contains metadata about a type. This is used by the reflection serializer.
     /// </summary>
     public class fsMetaType {
+        static fsMetaType() {
+            // Setup properties for Unity types that don't work well with the auto-rules.
+            fsMetaType.Get(typeof(Bounds)).SetProperties("center", "size");
+            fsMetaType.Get(typeof(Keyframe)).SetProperties("time", "value", "tangentMode", "inTangent", "outTangent");
+            fsMetaType.Get(typeof(AnimationCurve)).SetProperties("keys", "preWrapMode", "postWrapMode");
+            fsMetaType.Get(typeof(LayerMask)).SetProperties("value");
+            fsMetaType.Get(typeof(Gradient)).SetProperties("alphaKeys", "colorKeys");
+            fsMetaType.Get(typeof(Rect)).SetProperties("xMin", "yMin", "xMax", "yMax");
+        }
+
         /// <summary>
         /// The binding flags that we use when looking up properties.
         /// </summary>
