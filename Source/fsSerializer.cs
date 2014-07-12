@@ -57,6 +57,7 @@ namespace FullSerializer {
                 new fsPrimitiveConverter() { Serializer = this },
                 new fsArrayConverter() { Serializer = this },
                 new fsIEnumerableConverter() { Serializer = this },
+                new fsKeyValuePairConverter() { Serializer = this },
                 new fsReflectedConverter() { Serializer = this }
             };
 
