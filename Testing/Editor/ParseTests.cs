@@ -6,7 +6,7 @@ using UnityEngine;
 // It may not look like it, but at last check there were 17915 test cases. Combinatorics is used
 // to test a huge number of different variants, mainly dealing with whitespace.
 
-namespace FullSerializer {
+namespace FullSerializer.Tests {
     public class ParseTests {
         private static IEnumerable<string> Permutations(List<fsData> items, int depth) {
             if (items.Count == 0) {
