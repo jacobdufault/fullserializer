@@ -128,6 +128,14 @@ namespace FullSerializer.Internal {
             throw new InvalidOperationException("No adapter found for " + type);
         }
 
+        public override bool RequestCycleSupport(Type storageType) {
+            return false;
+        }
+
+        public override bool RequestInheritanceSupport(Type storageType) {
+            return false;
+        }
+
         public override bool CanProcess(Type type) {
             if (typeof(IEnumerable).IsAssignableFrom(type) == false) return false;
 

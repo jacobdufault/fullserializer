@@ -6,6 +6,14 @@ namespace FullSerializer.Internal {
             return type.IsPrimitive || type == typeof(string) || type == typeof(decimal);
         }
 
+        public override bool RequestCycleSupport(Type storageType) {
+            return false;
+        }
+
+        public override bool RequestInheritanceSupport(Type storageType) {
+            return false;
+        }
+
         public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
             if (instance is bool) {
                 serialized = new fsData((bool)instance);
