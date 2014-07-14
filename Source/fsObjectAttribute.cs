@@ -1,5 +1,10 @@
 ﻿using System;
+
 namespace FullSerializer {
+    /// <summary>
+    /// This attribute controls some serialization behavior for a type. See the comments
+    /// on each of the fields for more information.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
     public sealed class fsObjectAttribute : Attribute {
         /// <summary>
@@ -18,6 +23,12 @@ namespace FullSerializer {
         /// is "v1", "v2", "v3", ...
         /// </summary>
         public string VersionString;
+
+        /// <summary>
+        /// This controls the behavior for member serialization.
+        /// The default behavior is fsMemberSerialization.Default.
+        /// </summary>
+        public fsMemberSerialization MemberSerialization = fsMemberSerialization.Default;
 
         public fsObjectAttribute() { }
         public fsObjectAttribute(string versionString, params Type[] previousModels) {

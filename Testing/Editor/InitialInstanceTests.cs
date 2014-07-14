@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace FullSerializer.Tests {
+namespace FullSerializer.Tests.InitialInstance {
     public class SimpleModel {
         public int A;
     }

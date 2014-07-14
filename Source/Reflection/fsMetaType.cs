@@ -22,9 +22,17 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// The binding flags that we use when looking up properties.
+        /// The binding flags that we use when looking up properties that are on a particular type level.
         /// </summary>
-        private static BindingFlags PropertyLookupFlags =
+        private static BindingFlags InstancePropertyLookupFlags =
+            BindingFlags.NonPublic |
+            BindingFlags.Public |
+            BindingFlags.Instance;
+
+        /// <summary>
+        /// The binding flags that we use when looking up all properties on a type.
+        /// </summary>
+        private static BindingFlags FlattenedPropertyLookupFlags =
             BindingFlags.NonPublic |
             BindingFlags.Public |
             BindingFlags.Instance |
@@ -43,15 +51,23 @@ namespace FullSerializer {
 
         private fsMetaType(Type reflectedType) {
             ReflectedType = reflectedType;
-            Properties = CollectProperties(reflectedType).ToArray();
+
+            List<fsMetaProperty> properties = new List<fsMetaProperty>();
+            CollectProperties(properties, reflectedType);
+            Properties = properties.ToArray();
         }
 
         public Type ReflectedType;
 
-        private static List<fsMetaProperty> CollectProperties(Type reflectedType) {
-            var properties = new List<fsMetaProperty>();
+        private static void CollectProperties(List<fsMetaProperty> properties, Type reflectedType) {
+            // do we require a [SerializeField] or [fsProperty] attribute?
+            bool requireAnnotation = false;
+            fsObjectAttribute attr = (fsObjectAttribute)Attribute.GetCustomAttribute(reflectedType, typeof(fsObjectAttribute));
+            if (attr != null) {
+                requireAnnotation = attr.MemberSerialization == fsMemberSerialization.OptIn;
+            }
 
-            MemberInfo[] members = reflectedType.GetMembers(PropertyLookupFlags);
+            MemberInfo[] members = reflectedType.GetMembers(InstancePropertyLookupFlags);
             foreach (MemberInfo member in members) {
                 // We don't serialize members annotated with [fsIgnore] or [NonSerialized].
                 if (Attribute.IsDefined(member, typeof(fsIgnoreAttribute)) ||
@@ -61,6 +77,15 @@ namespace FullSerializer {
 
                 PropertyInfo property = member as PropertyInfo;
                 FieldInfo field = member as FieldInfo;
+
+                // If an annotation is required, then skip the property if it doesn't have
+                // [fsProperty] or [SerializeField] on it.
+                if (requireAnnotation &&
+                    (Attribute.IsDefined(member, typeof(fsPropertyAttribute)) == false &&
+                     Attribute.IsDefined(member, typeof(SerializeField)) == false)) {
+
+                    continue;
+                }
 
                 if (property != null) {
                     if (CanSerializeProperty(property, members)) {
@@ -75,7 +100,9 @@ namespace FullSerializer {
                 }
             }
 
-            return properties;
+            if (reflectedType.BaseType != null) {
+                CollectProperties(properties, reflectedType.BaseType);
+            }
         }
 
         private static bool IsAutoProperty(PropertyInfo property, MemberInfo[] members) {
@@ -156,7 +183,7 @@ namespace FullSerializer {
             Properties = new fsMetaProperty[propertyNames.Length];
 
             for (int i = 0; i < propertyNames.Length; ++i) {
-                MemberInfo[] members = ReflectedType.GetMember(propertyNames[i], PropertyLookupFlags);
+                MemberInfo[] members = ReflectedType.GetMember(propertyNames[i], FlattenedPropertyLookupFlags);
 
                 if (members.Length == 0) {
                     throw new InvalidOperationException("Unable to find property " +
