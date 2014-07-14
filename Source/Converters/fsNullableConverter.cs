@@ -1,4 +1,5 @@
 ﻿using System;
+
 namespace FullSerializer.Internal {
     /// <summary>
     /// The reflected converter will properly serialize nullable types. However, we do it here

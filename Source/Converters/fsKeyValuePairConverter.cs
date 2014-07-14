@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-namespace FullSerializer {
+
+namespace FullSerializer.Internal {
     public class fsKeyValuePairConverter : fsConverter {
         public override bool CanProcess(Type type) {
             return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(KeyValuePair<,>);
