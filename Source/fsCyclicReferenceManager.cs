@@ -13,7 +13,7 @@ namespace FullSerializer.Internal {
             _depth++;
         }
 
-        public void Exit() {
+        public bool Exit() {
             _depth--;
 
             if (_depth == 0) {
@@ -26,6 +26,8 @@ namespace FullSerializer.Internal {
                 _depth = 0;
                 throw new InvalidOperationException("Internal Error - Mismatched Enter/Exit");
             }
+
+            return _depth == 0;
         }
 
         public object GetReferenceObject(int id) {

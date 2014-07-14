@@ -4,11 +4,104 @@ using System.Collections.Generic;
 
 namespace FullSerializer {
     public class fsSerializer {
+        #region Keys
+        /// <summary>
+        /// This is an object reference in part of a cyclic graph.
+        /// </summary>
         private const string Key_ObjectReference = "$ref";
+
+        /// <summary>
+        /// This is an object definition, as part of a cyclic graph.
+        /// </summary>
         private const string Key_ObjectDefinition = "$id";
+
+        /// <summary>
+        /// This specifies the actual type of an object (the instance type was different from
+        /// the field type).
+        /// </summary>
         private const string Key_InstanceType = "$type";
+
+        /// <summary>
+        /// The version string for the serialized data.
+        /// </summary>
         private const string Key_Version = "$version";
-        private const string Key_WrappedData = "$content";
+
+        /// <summary>
+        /// If we have to add metadata but the original serialized state was not a dictionary,
+        /// then this will contain the original data.
+        /// </summary>
+        private const string Key_Content = "$content";
+
+        private static bool IsObjectReference(fsData data) {
+            if (data.IsDictionary == false) return false;
+            return data.AsDictionary.ContainsKey(Key_ObjectReference);
+        }
+        private static bool IsObjectDefinition(fsData data) {
+            if (data.IsDictionary == false) return false;
+            return data.AsDictionary.ContainsKey(Key_ObjectDefinition);
+        }
+        private static bool IsVersioned(fsData data) {
+            if (data.IsDictionary == false) return false;
+            return data.AsDictionary.ContainsKey(Key_Version);
+        }
+        private static bool IsTypeSpecified(fsData data) {
+            if (data.IsDictionary == false) return false;
+            return data.AsDictionary.ContainsKey(Key_InstanceType);
+        }
+        private static bool IsWrappedData(fsData data) {
+            if (data.IsDictionary == false) return false;
+            return data.AsDictionary.ContainsKey(Key_Content);
+        }
+        #endregion
+
+
+        /// <summary>
+        /// Ensures that the data is a dictionary. If it is not, then it is wrapped inside of one.
+        /// </summary>
+        private static void EnsureDictionary(ref fsData data) {
+            if (data.IsDictionary == false) {
+                var dict = fsData.CreateDictionary();
+                dict.AsDictionary[Key_Content] = data;
+                data = dict;
+            }
+        }
+
+        /// <summary>
+        /// This manages instance writing so that we do not write unnecessary $id fields. We
+        /// only need to write out an $id field when there is a corresponding $ref field.
+        /// </summary>
+        internal class fsLazyCycleDefinitionWriter {
+            private Dictionary<int, Dictionary<string, fsData>> _definitions = new Dictionary<int, Dictionary<string, fsData>>();
+            private HashSet<int> _references = new HashSet<int>();
+
+            public void WriteDefinition(int id, Dictionary<string, fsData> dict) {
+                if (_references.Contains(id)) {
+                    dict[Key_ObjectDefinition] = new fsData(id.ToString());
+                }
+
+                else {
+                    _definitions[id] = dict;
+                }
+            }
+
+            public void WriteReference(int id, Dictionary<string, fsData> dict) {
+                // Write the actual definition if necessary
+                if (_definitions.ContainsKey(id)) {
+                    _definitions[id][Key_ObjectDefinition] = new fsData(id.ToString());
+                    _definitions.Remove(id);
+                }
+                else {
+                    _references.Add(id);
+                }
+
+                // Write the reference
+                dict[Key_ObjectReference] = new fsData(id.ToString());
+            }
+
+            public void Clear() {
+                _definitions.Clear();
+            }
+        }
 
         /// <summary>
         /// A cache from type to it's converter.
@@ -24,10 +117,12 @@ namespace FullSerializer {
         /// Reference manager for cycle detection.
         /// </summary>
         private fsCyclicReferenceManager _references;
+        private fsLazyCycleDefinitionWriter _lazyReferenceWriter;
 
         public fsSerializer() {
             _cachedConverters = new Dictionary<Type, fsConverter>();
             _references = new fsCyclicReferenceManager();
+            _lazyReferenceWriter = new fsLazyCycleDefinitionWriter();
 
             _converters = new List<fsConverter>() {
                 new fsNullableConverter() { Serializer = this },
@@ -125,41 +220,13 @@ namespace FullSerializer {
                 return fsFailure.Success;
             }
 
-            return InternalSerialize_1_Inheritance(storageType, instance, out data);
+            return InternalSerialize_1_ProcessCycles(storageType, instance, out data);
         }
 
-        private fsFailure InternalSerialize_1_Inheritance(Type storageType, object instance, out fsData data) {
-            // Serialize the actual object with the field type being the same as the object
-            // type so that we won't go into an infinite loop.
-            var fail = InternalSerialize_2_ProcessCycles(instance, out data);
-            if (fail.Failed) return fail;
-
-
-            // Do we need to add type information? If the field type and the instance type are different
-            // then we will not be able to recover the correct instance type from the field type when
-            // we deserialize the object.
-            //
-            // Note: We allow converters to request that we do *not* add type information.
-            if (storageType != instance.GetType() &&
-                GetConverter(storageType).RequestInheritanceSupport(storageType)) {
-
-                if (data.IsDictionary == false) {
-                    var dict = fsData.CreateDictionary();
-                    dict.AsDictionary[Key_WrappedData] = data;
-                    data = dict;
-                }
-
-                // Add the inheritance metadata
-                data.AsDictionary[Key_InstanceType] = new fsData(instance.GetType().FullName);
-            }
-
-            return fsFailure.Success;
-        }
-
-        private fsFailure InternalSerialize_2_ProcessCycles(object instance, out fsData data) {
+        private fsFailure InternalSerialize_1_ProcessCycles(Type storageType, object instance, out fsData data) {
             // This type does not need cycle support.
             if (GetConverter(instance.GetType()).RequestCycleSupport(instance.GetType()) == false) {
-                return InternalSerialize_3_ProcessVersioning(instance, out data);
+                return InternalSerialize_2_Inheritance(storageType, instance, out data);
             }
 
             // We've already serialized this object instance (or it is pending higher up on the call stack).
@@ -169,7 +236,8 @@ namespace FullSerializer {
             //       in a conversion to/from floats.
             if (_references.IsReference(instance)) {
                 data = fsData.CreateDictionary();
-                data.AsDictionary[Key_ObjectReference] = new fsData(_references.GetReferenceId(instance).ToString());
+
+                _lazyReferenceWriter.WriteReference(_references.GetReferenceId(instance), data.AsDictionary);
                 return fsFailure.Success;
             }
 
@@ -184,23 +252,43 @@ namespace FullSerializer {
 
                 // We've created the cycle metadata, so we can now serialize the actual object.
                 // InternalSerialize will handle inheritance correctly for us.
-                var fail = InternalSerialize_3_ProcessVersioning(instance, out data);
+                var fail = InternalSerialize_2_Inheritance(storageType, instance, out data);
                 if (fail.Failed) return fail;
 
-                if (data.IsDictionary == false) {
-                    var dict = fsData.CreateDictionary();
-                    dict.AsDictionary[Key_WrappedData] = data;
-                    data = dict;
-                }
-
-                data.AsDictionary[Key_ObjectDefinition] = new fsData(_references.GetReferenceId(instance).ToString());
+                EnsureDictionary(ref data);
+                _lazyReferenceWriter.WriteDefinition(_references.GetReferenceId(instance), data.AsDictionary);
 
                 return fsFailure.Success;
             }
             finally {
-                _references.Exit();
+                if (_references.Exit()) {
+                    _lazyReferenceWriter.Clear();
+                }
             }
         }
+        private fsFailure InternalSerialize_2_Inheritance(Type storageType, object instance, out fsData data) {
+            // Serialize the actual object with the field type being the same as the object
+            // type so that we won't go into an infinite loop.
+            var fail = InternalSerialize_3_ProcessVersioning(instance, out data);
+            if (fail.Failed) return fail;
+
+            // Do we need to add type information? If the field type and the instance type are different
+            // then we will not be able to recover the correct instance type from the field type when
+            // we deserialize the object.
+            //
+            // Note: We allow converters to request that we do *not* add type information.
+            if (storageType != instance.GetType() &&
+                GetConverter(storageType).RequestInheritanceSupport(storageType)) {
+
+                EnsureDictionary(ref data);
+
+                // Add the inheritance metadata
+                data.AsDictionary[Key_InstanceType] = new fsData(instance.GetType().FullName);
+            }
+
+            return fsFailure.Success;
+        }
+
         private fsFailure InternalSerialize_3_ProcessVersioning(object instance, out fsData data) {
             // note: We do not have to take a Type parameter here, since at this point in the serialization
             //       algorithm inheritance has *always* been handled. If we took a type parameter, it will
@@ -217,13 +305,8 @@ namespace FullSerializer {
                 var fail = InternalSerialize_4_Converter(instance, out data);
                 if (fail.Failed) return fail;
 
-                if (data.IsDictionary == false) {
-                    var dict = fsData.CreateDictionary();
-                    dict.AsDictionary[Key_WrappedData] = data;
-                    data = dict;
-                }
-
                 // Add the versioning information
+                EnsureDictionary(ref data);
                 data.AsDictionary[Key_Version] = new fsData(versionedType.VersionString);
 
                 return fsFailure.Success;
@@ -236,29 +319,6 @@ namespace FullSerializer {
             var instanceType = instance.GetType();
             return GetConverter(instanceType).TrySerialize(instance, out data, instanceType);
         }
-
-        #region Data Metadata Queries
-        private static bool IsObjectReference(fsData data) {
-            if (data.IsDictionary == false) return false;
-            return data.AsDictionary.ContainsKey(Key_ObjectReference);
-        }
-        private static bool IsObjectDefinition(fsData data) {
-            if (data.IsDictionary == false) return false;
-            return data.AsDictionary.ContainsKey(Key_ObjectDefinition);
-        }
-        private static bool IsVersioned(fsData data) {
-            if (data.IsDictionary == false) return false;
-            return data.AsDictionary.ContainsKey(Key_Version);
-        }
-        private static bool IsTypeSpecified(fsData data) {
-            if (data.IsDictionary == false) return false;
-            return data.AsDictionary.ContainsKey(Key_InstanceType);
-        }
-        private static bool IsWrappedData(fsData data) {
-            if (data.IsDictionary == false) return false;
-            return data.AsDictionary.ContainsKey(Key_WrappedData);
-        }
-        #endregion
 
         /// <summary>
         /// Attempts to deserialize a value from a serialized state.
@@ -363,7 +423,7 @@ namespace FullSerializer {
         }
         private fsFailure InternalDeserialize_4a_Converter(fsData data, Type resultType, ref object result) {
             if (IsWrappedData(data)) {
-                data = data.AsDictionary[Key_WrappedData];
+                data = data.AsDictionary[Key_Content];
             }
 
             return GetConverter(resultType).TryDeserialize(data, ref result, resultType);
