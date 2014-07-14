@@ -2,43 +2,34 @@
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace FullSerializer {
-    public struct fsOption<T> {
-        private bool _hasValue;
-        private T _value;
-
-        public bool HasValue {
-            get { return _hasValue; }
-        }
-        public bool IsEmpty {
-            get { return _hasValue == false; }
-        }
-        public T Value {
-            get {
-                if (IsEmpty) throw new InvalidOperationException("fsOption is empty");
-                return _value;
-            }
-        }
-
-        public fsOption(T value) {
-            _hasValue = true;
-            _value = value;
-        }
-
-        public static fsOption<T> Empty;
-    }
-
-    public static class fsOption {
-        public static fsOption<T> Just<T>(T value) {
-            return new fsOption<T>(value);
-        }
-    }
-
-    public class fsVersionedImport {
+namespace FullSerializer.Internal {
+    public static class fsVersionManager {
         private static Dictionary<Type, fsOption<fsVersionedType>> _cache = new Dictionary<Type, fsOption<fsVersionedType>>();
 
-        public static List<fsVersionedType> GetVersionImportPath(string currentVersion, fsVersionedType targetVersion) {
-            throw new NotImplementedException();
+        public static fsFailure GetVersionImportPath(string currentVersion, fsVersionedType targetVersion, out List<fsVersionedType> path) {
+            path = new List<fsVersionedType>();
+
+            if (GetVersionImportPathRecursive(path, currentVersion, targetVersion) == false) {
+                return fsFailure.Fail("There is no migration path from \"" + currentVersion + "\" to \"" + targetVersion.VersionString + "\"");
+            }
+
+            path.Add(targetVersion);
+            return fsFailure.Success;
+        }
+
+        private static bool GetVersionImportPathRecursive(List<fsVersionedType> path, string currentVersion, fsVersionedType current) {
+            for (int i = 0; i < current.Ancestors.Length; ++i) {
+                fsVersionedType ancestor = current.Ancestors[i];
+
+                if (ancestor.VersionString == currentVersion ||
+                    GetVersionImportPathRecursive(path, currentVersion, ancestor)) {
+
+                    path.Add(ancestor);
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public static fsOption<fsVersionedType> GetVersionedType(Type type) {
@@ -85,13 +76,16 @@ namespace FullSerializer {
             return optionalVersionedType;
         }
 
+        /// <summary>
+        /// Verifies that the given type has constructors to migrate from all ancestor types.
+        /// </summary>
         private static void VerifyConstructors(fsVersionedType type) {
             var flags =
                 BindingFlags.Public | BindingFlags.NonPublic |
                 BindingFlags.DeclaredOnly | BindingFlags.Instance;
 
             ConstructorInfo[] publicConstructors = type.ModelType.GetConstructors(flags);
-            
+
             for (int i = 0; i < type.Ancestors.Length; ++i) {
                 Type requiredConstructorType = type.Ancestors[i].ModelType;
 
@@ -105,11 +99,14 @@ namespace FullSerializer {
                 }
 
                 if (found == false) {
-                    throw new Exception(type.ModelType + " is missing a required constructor for previous model type " + requiredConstructorType);
+                    throw new fsMissingVersionConstructorException(type.ModelType, requiredConstructorType);
                 }
             }
         }
 
+        /// <summary>
+        /// Verifies that the given version graph contains only unique versions.
+        /// </summary>
         private static void VerifyUniqueVersionStrings(fsVersionedType type) {
             // simple tree traversal
 
@@ -121,9 +118,11 @@ namespace FullSerializer {
             while (remaining.Count > 0) {
                 fsVersionedType item = remaining.Dequeue();
 
-                // verify we do not already have the version string
-                if (found.ContainsKey(item.VersionString)) {
-                    throw new Exception("Types " + found[item.VersionString] + " and " + item.ModelType + " cannot have the same version string (" + item.VersionString + ")");
+                // Verify we do not already have the version string. Take into account that we're not just
+                // comparing the same model twice, since we can have a valid import graph that has the same
+                // model multiple times.
+                if (found.ContainsKey(item.VersionString) && found[item.VersionString] != item.ModelType) {
+                    throw new fsDuplicateVersionNameException(found[item.VersionString], item.ModelType, item.VersionString);
                 }
                 found[item.VersionString] = item.ModelType;
 
@@ -132,27 +131,6 @@ namespace FullSerializer {
                     remaining.Enqueue(ancestor);
                 }
             }
-        }
-    }
-
-    public struct fsVersionedType {
-        /// <summary>
-        /// The direct ancestors that this type can import.
-        /// </summary>
-        public fsVersionedType[] Ancestors;
-
-        /// <summary>
-        /// The identifying string that is unique among all ancestors.
-        /// </summary>
-        public string VersionString;
-
-        /// <summary>
-        /// The modeling type that this versioned type maps back to.
-        /// </summary>
-        public Type ModelType;
-
-        public override string ToString() {
-            return "fsVersionedType [ModelType=" + ModelType + ", VersionString=" + VersionString + ", Ancestors.Length=" + Ancestors.Length + "]";
         }
     }
 }

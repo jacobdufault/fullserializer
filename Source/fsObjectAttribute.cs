@@ -18,5 +18,11 @@ namespace FullSerializer {
         /// is "v1", "v2", "v3", ...
         /// </summary>
         public string VersionString;
+
+        public fsObjectAttribute() { }
+        public fsObjectAttribute(string versionString, params Type[] previousModels) {
+            VersionString = versionString;
+            PreviousModels = previousModels;
+        }
     }
 }

@@ -295,7 +295,7 @@ namespace FullSerializer {
             //       *always* be equal to instance.GetType(), so why bother taking the parameter?
 
             // Check to see if there is versioning information for this type. If so, then we need to serialize it.
-            fsOption<fsVersionedType> optionalVersionedType = fsVersionedImport.GetVersionedType(instance.GetType());
+            fsOption<fsVersionedType> optionalVersionedType = fsVersionManager.GetVersionedType(instance.GetType());
             if (optionalVersionedType.HasValue) {
                 fsVersionedType versionedType = optionalVersionedType.Value;
 
@@ -333,11 +333,40 @@ namespace FullSerializer {
                 return fsFailure.Success;
             }
 
-            return InternalDeserialize_1_Inheritance(data, storageType, ref result);
+            return InternalDeserialize_1_Version(data, storageType, ref result);
         }
 
+        private fsFailure InternalDeserialize_1_Version(fsData data, Type storageType, ref object result) {
+            if (IsVersioned(data)) {
+                // data is versioned, but we might not need to do a migration
+                string version = data.AsDictionary[Key_Version].AsString;
 
-        private fsFailure InternalDeserialize_1_Inheritance(fsData data, Type storageType, ref object result) {
+                fsOption<fsVersionedType> versionedType = fsVersionManager.GetVersionedType(storageType);
+                if (versionedType.HasValue &&
+                    versionedType.Value.VersionString != version) {
+
+                    // we have to do a migration
+
+                    List<fsVersionedType> path;
+                    fsFailure fail = fsVersionManager.GetVersionImportPath(version, versionedType.Value, out path);
+                    if (fail.Failed) return fail;
+
+                    // deserialize as the original type
+                    fail = InternalDeserialize_2_Inheritance(data, path[0].ModelType, ref result);
+                    if (fail.Failed) return fail;
+
+                    for (int i = 1; i < path.Count; ++i) {
+                        result = path[i].Migrate(result);
+                    }
+
+                    return fsFailure.Success;
+                }
+            }
+
+            return InternalDeserialize_2_Inheritance(data, storageType, ref result);
+        }
+
+        private fsFailure InternalDeserialize_2_Inheritance(fsData data, Type storageType, ref object result) {
             Type objectType = storageType;
 
             // If the serialized state contains type information, then we need to make sure to update our
@@ -353,11 +382,10 @@ namespace FullSerializer {
                 objectType = type;
             }
 
-            // Construct an object instance if we don't have one already.
-            // note: If result is *not* null, then that means that the user passed in an existing object instance.
-            //       In that scenario, we simply assume that the user knows what they want (and can override
-            //       inheritance support). Is this the right behavior?
-            if (ReferenceEquals(result, null)) {
+            // Construct an object instance if we don't have one already. We also need to construct
+            // an instance if the result type is of the wrong type, which is also important for
+            // versioning.
+            if (ReferenceEquals(result, null) || result.GetType() != storageType) {
                 result = GetConverter(objectType).CreateInstance(data, objectType);
             }
 
@@ -367,10 +395,10 @@ namespace FullSerializer {
             //       return dummy values for CreateInstance() (for example, the default behavior
             //       for structs is to just return the type of the struct).
 
-            return InternalDeserialize_2_Cycles(data, objectType, ref result);
+            return InternalDeserialize_3_Cycles(data, objectType, ref result);
         }
 
-        private fsFailure InternalDeserialize_2_Cycles(fsData data, Type resultType, ref object result) {
+        private fsFailure InternalDeserialize_3_Cycles(fsData data, Type resultType, ref object result) {
             // While object construction should technically be two-pass, we can do it in
             // one pass because of how serialization happens. We traverse the serialization
             // graph in the same order during serialization and deserialization, so the first
@@ -395,7 +423,7 @@ namespace FullSerializer {
                     // request back to our _references group... so we just construct an instance
                     // before deserialization so that our _references group resolves correctly.
                     _references.AddReferenceWithId(sourceId, result);
-                    return InternalDeserialize_3a_Versioning(data, resultType, ref result);
+                    return InternalDeserialize_4_Converter(data, resultType, ref result);
                 }
                 finally {
                     _references.Exit();
@@ -403,25 +431,10 @@ namespace FullSerializer {
             }
 
             // Nothing special, go through the standard deserialization logic.
-            return InternalDeserialize_3a_Versioning(data, resultType, ref result);
+            return InternalDeserialize_4_Converter(data, resultType, ref result);
         }
 
-        private fsFailure InternalDeserialize_3a_Versioning(fsData data, Type resultType, ref object result) {
-            /*
-            if (IsVersioningInformation(data)) {
-                fsOption<fsVersionedType> optionalVerisonedType = fsVersionedImport.GetVersionedType(resultType);
-                if (optionalVerisonedType.HasValue) {
-                    fsVersionedType versionedType = optionalVerisonedType.Value;
-                    string version = data.AsDictionary[VersionString].AsString;
-
-                    List<fsVersionedType> path = fsVersionedImport.GetVersionImportPath(version, versionedType);
-                }
-            }
-            */
-
-            return InternalDeserialize_4a_Converter(data, resultType, ref result);
-        }
-        private fsFailure InternalDeserialize_4a_Converter(fsData data, Type resultType, ref object result) {
+        private fsFailure InternalDeserialize_4_Converter(fsData data, Type resultType, ref object result) {
             if (IsWrappedData(data)) {
                 data = data.AsDictionary[Key_Content];
             }
