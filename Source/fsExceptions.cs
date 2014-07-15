@@ -2,6 +2,7 @@
 //       in FullSerializer; they are only used when validating annotations and code-based models.
 
 using System;
+
 namespace FullSerializer {
     public sealed class fsMissingVersionConstructorException : Exception {
         public fsMissingVersionConstructorException(Type versionedType, Type constructorType) :
