@@ -52,6 +52,50 @@ namespace FullSerializer {
             if (data.IsDictionary == false) return false;
             return data.AsDictionary.ContainsKey(Key_Content);
         }
+
+        /// <summary>
+        /// This function converts legacy serialization data into the new format, so that
+        /// the import process can be unified and ignore the old format.
+        /// </summary>
+        private static void ConvertLegacyData(ref fsData data) {
+            if (data.IsDictionary == false) return;
+
+            var dict = data.AsDictionary;
+
+            // fast-exit: metadata never had more than two items
+            if (dict.Count > 2) return;
+
+            // Key strings used in the legacy system
+            string referenceIdString = "ReferenceId";
+            string sourceIdString = "SourceId";
+            string sourceDataString = "Data";
+            string typeString = "Type";
+            string typeDataString = "Data";
+
+            // type specifier
+            if (dict.Count == 2 && dict.ContainsKey(typeString) && dict.ContainsKey(typeDataString)) {
+                data = dict[typeDataString];
+                EnsureDictionary(ref data);
+                ConvertLegacyData(ref data);
+
+                data.AsDictionary[Key_InstanceType] = dict[typeString];
+            }
+
+            // object definition
+            else if (dict.Count == 2 && dict.ContainsKey(sourceIdString) && dict.ContainsKey(sourceDataString)) {
+                data = dict[sourceDataString];
+                EnsureDictionary(ref data);
+                ConvertLegacyData(ref data);
+
+                data.AsDictionary[Key_ObjectDefinition] = dict[sourceIdString];
+            }
+
+            // object reference
+            else if (dict.Count == 1 && dict.ContainsKey(referenceIdString)) {
+                data = fsData.CreateDictionary();
+                data.AsDictionary[Key_ObjectReference] = dict[referenceIdString];
+            }
+        }
         #endregion
 
 
@@ -332,6 +376,9 @@ namespace FullSerializer {
                 result = null;
                 return fsFailure.Success;
             }
+
+            // Convert legacy data into modern style data
+            ConvertLegacyData(ref data);
 
             return InternalDeserialize_1_Version(data, storageType, ref result);
         }
