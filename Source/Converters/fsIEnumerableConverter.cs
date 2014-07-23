@@ -62,7 +62,7 @@ namespace FullSerializer.Internal {
                 if (collectionType != null) {
                     var keyValuePairType = collectionType.GetGenericArguments()[0];
                     object keyValueInstance = Activator.CreateInstance(keyValuePairType, pair.Key, pair.Value);
-                    MethodInfo add = collectionType.GetMethod("Add");
+                    MethodInfo add = collectionType.GetFlattenedMethod("Add");
                     add.Invoke(collection, new object[] { keyValueInstance });
                     return;
                 }
@@ -100,17 +100,17 @@ namespace FullSerializer.Internal {
 
         private MethodInfo GetAddMethod(Type type) {
             // There is a really good chance the type will extend ICollection{}, which will contain
-            // the add method we want. Just doing type.GetMethod() may return the incorrect one --
+            // the add method we want. Just doing type.GetFlattenedMethod() may return the incorrect one --
             // for example, with dictionaries, it'll return Add(TKey, TValue), and we want
             // Add(KeyValuePair<TKey, TValue>).
             Type collectionInterface = fsReflectionUtility.GetInterface(type, typeof(ICollection<>));
             if (collectionInterface != null) {
-                MethodInfo add = collectionInterface.GetMethod("Add");
+                MethodInfo add = collectionInterface.GetDeclaredMethod("Add");
                 if (add != null) return add;
             }
 
             // Otherwise try and look up a general Add method.
-            return type.GetMethod("Add");
+            return type.GetFlattenedMethod("Add");
         }
     }
 

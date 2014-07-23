@@ -5,7 +5,9 @@ using System.Reflection;
 namespace FullSerializer.Internal {
     public class fsKeyValuePairConverter : fsConverter {
         public override bool CanProcess(Type type) {
-            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(KeyValuePair<,>);
+            return
+                type.Resolve().IsGenericType &&
+                type.GetGenericTypeDefinition() == typeof(KeyValuePair<,>);
         }
 
         public override bool RequestCycleSupport(Type storageType) {
@@ -37,8 +39,8 @@ namespace FullSerializer.Internal {
         public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
             serialized = null;
 
-            PropertyInfo keyProperty = storageType.GetProperty("Key");
-            PropertyInfo valueProperty = storageType.GetProperty("Value");
+            PropertyInfo keyProperty = storageType.GetDeclaredProperty("Key");
+            PropertyInfo valueProperty = storageType.GetDeclaredProperty("Value");
 
             object keyObject = keyProperty.GetValue(instance, null);
             object valueObject = valueProperty.GetValue(instance, null);

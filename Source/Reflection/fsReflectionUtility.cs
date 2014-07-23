@@ -14,7 +14,9 @@ namespace FullSerializer.Internal {
         /// <returns>The actual interface type that the type contains, or null if there is no
         /// implementation of the given interfaceType on type.</returns>
         public static Type GetInterface(Type type, Type interfaceType) {
-            if (interfaceType.IsGenericType && interfaceType.IsGenericTypeDefinition == false) {
+            if (interfaceType.Resolve().IsGenericType &&
+                interfaceType.Resolve().IsGenericTypeDefinition == false) {
+                
                 throw new ArgumentException("GetInterface requires that if the interface " +
                     "type is generic, then it must be the generic type definition, not a " +
                     "specific generic type instantiation");
@@ -22,7 +24,7 @@ namespace FullSerializer.Internal {
 
             while (type != null) {
                 foreach (var iface in type.GetInterfaces()) {
-                    if (iface.IsGenericType) {
+                    if (iface.Resolve().IsGenericType) {
                         if (interfaceType == iface.GetGenericTypeDefinition()) {
                             return iface;
                         }
@@ -33,7 +35,7 @@ namespace FullSerializer.Internal {
                     }
                 }
 
-                type = type.BaseType;
+                type = type.Resolve().BaseType;
             }
 
             return null;

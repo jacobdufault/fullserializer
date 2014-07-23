@@ -380,10 +380,30 @@ namespace FullSerializer {
             // Convert legacy data into modern style data
             ConvertLegacyData(ref data);
 
-            return InternalDeserialize_1_Version(data, storageType, ref result);
+            return InternalDeserialize_1_CycleReference(data, storageType, ref result);
         }
 
-        private fsFailure InternalDeserialize_1_Version(fsData data, Type storageType, ref object result) {
+        private fsFailure InternalDeserialize_1_CycleReference(fsData data, Type storageType, ref object result) {
+            // We handle object references first because we could be deserializing a cyclic type that is
+            // inherited. If that is the case, then if we handle references after inheritances we will try
+            // to create an object instance for an abstract/interface type.
+
+            // While object construction should technically be two-pass, we can do it in
+            // one pass because of how serialization happens. We traverse the serialization
+            // graph in the same order during serialization and deserialization, so the first
+            // time we encounter an object it'll always be the definition. Any times after that
+            // it will be a reference. Because of this, if we encounter a reference then we
+            // will have *always* already encountered the definition for it.
+            if (IsObjectReference(data)) {
+                int refId = int.Parse(data.AsDictionary[Key_ObjectReference].AsString);
+                result = _references.GetReferenceObject(refId);
+                return fsFailure.Success;
+            }
+
+            return InternalDeserialize_2_Version(data, storageType, ref result);
+        }
+
+        private fsFailure InternalDeserialize_2_Version(fsData data, Type storageType, ref object result) {
             if (IsVersioned(data)) {
                 // data is versioned, but we might not need to do a migration
                 string version = data.AsDictionary[Key_Version].AsString;
@@ -399,7 +419,7 @@ namespace FullSerializer {
                     if (fail.Failed) return fail;
 
                     // deserialize as the original type
-                    fail = InternalDeserialize_2_Inheritance(data, path[0].ModelType, ref result);
+                    fail = InternalDeserialize_3_Inheritance(data, path[0].ModelType, ref result);
                     if (fail.Failed) return fail;
 
                     for (int i = 1; i < path.Count; ++i) {
@@ -410,10 +430,10 @@ namespace FullSerializer {
                 }
             }
 
-            return InternalDeserialize_2_Inheritance(data, storageType, ref result);
+            return InternalDeserialize_3_Inheritance(data, storageType, ref result);
         }
 
-        private fsFailure InternalDeserialize_2_Inheritance(fsData data, Type storageType, ref object result) {
+        private fsFailure InternalDeserialize_3_Inheritance(fsData data, Type storageType, ref object result) {
             Type objectType = storageType;
 
             // If the serialized state contains type information, then we need to make sure to update our
@@ -432,7 +452,7 @@ namespace FullSerializer {
             // Construct an object instance if we don't have one already. We also need to construct
             // an instance if the result type is of the wrong type, which is also important for
             // versioning.
-            if (ReferenceEquals(result, null) || result.GetType() != storageType) {
+            if (ReferenceEquals(result, null) || result.GetType() != objectType) {
                 result = GetConverter(objectType).CreateInstance(data, objectType);
             }
 
@@ -442,21 +462,11 @@ namespace FullSerializer {
             //       return dummy values for CreateInstance() (for example, the default behavior
             //       for structs is to just return the type of the struct).
 
-            return InternalDeserialize_3_Cycles(data, objectType, ref result);
+            return InternalDeserialize_4_Cycles(data, objectType, ref result);
         }
 
-        private fsFailure InternalDeserialize_3_Cycles(fsData data, Type resultType, ref object result) {
-            // While object construction should technically be two-pass, we can do it in
-            // one pass because of how serialization happens. We traverse the serialization
-            // graph in the same order during serialization and deserialization, so the first
-            // time we encounter an object it'll always be the definition. Any times after that
-            // it will be a reference. Because of this, if we encounter a reference then we
-            // will have *always* already encountered the definition for it.
-            if (IsObjectReference(data)) {
-                int refId = int.Parse(data.AsDictionary[Key_ObjectReference].AsString);
-                result = _references.GetReferenceObject(refId);
-                return fsFailure.Success;
-            }
+        private fsFailure InternalDeserialize_4_Cycles(fsData data, Type resultType, ref object result) {
+            // object references are handled at stage 1
 
             if (IsObjectDefinition(data)) {
                 try {

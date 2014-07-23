@@ -10,7 +10,11 @@ public class MyEnumerableType : IEnumerable {
     }
 }
 
-public class CustomIEnumerableProvider : BaseProvider<MyEnumerableType> {
+public class CustomIEnumerableProvider : TestProvider<MyEnumerableType> {
+    public override bool Compare(MyEnumerableType before, MyEnumerableType after) {
+        return before.A == after.A;
+    }
+
     public override IEnumerable<MyEnumerableType> GetValues() {
         yield return new MyEnumerableType { A = -1 };
         yield return new MyEnumerableType { A = 0 };

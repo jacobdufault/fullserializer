@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Reflection;
 
 namespace FullSerializer.Internal {
     public struct fsVersionedType {
@@ -22,12 +21,7 @@ namespace FullSerializer.Internal {
         /// Migrate from an instance of an ancestor.
         /// </summary>
         public object Migrate(object ancestorInstance) {
-            // TODO: move these flags to a common area, combine with VerifyConstructors
-            var flags =
-                BindingFlags.Public | BindingFlags.NonPublic |
-                BindingFlags.DeclaredOnly | BindingFlags.Instance;
-
-            return Activator.CreateInstance(ModelType, flags, null, new object[] { ancestorInstance }, null);
+            return Activator.CreateInstance(ModelType, ancestorInstance);
         }
 
         public override string ToString() {

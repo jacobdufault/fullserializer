@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 
-public class NumberProvider : BaseProvider<object> {
+public class NumberProvider : TestProvider<object> {
+    public override bool Compare(object before, object after) {
+        return EqualityComparer<object>.Default.Equals(before, after);
+    }
+
     public override IEnumerable<object> GetValues() {
         yield return (float)-2.5;
         yield return (double)-2.5;

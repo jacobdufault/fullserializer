@@ -18,6 +18,7 @@ namespace FullSerializer.Internal {
                 return type;
             }
 
+#if (!UNITY_EDITOR && UNITY_METRO) == false // no AppDomain on WinRT
             // If we still haven't found the proper type, we can enumerate all of the loaded
             // assemblies and see if any of them define the type
             foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies()) {
@@ -27,6 +28,7 @@ namespace FullSerializer.Internal {
                     return type;
                 }
             }
+#endif
 
             return null;
         }

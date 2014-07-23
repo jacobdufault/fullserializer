@@ -1,9 +1,16 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
-public class IDictionaryProvider : BaseProvider<IDictionary> {
-    public override IEnumerable<IDictionary> GetValues() {
+public class IDictionaryIntIntProvider : TestProvider<IDictionary<int, int>> {
+    public override bool Compare(IDictionary<int, int> before, IDictionary<int, int> after) {
+        return
+            before.Except(after).Count() == 0 &&
+            after.Except(before).Count() == 0;
+    }
+
+    public override IEnumerable<IDictionary<int, int>> GetValues() {
         yield return new Dictionary<int, int>();
 
         yield return new Dictionary<int, int> {
@@ -11,19 +18,39 @@ public class IDictionaryProvider : BaseProvider<IDictionary> {
             { 2, 0 },
             { 3, 32 }
         };
+    }
+}
 
+public class IDictionaryStringIntProvider : TestProvider<IDictionary<string, int>> {
+    public override bool Compare(IDictionary<string, int> before, IDictionary<string, int> after) {
+        return
+            before.Except(after).Count() == 0 &&
+            after.Except(before).Count() == 0;
+    }
+
+    public override IEnumerable<IDictionary<string, int>> GetValues() {
         yield return new Dictionary<string, int> {
             { "ok", 3 },
             { string.Empty, 2 }
         };
+    }
+}
 
+public class IDictionaryStringStringProvider : TestProvider<IDictionary<string, string>> {
+    public override bool Compare(IDictionary<string, string> before, IDictionary<string, string> after) {
+        return
+            before.Except(after).Count() == 0 &&
+            after.Except(before).Count() == 0;
+    }
+
+    public override IEnumerable<IDictionary<string, string>> GetValues() {
         yield return new Dictionary<string, string> {
             { string.Empty, null }
         };
     }
 }
 
-public class SortedDictionaryProvider : BaseProvider<IDictionary> {
+public class SortedDictionaryProvider : TestProvider<IDictionary> {
     public enum Enum {
         A, B, C, D, E, F
     }
@@ -32,8 +59,37 @@ public class SortedDictionaryProvider : BaseProvider<IDictionary> {
         A, B, C, D, E, F
     }
 
+    public override bool Compare(IDictionary before, IDictionary after) {
+#if !(UNITY_WP8 || UNITY_METRO)
+        if (before is SortedDictionary<double, float>)
+            return CompareDicts<SortedDictionary<double, float>, double, float>(before, after);
+        if (before is SortedList<int, string>)
+            return CompareDicts<SortedList<int, string>, int, string>(before, after);
+        if (before is SortedDictionary<int, int>)
+            return CompareDicts<SortedDictionary<int, int>, int, int>(before, after);
+        if (before is SortedList<string, float>)
+            return CompareDicts<SortedList<string, float>, string, float>(before, after);
+        if (before is SortedDictionary<Enum, int>)
+            return CompareDicts<SortedDictionary<Enum, int>, Enum, int>(before, after);
+        if (before is SortedDictionary<FlagsEnum, int>)
+            return CompareDicts<SortedDictionary<FlagsEnum, int>, FlagsEnum, int>(before, after);
+#endif
+
+        throw new Exception("unknown type");
+    }
+
+    private static bool CompareDicts<TDict, TKey, TValue>(object a, object b) where TDict : IDictionary<TKey, TValue> {
+        var dictA = (TDict)a;
+        var dictB = (TDict)b;
+
+        return
+            dictA.Except<KeyValuePair<TKey, TValue>>(dictB).Count() == 0 &&
+            dictB.Except<KeyValuePair<TKey, TValue>>(dictA).Count() == 0;
+    }
+
+
     public override IEnumerable<IDictionary> GetValues() {
-#if !(UNITY_WP8 || UNITY_WINRT)
+#if !(UNITY_WP8 || UNITY_METRO)
         yield return new SortedDictionary<double, float>();
 
         yield return new SortedList<int, string> {
@@ -79,6 +135,7 @@ public class SortedDictionaryProvider : BaseProvider<IDictionary> {
             { FlagsEnum.D | FlagsEnum.E | FlagsEnum.F, 3 },
         };
 #endif
+
         yield break;
     }
 }

@@ -7,7 +7,9 @@ namespace FullSerializer.Internal {
     /// </summary>
     public class fsNullableConverter : fsConverter {
         public override bool CanProcess(Type type) {
-            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
+            return
+                type.Resolve().IsGenericType &&
+                type.GetGenericTypeDefinition() == typeof(Nullable<>);
         }
 
         public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {

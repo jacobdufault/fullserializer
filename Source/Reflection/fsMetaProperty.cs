@@ -78,7 +78,7 @@ namespace FullSerializer.Internal {
         /// Returns the name the given member wants to use for JSON serialization.
         /// </summary>
         private static string GetName(MemberInfo member) {
-            var attr = (fsPropertyAttribute)Attribute.GetCustomAttribute(member, typeof(fsPropertyAttribute));
+            var attr = fsPortableReflection.GetAttribute<fsPropertyAttribute>(member);
             if (attr != null && string.IsNullOrEmpty(attr.Name) == false) {
                 return attr.Name;
             }

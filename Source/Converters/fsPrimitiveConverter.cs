@@ -3,7 +3,10 @@
 namespace FullSerializer.Internal {
     public class fsPrimitiveConverter : fsConverter {
         public override bool CanProcess(Type type) {
-            return type.IsPrimitive || type == typeof(string) || type == typeof(decimal);
+            return
+                type.Resolve().IsPrimitive ||
+                type == typeof(string) ||
+                type == typeof(decimal);
         }
 
         public override bool RequestCycleSupport(Type storageType) {

@@ -7,7 +7,7 @@ namespace FullSerializer.Internal {
     /// </summary>
     public class fsEnumConverter : fsConverter {
         public override bool CanProcess(Type type) {
-            return type.IsEnum;
+            return type.Resolve().IsEnum;
         }
 
         public override bool RequestCycleSupport(Type storageType) {
@@ -19,7 +19,7 @@ namespace FullSerializer.Internal {
         }
 
         public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
-            if (Attribute.IsDefined(storageType, typeof(FlagsAttribute))) {
+            if (fsPortableReflection.GetAttribute<FlagsAttribute>(storageType) != null) {
                 serialized = new fsData(Convert.ToInt32(instance));
             }
             else {

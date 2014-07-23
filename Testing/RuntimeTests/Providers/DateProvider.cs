@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 
-public class DateTimeProvider : BaseProvider<DateTime> {
+public class DateTimeProvider : TestProvider<DateTime> {
     public override bool Compare(DateTime original, DateTime deserialized) {
         return original == deserialized;
     }
@@ -18,7 +18,7 @@ public class DateTimeProvider : BaseProvider<DateTime> {
     }
 }
 
-public class DateTimeOffsetProvider : BaseProvider<DateTimeOffset> {
+public class DateTimeOffsetProvider : TestProvider<DateTimeOffset> {
     public override bool Compare(DateTimeOffset original, DateTimeOffset deserialized) {
         return original == deserialized;
     }
@@ -36,7 +36,7 @@ public class DateTimeOffsetProvider : BaseProvider<DateTimeOffset> {
     }
 }
 
-public class TimeSpanProvider : BaseProvider<TimeSpan> {
+public class TimeSpanProvider : TestProvider<TimeSpan> {
     public override bool Compare(TimeSpan original, TimeSpan deserialized) {
         return original == deserialized;
     }
@@ -57,12 +57,34 @@ public class TimeSpanProvider : BaseProvider<TimeSpan> {
     }
 }
 
-public class NullableDatesProvider : BaseProvider<object> {
-    public override IEnumerable<object> GetValues() {
+public class NullableDateTimeProvider : TestProvider<ValueHolder<DateTime?>> {
+    public override bool Compare(ValueHolder<DateTime?> before, ValueHolder<DateTime?> after) {
+        return before.Value == after.Value;
+    }
+
+    public override IEnumerable<ValueHolder<DateTime?>> GetValues() {
         yield return new ValueHolder<DateTime?>(null);
         yield return new ValueHolder<DateTime?>(DateTime.UtcNow);
+    }
+}
+
+public class NullableDateTimeOffsetProvider : TestProvider<ValueHolder<DateTimeOffset?>> {
+    public override bool Compare(ValueHolder<DateTimeOffset?> before, ValueHolder<DateTimeOffset?> after) {
+        return before.Value == after.Value;
+    }
+
+    public override IEnumerable<ValueHolder<DateTimeOffset?>> GetValues() {
         yield return new ValueHolder<DateTimeOffset?>(null);
         yield return new ValueHolder<DateTimeOffset?>(DateTimeOffset.UtcNow);
+    }
+}
+
+public class NullableTimeSpanProvider : TestProvider<ValueHolder<TimeSpan?>> {
+    public override bool Compare(ValueHolder<TimeSpan?> before, ValueHolder<TimeSpan?> after) {
+        return before.Value == after.Value;
+    }
+
+    public override IEnumerable<ValueHolder<TimeSpan?>> GetValues() {
         yield return new ValueHolder<TimeSpan?>(null);
         yield return new ValueHolder<TimeSpan?>(TimeSpan.FromSeconds(35));
     }

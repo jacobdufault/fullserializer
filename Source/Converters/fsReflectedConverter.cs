@@ -4,7 +4,9 @@ using System.Collections;
 namespace FullSerializer.Internal {
     public class fsReflectedConverter : fsConverter {
         public override bool CanProcess(Type type) {
-            if (type.IsArray || typeof(ICollection).IsAssignableFrom(type)) {
+            if (type.Resolve().IsArray ||
+                typeof(ICollection).IsAssignableFrom(type)) {
+
                 return false;
             }
 

@@ -27,7 +27,7 @@ namespace FullSerializer {
         public virtual bool RequestCycleSupport(Type storageType) {
             if (storageType == typeof(string)) return false;
 
-            return storageType.IsClass || storageType.IsInterface;
+            return storageType.Resolve().IsClass || storageType.Resolve().IsInterface;
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace FullSerializer {
         /// <param name="storageType">The field/property type that is currently storing the object
         /// that is being serialized.</param>
         public virtual bool RequestInheritanceSupport(Type storageType) {
-            return storageType.IsSealed == false;
+            return storageType.Resolve().IsSealed == false;
         }
 
         /// <summary>

@@ -33,7 +33,11 @@ public class PrivateHolder {
     }
 }
 
-public class PrivateFieldsProvider : BaseProvider<PrivateHolder> {
+public class PrivateFieldsProvider : TestProvider<PrivateHolder> {
+    public override bool Compare(PrivateHolder before, PrivateHolder after) {
+        return before.Equals(after);
+    }
+
     public override IEnumerable<PrivateHolder> GetValues() {
         var holder = new PrivateHolder();
         holder.Setup();

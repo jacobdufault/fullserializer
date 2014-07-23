@@ -1,7 +1,6 @@
 ﻿using FullInspector;
 using FullInspector.Internal;
 using FullSerializer;
-using KellermanSoftware.CompareNetObjects;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -54,48 +53,19 @@ public interface ITestProvider {
     IEnumerable<TestItem> GetValues();
 }
 
-public abstract class BaseProvider<T> : ITestProvider {
+
+public abstract class TestProvider<T> : ITestProvider {
+    public abstract bool Compare(T before, T after);
     public abstract IEnumerable<T> GetValues();
-    public virtual bool Compare(T original, T deserialized) {
-        var customCompare = deserialized as ICustomCompareRequested;
-        if (customCompare != null) {
-            return customCompare.AreEqual(original);
-        }
-
-        CompareLogic compare = new CompareLogic(true);
-        ComparisonResult result = compare.Compare(original, deserialized);
-        return result.AreEqual;
-    }
-
-    private bool CompareObjects(object a, object b) {
-        if (typeof(T).IsAssignableFrom(a.GetType()) == false ||
-            typeof(T).IsAssignableFrom(b.GetType()) == false) {
-            return false;
-        }
-
-        if (a.GetType() != b.GetType()) {
-            return false;
-        }
-
-        return Compare((T)a, (T)b);
-    }
 
     IEnumerable<TestItem> ITestProvider.GetValues() {
         foreach (T value in GetValues()) {
-            yield return new TestItem {
+            yield return new TestItem() {
                 Item = value,
-                Comparer = CompareObjects
+                Comparer = (a, b) => Compare((T)a, (T)b)
             };
         }
     }
-}
-
-public interface IAfterDeserializeCallback {
-    void VerifyDeserialize();
-}
-
-public interface ICustomCompareRequested {
-    bool AreEqual(object original);
 }
 
 public class TestRunner : BaseBehavior<FullSerializerSerializer> {
@@ -171,11 +141,6 @@ public class TestRunner : BaseBehavior<FullSerializerSerializer> {
                 testObj.Deserialized = Deserialize(testObj.Original.GetType(), testObj.Serialized);
 
                 TestValues[i] = testObj;
-
-                var afterDeserialize = testObj.Deserialized as IAfterDeserializeCallback;
-                if (afterDeserialize != null) {
-                    afterDeserialize.VerifyDeserialize();
-                }
 
                 if (testObj.EqualityComparer(testObj.Original, testObj.Deserialized) == false) {
                     throw new Exception("Item " + i + " with type " + testObj.Original.GetType() +

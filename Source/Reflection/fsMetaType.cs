@@ -21,23 +21,6 @@ namespace FullSerializer {
             fsMetaType.Get(typeof(Rect)).SetProperties("xMin", "yMin", "xMax", "yMax");
         }
 
-        /// <summary>
-        /// The binding flags that we use when looking up properties that are on a particular type level.
-        /// </summary>
-        private static BindingFlags InstancePropertyLookupFlags =
-            BindingFlags.NonPublic |
-            BindingFlags.Public |
-            BindingFlags.Instance;
-
-        /// <summary>
-        /// The binding flags that we use when looking up all properties on a type.
-        /// </summary>
-        private static BindingFlags FlattenedPropertyLookupFlags =
-            BindingFlags.NonPublic |
-            BindingFlags.Public |
-            BindingFlags.Instance |
-            BindingFlags.FlattenHierarchy;
-
         private static Dictionary<Type, fsMetaType> _metaTypes = new Dictionary<Type, fsMetaType>();
         public static fsMetaType Get(Type type) {
             fsMetaType metaType;
@@ -62,16 +45,16 @@ namespace FullSerializer {
         private static void CollectProperties(List<fsMetaProperty> properties, Type reflectedType) {
             // do we require a [SerializeField] or [fsProperty] attribute?
             bool requireAnnotation = false;
-            fsObjectAttribute attr = (fsObjectAttribute)Attribute.GetCustomAttribute(reflectedType, typeof(fsObjectAttribute));
+            fsObjectAttribute attr = fsPortableReflection.GetAttribute<fsObjectAttribute>(reflectedType);
             if (attr != null) {
                 requireAnnotation = attr.MemberSerialization == fsMemberSerialization.OptIn;
             }
 
-            MemberInfo[] members = reflectedType.GetMembers(InstancePropertyLookupFlags);
+            MemberInfo[] members = reflectedType.GetDeclaredMembers();
             foreach (MemberInfo member in members) {
                 // We don't serialize members annotated with [fsIgnore] or [NonSerialized].
-                if (Attribute.IsDefined(member, typeof(fsIgnoreAttribute)) ||
-                    Attribute.IsDefined(member, typeof(NonSerializedAttribute))) {
+                if (member.IsDefined(typeof(fsIgnoreAttribute), inherit: true) ||
+                    member.IsDefined(typeof(NonSerializedAttribute), inherit: true)) {
                     continue;
                 }
 
@@ -81,8 +64,8 @@ namespace FullSerializer {
                 // If an annotation is required, then skip the property if it doesn't have
                 // [fsProperty] or [SerializeField] on it.
                 if (requireAnnotation &&
-                    (Attribute.IsDefined(member, typeof(fsPropertyAttribute)) == false &&
-                     Attribute.IsDefined(member, typeof(SerializeField)) == false)) {
+                    (member.IsDefined(typeof(fsPropertyAttribute), inherit: true) == false &&
+                     member.IsDefined(typeof(SerializeField), inherit: true) == false)) {
 
                     continue;
                 }
@@ -100,8 +83,8 @@ namespace FullSerializer {
                 }
             }
 
-            if (reflectedType.BaseType != null) {
-                CollectProperties(properties, reflectedType.BaseType);
+            if (reflectedType.Resolve().BaseType != null) {
+                CollectProperties(properties, reflectedType.Resolve().BaseType);
             }
         }
 
@@ -131,11 +114,6 @@ namespace FullSerializer {
                 return false;
             }
 
-            // If a property is annotated with SerializeField, it should definitely be serialized
-            if (Attribute.IsDefined(property, typeof(SerializeField))) {
-                return true;
-            }
-
             var publicGetMethod = property.GetGetMethod(nonPublic: false);
             var publicSetMethod = property.GetSetMethod(nonPublic: false);
 
@@ -143,6 +121,22 @@ namespace FullSerializer {
             // then we serialize it
             if (IsAutoProperty(property, members) &&
                 (publicGetMethod != null || publicSetMethod != null)) {
+                return true;
+            }
+
+            // We do not bother to serialize static fields.
+            if ((publicGetMethod != null && publicGetMethod.IsStatic) ||
+                (publicSetMethod != null && publicSetMethod.IsStatic)) {
+                return false;
+            }
+
+            // If a property is annotated with SerializeField or fsProperty, then it should
+            // it should definitely be serialized.
+            //
+            // NOTE: We place this override check *after* the static check, because we *never*
+            //       allow statics to be serialized.
+            if (fsPortableReflection.GetAttribute<SerializeField>(property) != null ||
+                fsPortableReflection.GetAttribute<fsPropertyAttribute>(property) != null) {
                 return true;
             }
 
@@ -161,11 +155,23 @@ namespace FullSerializer {
                 return false;
             }
 
+            // We don't serialize static fields
+            if (field.IsStatic) {
+                return false;
+            }
+
+            // We want to serialize any fields annotated with SerializeField or fsProperty.
+            //
+            // NOTE: This occurs *after* the static check, because we *never* want to serialize
+            //       static fields.
+            if (fsPortableReflection.GetAttribute<SerializeField>(field) != null ||
+                fsPortableReflection.GetAttribute<fsPropertyAttribute>(field) != null) {
+                return true;
+            }
+
             // We use !IsPublic because that also checks for internal, protected, and private.
             if (!field.IsPublic) {
-                if (Attribute.IsDefined(field, typeof(SerializeField), inherit: true) == false) {
-                    return false;
-                }
+                return false;
             }
 
             return true;
@@ -183,7 +189,7 @@ namespace FullSerializer {
             Properties = new fsMetaProperty[propertyNames.Length];
 
             for (int i = 0; i < propertyNames.Length; ++i) {
-                MemberInfo[] members = ReflectedType.GetMember(propertyNames[i], FlattenedPropertyLookupFlags);
+                MemberInfo[] members = ReflectedType.GetFlattenedMember(propertyNames[i]);
 
                 if (members.Length == 0) {
                     throw new InvalidOperationException("Unable to find property " +
@@ -211,20 +217,18 @@ namespace FullSerializer {
             get {
                 if (_hasDefaultConstructorCache.HasValue == false) {
                     // arrays are considered to have a default constructor
-                    if (ReflectedType.IsArray) {
+                    if (ReflectedType.Resolve().IsArray) {
                         _hasDefaultConstructorCache = true;
                     }
 
                     // value types (ie, structs) always have a default constructor
-                    else if (ReflectedType.IsValueType) {
+                    else if (ReflectedType.Resolve().IsValueType) {
                         _hasDefaultConstructorCache = true;
                     }
 
                     else {
                         // consider private constructors as well
-                        var ctor = ReflectedType.GetConstructor(
-                            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                            null, Type.EmptyTypes, null);
+                        var ctor = ReflectedType.GetDeclaredConstructor(fsPortableReflection.EmptyTypes);
                         _hasDefaultConstructorCache = ctor != null;
                     }
                 }
@@ -241,6 +245,10 @@ namespace FullSerializer {
         /// FormatterServices.GetSafeUninitializedObject is used to construct the instance.
         /// </summary>
         public object CreateInstance() {
+            if (ReflectedType.Resolve().IsInterface || ReflectedType.Resolve().IsAbstract) {
+                throw new Exception("Cannot create an instance of an interface or abstract type for " + ReflectedType);
+            }
+
             // Unity requires special construction logic for types that derive from
             // ScriptableObject.
             if (typeof(ScriptableObject).IsAssignableFrom(ReflectedType)) {
@@ -254,7 +262,7 @@ namespace FullSerializer {
             }
 
             if (HasDefaultConstructor == false) {
-#if !UNITY_EDITOR && (UNITY_WEBPLAYER || UNITY_WP8)
+#if !UNITY_EDITOR && (UNITY_WEBPLAYER || UNITY_WP8 || UNITY_METRO)
                 throw new InvalidOperationException("The selected Unity platform requires " +
                     ReflectedType.FullName + " to have a default constructor. Please add one.");
 #else
@@ -262,18 +270,20 @@ namespace FullSerializer {
 #endif
             }
 
-            if (ReflectedType.IsArray) {
+            if (ReflectedType.Resolve().IsArray) {
                 // we have to start with a size zero array otherwise it will have invalid data
                 // inside of it
                 return Array.CreateInstance(ReflectedType.GetElementType(), 0);
             }
 
             try {
-                return Activator.CreateInstance(ReflectedType, /*nonPublic:*/ true);
+                return Activator.CreateInstance(ReflectedType);
             }
+#if (!UNITY_EDITOR && (UNITY_METRO)) == false
             catch (MissingMethodException e) {
                 throw new InvalidOperationException("Unable to create instance of " + ReflectedType + "; there is no default constructor", e);
             }
+#endif
             catch (TargetInvocationException e) {
                 throw new InvalidOperationException("Constructor of " + ReflectedType + " threw an exception when creating an instance", e);
             }

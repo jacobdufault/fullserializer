@@ -36,7 +36,7 @@ namespace FullSerializer.Internal {
             fsOption<fsVersionedType> optionalVersionedType;
 
             if (_cache.TryGetValue(type, out optionalVersionedType) == false) {
-                fsObjectAttribute attr = (fsObjectAttribute)Attribute.GetCustomAttribute(type, typeof(fsObjectAttribute), inherit: true);
+                var attr = fsPortableReflection.GetAttribute<fsObjectAttribute>(type);
 
                 if (attr != null) {
                     if (string.IsNullOrEmpty(attr.VersionString) == false || attr.PreviousModels != null) {
