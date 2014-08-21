@@ -268,26 +268,28 @@ namespace FullSerializer {
         }
 
         private fsFailure InternalSerialize_1_ProcessCycles(Type storageType, object instance, out fsData data) {
-            // This type does not need cycle support.
-            if (GetConverter(instance.GetType()).RequestCycleSupport(instance.GetType()) == false) {
-                return InternalSerialize_2_Inheritance(storageType, instance, out data);
-            }
-
-            // We've already serialized this object instance (or it is pending higher up on the call stack).
-            // Just serialize a reference to it to escape the cycle.
-            // 
-            // note: We serialize the int as a string to so that we don't lose any information
-            //       in a conversion to/from floats.
-            if (_references.IsReference(instance)) {
-                data = fsData.CreateDictionary();
-
-                _lazyReferenceWriter.WriteReference(_references.GetReferenceId(instance), data.AsDictionary);
-                return fsFailure.Success;
-            }
-
             // We have an object definition to serialize.
             try {
+                // Note that we enter the reference group at the beginning of serialization so that we support
+                // references that are at equal serialization levels, not just nested serialization levels, within
+                // the given subobject. A prime example is serialization a list of references.
                 _references.Enter();
+
+                // This type does not need cycle support.
+                if (GetConverter(instance.GetType()).RequestCycleSupport(instance.GetType()) == false) {
+                    return InternalSerialize_2_Inheritance(storageType, instance, out data);
+                }
+
+                // We've already serialized this object instance (or it is pending higher up on the call stack).
+                // Just serialize a reference to it to escape the cycle.
+                // 
+                // note: We serialize the int as a string to so that we don't lose any information
+                //       in a conversion to/from floats.
+                if (_references.IsReference(instance)) {
+                    data = fsData.CreateDictionary();
+                    _lazyReferenceWriter.WriteReference(_references.GetReferenceId(instance), data.AsDictionary);
+                    return fsFailure.Success;
+                }
 
                 // Mark inside the object graph that we've serialized the instance. We do this *before*
                 // serialization so that if we get back into this function recursively, it'll already
@@ -380,7 +382,17 @@ namespace FullSerializer {
             // Convert legacy data into modern style data
             ConvertLegacyData(ref data);
 
-            return InternalDeserialize_1_CycleReference(data, storageType, ref result);
+            try {
+                // We wrap the entire deserialize call in a reference group so that we can properly
+                // deserialize a "parallel" set of references, ie, a list of objects that are cyclic
+                // w.r.t. the list
+                _references.Enter();
+
+                return InternalDeserialize_1_CycleReference(data, storageType, ref result);
+            }
+            finally {
+                _references.Exit();
+            }
         }
 
         private fsFailure InternalDeserialize_1_CycleReference(fsData data, Type storageType, ref object result) {
@@ -469,22 +481,15 @@ namespace FullSerializer {
             // object references are handled at stage 1
 
             if (IsObjectDefinition(data)) {
-                try {
-                    _references.Enter();
+                var dict = data.AsDictionary;
 
-                    var dict = data.AsDictionary;
+                int sourceId = int.Parse(dict[Key_ObjectDefinition].AsString);
 
-                    int sourceId = int.Parse(dict[Key_ObjectDefinition].AsString);
-
-                    // to get the reference object, we need to deserialize it, but doing so sends a
-                    // request back to our _references group... so we just construct an instance
-                    // before deserialization so that our _references group resolves correctly.
-                    _references.AddReferenceWithId(sourceId, result);
-                    return InternalDeserialize_4_Converter(data, resultType, ref result);
-                }
-                finally {
-                    _references.Exit();
-                }
+                // to get the reference object, we need to deserialize it, but doing so sends a
+                // request back to our _references group... so we just construct an instance
+                // before deserialization so that our _references group resolves correctly.
+                _references.AddReferenceWithId(sourceId, result);
+                return InternalDeserialize_4_Converter(data, resultType, ref result);
             }
 
             // Nothing special, go through the standard deserialization logic.

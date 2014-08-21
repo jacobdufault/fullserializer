@@ -88,5 +88,35 @@ public class CyclesProvider : ITestProvider {
                     ReferenceEquals(deserialized.Value.Cycle.Cycle, deserialized.Value);
             }
         };
+
+        //--
+        //
+        //
+        //
+
+        {
+            Cyclic a0 = new Cyclic(), a1 = new Cyclic(), a2 = new Cyclic();
+            yield return new TestItem {
+                Item = new List<object> { a0, a1, a2, a1, a2, a0, a0, a0, a0 },
+                Comparer = (a, b) => {
+                    var listB = (List<object>)b;
+
+                    var b0 = listB[0];
+                    var b1 = listB[1];
+                    var b2 = listB[2];
+
+                    return
+                        listB[3] == b1 &&
+                        listB[4] == b2 &&
+                        listB[5] == b0 &&
+                        listB[6] == b0 &&
+                        listB[7] == b0 &&
+                        listB[8] == b0;
+                }
+            };
+        }
+    }
+
+    public class Cyclic {
     }
 }
