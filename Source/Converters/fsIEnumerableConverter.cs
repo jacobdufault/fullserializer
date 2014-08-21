@@ -110,7 +110,10 @@ namespace FullSerializer.Internal {
             }
 
             // Otherwise try and look up a general Add method.
-            return type.GetFlattenedMethod("Add");
+            return
+                type.GetFlattenedMethod("Add") ??
+                type.GetFlattenedMethod("Push") ??
+                type.GetFlattenedMethod("Enqueue");
         }
     }
 
