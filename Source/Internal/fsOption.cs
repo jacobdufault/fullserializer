@@ -2,7 +2,7 @@
 
 namespace FullSerializer.Internal {
     /// <summary>
-    /// Simple option time. This is akin to nullable types.
+    /// Simple option type. This is akin to nullable types.
     /// </summary>
     public struct fsOption<T> {
         private bool _hasValue;
