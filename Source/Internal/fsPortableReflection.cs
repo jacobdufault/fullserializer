@@ -195,6 +195,14 @@ namespace FullSerializer.Internal {
 #endif
         }
 
+        public static FieldInfo[] GetDeclaredFields(this Type type) {
+#if USE_TYPEINFO
+            return type.GetTypeInfo().DeclaredFields.ToArray();
+#else
+            return type.GetFields(DeclaredFlags);
+#endif
+        }
+
         public static MemberInfo[] GetDeclaredMembers(this Type type) {
 #if USE_TYPEINFO
             return type.GetTypeInfo().DeclaredMembers.ToArray();
