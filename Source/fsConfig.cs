@@ -15,5 +15,20 @@ namespace FullSerializer {
         /// The attributes that will force a field or property to *not* be serialized.
         /// </summary>
         public static Type[] IgnoreSerializeAttributes = new[] { typeof(NonSerializedAttribute), typeof(fsIgnoreAttribute) };
+
+        /// <summary>
+        /// The default member serialization.
+        /// </summary>
+        public static fsMemberSerialization DefaultMemberSerialization {
+            get {
+                return _defaultMemberSerialization;
+            }
+            set {
+                _defaultMemberSerialization = value;
+                fsMetaType.ClearCache();
+            }
+        }
+
+        private static fsMemberSerialization _defaultMemberSerialization = fsMemberSerialization.OptOut;
     }
 }

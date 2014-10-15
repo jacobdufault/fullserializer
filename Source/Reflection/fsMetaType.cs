@@ -33,6 +33,14 @@ namespace FullSerializer {
             return metaType;
         }
 
+        /// <summary>
+        /// Clears out the cached type results. Useful if some prior assumptions become invalid, ie, the default member
+        /// serialization mode.
+        /// </summary>
+        public static void ClearCache() {
+            _metaTypes = new Dictionary<Type, fsMetaType>();
+        }
+
         private fsMetaType(Type reflectedType) {
             ReflectedType = reflectedType;
 
@@ -45,8 +53,8 @@ namespace FullSerializer {
 
         private static void CollectProperties(List<fsMetaProperty> properties, Type reflectedType) {
             // do we require a [SerializeField] or [fsProperty] attribute?
-            bool requireOptIn = false;
-            bool requireOptOut = false;
+            bool requireOptIn = fsConfig.DefaultMemberSerialization == fsMemberSerialization.OptIn;
+            bool requireOptOut = fsConfig.DefaultMemberSerialization == fsMemberSerialization.OptOut;
 
             fsObjectAttribute attr = fsPortableReflection.GetAttribute<fsObjectAttribute>(reflectedType);
             if (attr != null) {
