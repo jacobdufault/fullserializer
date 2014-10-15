@@ -45,10 +45,13 @@ namespace FullSerializer {
 
         private static void CollectProperties(List<fsMetaProperty> properties, Type reflectedType) {
             // do we require a [SerializeField] or [fsProperty] attribute?
-            bool requireAnnotation = false;
+            bool requireOptIn = false;
+            bool requireOptOut = false;
+
             fsObjectAttribute attr = fsPortableReflection.GetAttribute<fsObjectAttribute>(reflectedType);
             if (attr != null) {
-                requireAnnotation = attr.MemberSerialization == fsMemberSerialization.OptIn;
+                requireOptIn = attr.MemberSerialization == fsMemberSerialization.OptIn;
+                requireOptOut = attr.MemberSerialization == fsMemberSerialization.OptOut;
             }
 
             MemberInfo[] members = reflectedType.GetDeclaredMembers();
@@ -61,22 +64,28 @@ namespace FullSerializer {
                 PropertyInfo property = member as PropertyInfo;
                 FieldInfo field = member as FieldInfo;
 
-                // If an annotation is required, then skip the property if it doesn't have one of the serialize
-                // attributes
-                if (requireAnnotation &&
+                // If an opt-in annotation is required, then skip the property if it doesn't have one
+                // of the serialize attributes
+                if (requireOptIn &&
                     fsConfig.SerializeAttributes.Any(t => fsPortableReflection.HasAttribute(member, t))) {
 
                     continue;
                 }
 
+                // If an opt-out annotation is required, then skip the property *only if* it has one of
+                // the not serialize attributes
+                if (requireOptOut && fsConfig.IgnoreSerializeAttributes.Any(t => fsPortableReflection.HasAttribute(member, t))) {
+                    continue;
+                }
+
                 if (property != null) {
-                    if (CanSerializeProperty(property, members)) {
+                    if (CanSerializeProperty(property, members, requireOptOut)) {
                         properties.Add(new fsMetaProperty(property));
                     }
                 }
 
                 else if (field != null) {
-                    if (CanSerializeField(field)) {
+                    if (CanSerializeField(field, requireOptOut)) {
                         properties.Add(new fsMetaProperty(field));
                     }
                 }
@@ -102,7 +111,7 @@ namespace FullSerializer {
             return false;
         }
 
-        private static bool CanSerializeProperty(PropertyInfo property, MemberInfo[] members) {
+        private static bool CanSerializeProperty(PropertyInfo property, MemberInfo[] members, bool optOut) {
             // We don't serialize delegates
             if (typeof(Delegate).IsAssignableFrom(property.PropertyType)) {
                 return false;
@@ -139,10 +148,10 @@ namespace FullSerializer {
             }
 
             // Otherwise, we don't bother with serialization
-            return false;
+            return optOut || false;
         }
 
-        private static bool CanSerializeField(FieldInfo field) {
+        private static bool CanSerializeField(FieldInfo field, bool optOut) {
             // We don't serialize delegates
             if (typeof(Delegate).IsAssignableFrom(field.FieldType)) {
                 return false;
@@ -167,7 +176,7 @@ namespace FullSerializer {
             }
 
             // We use !IsPublic because that also checks for internal, protected, and private.
-            if (!field.IsPublic) {
+            if (!optOut && !field.IsPublic) {
                 return false;
             }
 
