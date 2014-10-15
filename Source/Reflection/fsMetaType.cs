@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using System.Linq;
 using UnityEngine;
 
 namespace FullSerializer {
@@ -52,20 +53,18 @@ namespace FullSerializer {
 
             MemberInfo[] members = reflectedType.GetDeclaredMembers();
             foreach (MemberInfo member in members) {
-                // We don't serialize members annotated with [fsIgnore] or [NonSerialized].
-                if (member.IsDefined(typeof(fsIgnoreAttribute), inherit: true) ||
-                    member.IsDefined(typeof(NonSerializedAttribute), inherit: true)) {
+                // We don't serialize members annotated with any of the ignore serialize attributes
+                if (fsConfig.IgnoreSerializeAttributes.Any(t => fsPortableReflection.HasAttribute(member, t))) {
                     continue;
                 }
 
                 PropertyInfo property = member as PropertyInfo;
                 FieldInfo field = member as FieldInfo;
 
-                // If an annotation is required, then skip the property if it doesn't have
-                // [fsProperty] or [SerializeField] on it.
+                // If an annotation is required, then skip the property if it doesn't have one of the serialize
+                // attributes
                 if (requireAnnotation &&
-                    (member.IsDefined(typeof(fsPropertyAttribute), inherit: true) == false &&
-                     member.IsDefined(typeof(SerializeField), inherit: true) == false)) {
+                    fsConfig.SerializeAttributes.Any(t => fsPortableReflection.HasAttribute(member, t))) {
 
                     continue;
                 }
@@ -130,13 +129,12 @@ namespace FullSerializer {
                 return false;
             }
 
-            // If a property is annotated with SerializeField or fsProperty, then it should
+            // If a property is annotated with one of the serializable attributes, then it should
             // it should definitely be serialized.
             //
             // NOTE: We place this override check *after* the static check, because we *never*
             //       allow statics to be serialized.
-            if (fsPortableReflection.GetAttribute<SerializeField>(property) != null ||
-                fsPortableReflection.GetAttribute<fsPropertyAttribute>(property) != null) {
+            if (fsConfig.SerializeAttributes.Any(t => fsPortableReflection.HasAttribute(property, t))) {
                 return true;
             }
 
@@ -160,12 +158,11 @@ namespace FullSerializer {
                 return false;
             }
 
-            // We want to serialize any fields annotated with SerializeField or fsProperty.
+            // We want to serialize any fields annotated with one of the serialize attributes.
             //
             // NOTE: This occurs *after* the static check, because we *never* want to serialize
             //       static fields.
-            if (fsPortableReflection.GetAttribute<SerializeField>(field) != null ||
-                fsPortableReflection.GetAttribute<fsPropertyAttribute>(field) != null) {
+            if (fsConfig.SerializeAttributes.Any(t => fsPortableReflection.HasAttribute(field, t))) {
                 return true;
             }
 

@@ -47,12 +47,28 @@ namespace FullSerializer.Internal {
 
             return GetAttribute<TAttribute>(type.GetTypeInfo());
         }
+
+        public static Attribute GetAttribute(Type type, Type attributeType) {
+            return GetAttribute(type.GetTypeInfo(), attributeType);
+        }
+
+        public static bool HasAttribute(Type type, Type attributeType) {
+            return GetAttribute(type, attributeType) != null;
+        }
 #endif
 
         public static TAttribute GetAttribute<TAttribute>(MemberInfo memberInfo)
             where TAttribute : Attribute {
 
             return (TAttribute)memberInfo.GetCustomAttributes(typeof(TAttribute), inherit: true).FirstOrDefault();
+        }
+
+        public static Attribute GetAttribute(MemberInfo memberInfo, Type attributeType) {
+            return (Attribute)memberInfo.GetCustomAttributes(attributeType, inherit: true).FirstOrDefault();
+        }
+
+        public static bool HasAttribute(MemberInfo memberInfo, Type attributeType) {
+            return GetAttribute(memberInfo, attributeType) != null;
         }
 
 #if !USE_TYPEINFO
