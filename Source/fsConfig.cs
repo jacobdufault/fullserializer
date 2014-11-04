@@ -29,6 +29,6 @@ namespace FullSerializer {
             }
         }
 
-        private static fsMemberSerialization _defaultMemberSerialization = fsMemberSerialization.OptOut;
+        private static fsMemberSerialization _defaultMemberSerialization = fsMemberSerialization.Default;
     }
 }
