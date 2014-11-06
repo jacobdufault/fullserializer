@@ -11,8 +11,8 @@ namespace FullSerializer {
         private string _input;
 
         private fsFailure MakeFailure(string message) {
-            int start = Math.Max(0, _start - 10);
-            int length = Math.Min(20, _input.Length - start);
+            int start = Math.Max(0, _start - 20);
+            int length = Math.Min(50, _input.Length - start);
 
             string error = "Error while parsing: " + message + "; context = <" +
                 _input.Substring(start, length) + ">";
