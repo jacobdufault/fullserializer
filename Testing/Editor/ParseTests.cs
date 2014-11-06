@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -48,6 +49,17 @@ namespace FullSerializer.Tests {
             }
         }
 
+        /// <summary>
+        /// Utility method that converts a double to a string.
+        /// </summary>
+        private static String ConvertDoubleToString(double d) {
+            if (Double.IsInfinity(d) || Double.IsNaN(d)) return d.ToString();
+            String doubledString = d.ToString();
+            if (doubledString.Contains(".") == false) doubledString += ".0";
+            return doubledString;
+        }
+
+
         private static IEnumerable<string> Print(fsData data) {
             if (data.IsBool) {
                 yield return "" + data.AsBool.ToString().ToLower() + "";
@@ -56,11 +68,18 @@ namespace FullSerializer.Tests {
                 yield return " \n" + data.AsBool.ToString().ToLower() + "\n   ";
             }
 
-            else if (data.IsFloat) {
-                yield return "" + data.AsFloat + "";
-                yield return "  " + data.AsFloat + "";
-                yield return " " + data.AsFloat + "   ";
-                yield return " \n" + data.AsFloat + "\n   ";
+            else if (data.IsDouble) {
+                yield return "" + ConvertDoubleToString(data.AsDouble) + "";
+                yield return "  " + ConvertDoubleToString(data.AsDouble) + "";
+                yield return " " + ConvertDoubleToString(data.AsDouble) + "   ";
+                yield return " \n" + ConvertDoubleToString(data.AsDouble) + "\n   ";
+            }
+
+            else if (data.IsInt64) {
+                yield return "" + data.AsInt64 + "";
+                yield return "  " + data.AsInt64 + "";
+                yield return " " + data.AsInt64 + "   ";
+                yield return " \n" + data.AsInt64 + "\n   ";
             }
 
             else if (data.IsNull) {
@@ -120,11 +139,23 @@ namespace FullSerializer.Tests {
 
         [Test]
         public void ParseNumbers() {
-            VerifyData(new fsData(0));
+            VerifyData(new fsData(0f));
             VerifyData(new fsData(3f));
             VerifyData(new fsData(-3f));
             VerifyData(new fsData(3.5f));
             VerifyData(new fsData(-3.5f));
+            //VerifyData(new fsData(Single.MinValue)); // mono has a bug where it cannot handle Double.Parse(Double.MinValue.ToString())
+            //VerifyData(new fsData(Single.MaxValue)); // mono has a bug where it cannot handle Double.Parse(Double.MinValue.ToString())
+            VerifyData(new fsData(Double.NegativeInfinity));
+            VerifyData(new fsData(Double.PositiveInfinity));
+            //VerifyData(new fsData(Double.NaN));
+            VerifyData(new fsData(Double.Epsilon));
+
+            VerifyData(new fsData(Int64.MaxValue));
+            VerifyData(new fsData(Int64.MinValue));
+            VerifyData(new fsData(3));
+            VerifyData(new fsData(-3));
+
         }
 
 

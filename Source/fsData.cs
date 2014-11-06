@@ -9,7 +9,8 @@ namespace FullSerializer {
     public enum fsDataType {
         Array,
         Object,
-        Number,
+        Double,
+        Int64,
         Boolean,
         String,
         Null
@@ -17,67 +18,74 @@ namespace FullSerializer {
 
     /// <summary>
     /// A union type that stores a serialized value. The stored type can be one of six different
-    /// types: null, boolean, float, string, Dictionary, or List.
+    /// types: null, boolean, double, Int64, string, Dictionary, or List.
     /// </summary>
     public sealed class fsData {
         /// <summary>
         /// The raw value that this serialized data stores. It can be one of six different types; a
-        /// boolean, a float, a string, a Dictionary, or a List.
+        /// boolean, a double, Int64, a string, a Dictionary, or a List.
         /// </summary>
         private object _value;
 
         #region Constructors
         /// <summary>
-        /// Creates a SerializedData instance that holds null.
+        /// Creates a fsData instance that holds null.
         /// </summary>
         public fsData() {
             _value = null;
         }
 
         /// <summary>
-        /// Creates a SerializedData instance that holds a boolean.
+        /// Creates a fsData instance that holds a boolean.
         /// </summary>
         public fsData(bool boolean) {
             _value = boolean;
         }
 
         /// <summary>
-        /// Creates a SerializedData instance that holds a float.
+        /// Creates a fsData instance that holds a double.
         /// </summary>
-        public fsData(float f) {
+        public fsData(double f) {
             _value = f;
         }
 
         /// <summary>
-        /// Creates a SerializedData instance that holds a string.
+        /// Creates a new fsData instance that holds an integer.
+        /// </summary>
+        public fsData(Int64 i) {
+            _value = i;
+        }
+
+        /// <summary>
+        /// Creates a fsData instance that holds a string.
         /// </summary>
         public fsData(string str) {
             _value = str;
         }
 
         /// <summary>
-        /// Creates a SerializedData instance that holds a dictionary of values.
+        /// Creates a fsData instance that holds a dictionary of values.
         /// </summary>
         public fsData(Dictionary<string, fsData> dict) {
             _value = dict;
         }
 
         /// <summary>
-        /// Creates a SerializedData instance that holds a list of values.
+        /// Creates a fsData instance that holds a list of values.
         /// </summary>
         public fsData(List<fsData> list) {
             _value = list;
         }
 
         /// <summary>
-        /// Helper method to create a SerializedData instance that holds a dictionary.
+        /// Helper method to create a fsData instance that holds a dictionary.
         /// </summary>
         public static fsData CreateDictionary() {
             return new fsData(new Dictionary<string, fsData>());
         }
 
         /// <summary>
-        /// Helper method to create a SerializedData instance that holds a list.
+        /// Helper method to create a fsData instance that holds a list.
         /// </summary>
         public static fsData CreateList() {
             return new fsData(new List<fsData>());
@@ -88,7 +96,8 @@ namespace FullSerializer {
         public fsDataType Type {
             get {
                 if (_value == null) return fsDataType.Null;
-                if (_value is float) return fsDataType.Number;
+                if (_value is double) return fsDataType.Double;
+                if (_value is Int64) return fsDataType.Int64;
                 if (_value is bool) return fsDataType.Boolean;
                 if (_value is string) return fsDataType.String;
                 if (_value is Dictionary<string, fsData>) return fsDataType.Object;
@@ -99,7 +108,7 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Returns true if this SerializedData instance maps back to null.
+        /// Returns true if this fsData instance maps back to null.
         /// </summary>
         public bool IsNull {
             get {
@@ -108,16 +117,25 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Returns true if this SerializedData instance maps back to a float.
+        /// Returns true if this fsData instance maps back to a double.
         /// </summary>
-        public bool IsFloat {
+        public bool IsDouble {
             get {
-                return _value is float;
+                return _value is double;
             }
         }
 
         /// <summary>
-        /// Returns true if this SerializedData instance maps back to a boolean.
+        /// Returns true if this fsData instance maps back to an Int64.
+        /// </summary>
+        public bool IsInt64 {
+            get {
+                return _value is Int64;
+            }
+        }
+
+        /// <summary>
+        /// Returns true if this fsData instance maps back to a boolean.
         /// </summary>
         public bool IsBool {
             get {
@@ -126,7 +144,7 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Returns true if this SerializedData instance maps back to a string.
+        /// Returns true if this fsData instance maps back to a string.
         /// </summary>
         public bool IsString {
             get {
@@ -135,7 +153,7 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Returns true if this SerializedData instance maps back to a Dictionary.
+        /// Returns true if this fsData instance maps back to a Dictionary.
         /// </summary>
         public bool IsDictionary {
             get {
@@ -144,7 +162,7 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Returns true if this SerializedData instance maps back to a List.
+        /// Returns true if this fsData instance maps back to a List.
         /// </summary>
         public bool IsList {
             get {
@@ -155,17 +173,28 @@ namespace FullSerializer {
 
         #region Casts
         /// <summary>
-        /// Casts this SerializedData to a float. Throws an exception if it is not a float.
+        /// Casts this fsData to a double. Throws an exception if it is not a double.
         /// </summary>
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        public float AsFloat {
+        public double AsDouble {
             get {
-                return Cast<float>();
+                return Cast<double>();
             }
         }
 
         /// <summary>
-        /// Casts this SerializedData to a boolean. Throws an exception if it is not a boolean.
+        /// Casts this fsData to an Int64. Throws an exception if it is not an Int64.
+        /// </summary>
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        public Int64 AsInt64 {
+            get {
+                return Cast<Int64>();
+            }
+        }
+
+
+        /// <summary>
+        /// Casts this fsData to a boolean. Throws an exception if it is not a boolean.
         /// </summary>
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public bool AsBool {
@@ -175,7 +204,7 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Casts this SerializedData to a string. Throws an exception if it is not a string.
+        /// Casts this fsData to a string. Throws an exception if it is not a string.
         /// </summary>
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public string AsString {
@@ -185,7 +214,7 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Casts this SerializedData to a Dictionary. Throws an exception if it is not a
+        /// Casts this fsData to a Dictionary. Throws an exception if it is not a
         /// Dictionary.
         /// </summary>
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -196,7 +225,7 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Casts this SerializedData to a List. Throws an exception if it is not a List.
+        /// Casts this fsData to a List. Throws an exception if it is not a List.
         /// </summary>
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public List<fsData> AsList {
@@ -245,8 +274,11 @@ namespace FullSerializer {
                 case fsDataType.Null:
                     return true;
 
-                case fsDataType.Number:
-                    return AsFloat == other.AsFloat;
+                case fsDataType.Double:
+                    return AsDouble == other.AsDouble;
+
+                case fsDataType.Int64:
+                    return AsInt64 == other.AsInt64;
 
                 case fsDataType.Boolean:
                     return AsBool == other.AsBool;
@@ -302,6 +334,10 @@ namespace FullSerializer {
             // If one is null, but not both, return false.
             if (((object)a == null) || ((object)b == null)) {
                 return false;
+            }
+
+            if (a.IsDouble && b.IsDouble) {
+                return Double.Equals(a, b);
             }
 
             return a.Equals(b);

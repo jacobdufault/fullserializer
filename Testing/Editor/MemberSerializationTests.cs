@@ -34,6 +34,8 @@ namespace FullSerializer.Tests.MemberSerialization {
             SimpleModel model2 = null;
             Assert.IsTrue(serializer.TryDeserialize(data, ref model2).Succeeded);
 
+            Debug.Log(fsJsonPrinter.PrettyJson(data));
+
             Assert.AreEqual(model1.Serialized0, model2.Serialized0);
             Assert.AreEqual(model1.Serialized1, model2.Serialized1);
             Assert.AreEqual(model1.Serialized2, model2.Serialized2);

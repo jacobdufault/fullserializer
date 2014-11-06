@@ -220,14 +220,29 @@ namespace FullSerializer {
             }
 
             // try to parse the value
-            float floatValue;
-            if (float.TryParse(_input.Substring(start, _start - start), out floatValue) == false) {
-                data = null;
-                return MakeFailure("Bad float format with " + _input.Substring(start, _start - start));
-            }
+            string numberString = _input.Substring(start, _start - start);
 
-            data = new fsData(floatValue);
-            return fsFailure.Success;
+            // double -- includes a .
+            if (numberString.Contains(".") || numberString == "Infinity" || numberString == "-Infinity" || numberString == "NaN") {
+                double doubleValue;
+                if (double.TryParse(numberString, out doubleValue) == false) {
+                    data = null;
+                    return MakeFailure("Bad double format with " + numberString);
+                }
+
+                data = new fsData(doubleValue);
+                return fsFailure.Success;
+            }
+            else {
+                Int64 intValue;
+                if (Int64.TryParse(numberString, out intValue) == false) {
+                    data = null;
+                    return MakeFailure("Bad Int64 format with " + numberString);
+                }
+
+                data = new fsData(intValue);
+                return fsFailure.Success;
+            }
         }
 
         /// <summary>
@@ -394,6 +409,8 @@ namespace FullSerializer {
             SkipSpace();
 
             switch (Character()) {
+                case 'I': // Infinity
+                case 'N': // NaN
                 case '.':
                 case '+':
                 case '-':

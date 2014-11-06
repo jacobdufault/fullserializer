@@ -97,8 +97,13 @@ namespace FullSerializer {
                     else stream.Write("false");
                     break;
 
-                case fsDataType.Number:
-                    stream.Write(data.AsFloat);
+                case fsDataType.Double:
+                    // doubles must *always* include a decimal
+                    stream.Write(ConvertDoubleToString(data.AsDouble));
+                    break;
+
+                case fsDataType.Int64:
+                    stream.Write(data.AsInt64);
                     break;
 
                 case fsDataType.String:
@@ -151,9 +156,14 @@ namespace FullSerializer {
                     else stream.Write("false");
                     break;
 
-                case fsDataType.Number:
-                    stream.Write(data.AsFloat);
+                case fsDataType.Double:
+                    stream.Write(ConvertDoubleToString(data.AsDouble));
                     break;
+
+                case fsDataType.Int64:
+                    stream.Write(data.AsInt64);
+                    break;
+
 
                 case fsDataType.String:
                     stream.Write('"');
@@ -259,5 +269,16 @@ namespace FullSerializer {
                 return reader.ReadToEnd();
             }
         }
+
+        /// <summary>
+        /// Utility method that converts a double to a string.
+        /// </summary>
+        private static String ConvertDoubleToString(double d) {
+            if (Double.IsInfinity(d) || Double.IsNaN(d)) return d.ToString();
+            String doubledString = d.ToString();
+            if (doubledString.Contains(".") == false) doubledString += ".0";
+            return doubledString;
+        }
+
     }
 }

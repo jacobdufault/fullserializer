@@ -42,8 +42,8 @@ namespace FullSerializer.Internal {
                 return fsFailure.Success;
             }
 
-            else if (data.IsFloat) {
-                int enumValue = (int)data.AsFloat;
+            else if (data.IsInt64) {
+                int enumValue = (int)data.AsInt64;
 
                 // In .NET compact, Enum.ToObject(Type, Object) is defined but the overloads like
                 // Enum.ToObject(Type, int) are not -- so we get around this by boxing the value.

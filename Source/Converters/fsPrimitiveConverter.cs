@@ -23,13 +23,17 @@ namespace FullSerializer.Internal {
                 return fsFailure.Success;
             }
 
-            if (instance is byte ||
-                instance is short || instance is ushort ||
-                instance is int || instance is uint ||
-                instance is long || instance is ulong ||
-                instance is float || instance is double || instance is decimal) {
+            if (instance is sbyte || instance is byte ||
+                instance is Int16 || instance is UInt16 ||
+                instance is Int32 || instance is UInt32 ||
+                instance is Int64 || instance is UInt64) {
+                serialized = new fsData((Int64)Convert.ChangeType(instance, typeof(Int64)));
+                return fsFailure.Success;
 
-                serialized = new fsData((float)Convert.ChangeType(instance, typeof(float)));
+            }
+
+            if (instance is float || instance is double || instance is decimal) {
+                serialized = new fsData((double)Convert.ChangeType(instance, typeof(double)));
                 return fsFailure.Success;
             }
 
@@ -48,8 +52,13 @@ namespace FullSerializer.Internal {
                 return fsFailure.Success;
             }
 
-            if (storage.IsFloat) {
-                instance = Convert.ChangeType(storage.AsFloat, storageType);
+            if (storage.IsDouble) {
+                instance = Convert.ChangeType(storage.AsDouble, storageType);
+                return fsFailure.Success;
+            }
+
+            if (storage.IsInt64) {
+                instance = Convert.ChangeType(storage.AsInt64, storageType);
                 return fsFailure.Success;
             }
 
