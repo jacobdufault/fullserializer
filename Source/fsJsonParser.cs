@@ -28,11 +28,19 @@ namespace FullSerializer {
             return false;
         }
 
-        private bool HasValue(int offset = 0) {
+        private bool HasValue() {
+            return HasValue(0);
+        }
+
+        private bool HasValue(int offset) {
             return (_start + offset) >= 0 && (_start + offset) < _input.Length;
         }
 
-        private char Character(int offset = 0) {
+        private char Character() {
+            return Character(0);
+        }
+
+        private char Character(int offset) {
             return _input[_start + offset];
         }
 

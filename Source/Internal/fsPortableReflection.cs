@@ -60,11 +60,11 @@ namespace FullSerializer.Internal {
         public static TAttribute GetAttribute<TAttribute>(MemberInfo memberInfo)
             where TAttribute : Attribute {
 
-            return (TAttribute)memberInfo.GetCustomAttributes(typeof(TAttribute), inherit: true).FirstOrDefault();
+            return (TAttribute)memberInfo.GetCustomAttributes(typeof(TAttribute), /*inherit:*/ true).FirstOrDefault();
         }
 
         public static Attribute GetAttribute(MemberInfo memberInfo, Type attributeType) {
-            return (Attribute)memberInfo.GetCustomAttributes(attributeType, inherit: true).FirstOrDefault();
+            return (Attribute)memberInfo.GetCustomAttributes(attributeType, /*inherit:*/ true).FirstOrDefault();
         }
 
         public static bool HasAttribute(MemberInfo memberInfo, Type attributeType) {
