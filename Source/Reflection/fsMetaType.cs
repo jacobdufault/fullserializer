@@ -75,7 +75,7 @@ namespace FullSerializer {
                 // If an opt-in annotation is required, then skip the property if it doesn't have one
                 // of the serialize attributes
                 if (requireOptIn &&
-                    fsConfig.SerializeAttributes.Any(t => fsPortableReflection.HasAttribute(member, t))) {
+                    !fsConfig.SerializeAttributes.Any(t => fsPortableReflection.HasAttribute(member, t))) {
 
                     continue;
                 }
