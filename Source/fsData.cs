@@ -25,7 +25,7 @@ namespace FullSerializer {
         /// The raw value that this serialized data stores. It can be one of six different types; a
         /// boolean, a double, Int64, a string, a Dictionary, or a List.
         /// </summary>
-        private object _value;
+        private readonly object _value;
 
         #region Constructors
         /// <summary>
