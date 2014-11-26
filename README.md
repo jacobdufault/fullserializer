@@ -42,6 +42,80 @@ Here are the precise rules:
 
 Inheritance and cycles are both correctly handled and fully supported by Full Serializer. You don't need to do anything -- they are automatically detected.
 
+## [fsObject] Customization
+
+You can easily customize the serialization of a specific object by utilizing `[fsObject]`. There are a number of options:
+
+### Member Serialization
+
+You can specify what the default member serialization is by changing the `MemberSerialization` parameter. The options are `OptIn`, `OptOut`, and `Default`. `OptIn` requires that every serialize member be annotated with `fsProperty`, `OptOut` will serialize every member *except* those annotated with `fsIgnore`, and `Default` uses the default intelligent behavior where visibility level and property type are examined.
+
+### Converter
+
+You can specify a custom converter to use directly on the model. This is more efficient than registering a custom converter on the `fsSerializer` and additionally provides portability w.r.t. the actual `fsSerializer` instance; the `fsSerializer` creator does not need to know about this specific converter.
+
+Here is an example usage. See docs below for a more detailed explanation of `fsConverter`:
+
+```c#
+[fsObject(Converter = typeof(MyConverter))]
+public class MyModel {
+}
+
+public class MyConverter : fsConverter {
+    public override bool CanProcess(Type type) {
+        throw new NotSupportedException();
+    }
+
+    public override object CreateInstance(fsData data, Type storageType) {
+        return new MyModel();
+    }
+
+    public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
+        serialized = new fsData();
+        return fsFailure.Success;
+    }
+
+    public override fsFailure TryDeserialize(fsData data, ref object instance, Type storageType) {
+        return fsFailure.Success;
+    }
+}
+
+```
+
+### Versioning
+
+Full Serializer supports versioning for serialization. You can specify the previous version of an object by utilizing these parameters for `[fsObject]`.
+```c#
+PreviousModels
+VersionString
+```
+
+`PreviousModels` is an array of types that specify the prior models that this object was migrated from. `VersionString` specifies a unique identifier for this model that separates it from all other prior model instances. Note that if a model should be versioned, it needs to initially have a `VersionString` parameter, otherwise no migration will be performed.
+
+Here is a simple object migration:
+
+```c#
+[fsObject("1")]
+public struct Model_v1 {
+    public int A;
+}
+
+[fsObject("2", typeof(Model_v1))]
+public struct Model {
+    public int B;
+
+    public Model(Model_v1 model) {
+        B = model.A;
+    }
+}
+```
+
+Notice in particular that we have a constructor on `Model` that accepts an instance of `Model_v1`. If Full Serializer detects that we are deserializing old data, it will first deserialize it into an instance of `Model_v1` and then return a newly constructed instance of `Model` via the `Model_v1` constructor.
+
+All version strings have to be unique (if not, an error will be issued) and there can be no cycles in the versioning import graph (there can be more than one previous model).
+
+We can easily introduce a new `Model` type and then we just rename `Model` to `Model_v2` and Full Serializer will automatically send a `Model_v1` instance through to `Model_v1(deserialized)` -> `Model_v2(Model_v1)` -> `Model(Model_v2)`. Running deserializing this way prevents an explosion of required constructor types.
+
 ## API
 
 ### Serialization and Deserialization
@@ -159,6 +233,13 @@ public class MyTypeConverter : fsConverter {
 ```c#
 var serializer = new fsSerializer();
 serializer.AddConverter(new MyTypeConverter());
+```
+
+or:
+
+```c#
+[fsObject(Converter = typeof(MyTypeConverter))]
+public class MyType {}
 ```
 
 After registration, use your serializer like normal and when it comes time to serialize or deserialize, your custom `MyTypeConverter` will automatically be invoked to serialize/deserialize `MyType` objects.
