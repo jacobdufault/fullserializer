@@ -275,7 +275,7 @@ namespace FullSerializer {
                     return true;
 
                 case fsDataType.Double:
-                    return AsDouble == other.AsDouble;
+                    return Math.Abs(AsDouble - other.AsDouble) < double.Epsilon;
 
                 case fsDataType.Int64:
                     return AsInt64 == other.AsInt64;
@@ -337,7 +337,7 @@ namespace FullSerializer {
             }
 
             if (a.IsDouble && b.IsDouble) {
-                return Double.Equals(a, b);
+                return Math.Abs(a.AsDouble - b.AsDouble) < double.Epsilon;
             }
 
             return a.Equals(b);
