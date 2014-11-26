@@ -446,9 +446,10 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Parses the specified input. Throws a ParseException if parsing failed.
+        /// Parses the specified input. Returns a failure state if parsing failed.
         /// </summary>
         /// <param name="input">The input to parse.</param>
+        /// <param name="data">The parsed data. This is undefined if parsing fails.</param>
         /// <returns>The parsed input.</returns>
         public static fsFailure Parse(string input, out fsData data) {
             var context = new fsJsonParser(input);

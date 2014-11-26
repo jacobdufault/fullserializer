@@ -8,13 +8,13 @@ namespace FullSerializer {
         private fsFailure() {
         }
 
-        public static fsFailure Success = new fsFailure() {
+        public static fsFailure Success = new fsFailure {
             _success = true,
             _reason = string.Empty
         };
 
         public static fsFailure Fail(string reason) {
-            return new fsFailure() {
+            return new fsFailure {
                 _success = false,
                 _reason = reason
             };

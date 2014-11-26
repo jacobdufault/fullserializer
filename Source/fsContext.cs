@@ -10,7 +10,7 @@ namespace FullSerializer {
         /// <summary>
         /// All of the context objects.
         /// </summary>
-        private Dictionary<Type, object> _contextObjects = new Dictionary<Type, object>();
+        private readonly Dictionary<Type, object> _contextObjects = new Dictionary<Type, object>();
 
         /// <summary>
         /// Removes all context objects from the context.

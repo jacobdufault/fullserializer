@@ -9,12 +9,12 @@ namespace FullSerializer {
         /// <summary>
         /// The attributes that will force a field or property to be serialized.
         /// </summary>
-        public static Type[] SerializeAttributes = new[] { typeof(SerializeField), typeof(fsPropertyAttribute) };
+        public static Type[] SerializeAttributes = { typeof(SerializeField), typeof(fsPropertyAttribute) };
 
         /// <summary>
         /// The attributes that will force a field or property to *not* be serialized.
         /// </summary>
-        public static Type[] IgnoreSerializeAttributes = new[] { typeof(NonSerializedAttribute), typeof(fsIgnoreAttribute) };
+        public static Type[] IgnoreSerializeAttributes = { typeof(NonSerializedAttribute), typeof(fsIgnoreAttribute) };
 
         /// <summary>
         /// The default member serialization.

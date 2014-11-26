@@ -51,7 +51,7 @@ namespace FullSerializer {
         /// <summary>
         /// Deserialize data into the object instance.
         /// </summary>
-        /// <param name="storage">Serialization data to deserialize from.</param>
+        /// <param name="data">Serialization data to deserialize from.</param>
         /// <param name="instance">The object instance to deserialize into.</param>
         /// <param name="storageType">The field/property type that is storing the instance.</param>
         /// <returns>True if serialization was successful, false otherwise.</returns>
@@ -67,7 +67,7 @@ namespace FullSerializer {
         public virtual object CreateInstance(fsData data, Type storageType) {
             if (RequestCycleSupport(storageType)) {
                 throw new InvalidOperationException("Please override CreateInstance for " +
-                    this.GetType().FullName + "; the object graph for " + storageType +
+                    GetType().FullName + "; the object graph for " + storageType +
                     " can contain potentially contain cycles, so separated instance creation " +
                     "is needed");
             }

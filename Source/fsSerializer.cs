@@ -155,30 +155,30 @@ namespace FullSerializer {
         /// <summary>
         /// Converters that are available.
         /// </summary>
-        private List<fsConverter> _converters;
+        private readonly List<fsConverter> _converters;
 
         /// <summary>
         /// Reference manager for cycle detection.
         /// </summary>
-        private fsCyclicReferenceManager _references;
-        private fsLazyCycleDefinitionWriter _lazyReferenceWriter;
+        private readonly fsCyclicReferenceManager _references;
+        private readonly fsLazyCycleDefinitionWriter _lazyReferenceWriter;
 
         public fsSerializer() {
             _cachedConverters = new Dictionary<Type, fsConverter>();
             _references = new fsCyclicReferenceManager();
             _lazyReferenceWriter = new fsLazyCycleDefinitionWriter();
 
-            _converters = new List<fsConverter>() {
-                new fsNullableConverter() { Serializer = this },
-                new fsGuidConverter() { Serializer = this },
-                new fsTypeConverter() { Serializer = this },
-                new fsDateConverter() { Serializer = this },
-                new fsEnumConverter() { Serializer = this },
-                new fsPrimitiveConverter() { Serializer = this },
-                new fsArrayConverter() { Serializer = this },
-                new fsIEnumerableConverter() { Serializer = this },
-                new fsKeyValuePairConverter() { Serializer = this },
-                new fsReflectedConverter() { Serializer = this }
+            _converters = new List<fsConverter> {
+                new fsNullableConverter { Serializer = this },
+                new fsGuidConverter { Serializer = this },
+                new fsTypeConverter { Serializer = this },
+                new fsDateConverter { Serializer = this },
+                new fsEnumConverter { Serializer = this },
+                new fsPrimitiveConverter { Serializer = this },
+                new fsArrayConverter { Serializer = this },
+                new fsIEnumerableConverter { Serializer = this },
+                new fsKeyValuePairConverter { Serializer = this },
+                new fsReflectedConverter { Serializer = this }
             };
 
             Context = new fsContext();
