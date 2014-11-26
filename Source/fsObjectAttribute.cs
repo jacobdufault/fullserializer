@@ -30,6 +30,13 @@ namespace FullSerializer {
         /// </summary>
         public fsMemberSerialization MemberSerialization = fsMemberSerialization.Default;
 
+        /// <summary>
+        /// Specify a custom converter to use for serialization. The converter type needs
+        /// to derive from fsConverter and the call to CanProcess can be skipped. This
+        /// defaults to null.
+        /// </summary>
+        public Type Converter;
+
         public fsObjectAttribute() { }
         public fsObjectAttribute(string versionString, params Type[] previousModels) {
             VersionString = versionString;
