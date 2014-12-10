@@ -6,16 +6,24 @@ namespace FullSerializer.Internal {
     /// A property or field on a MetaType.
     /// </summary>
     public class fsMetaProperty {
+		private readonly bool canRead;
+		private readonly bool canWrite;
+
         internal fsMetaProperty(FieldInfo field) {
             _memberInfo = field;
             StorageType = field.FieldType;
             Name = GetName(field);
+
+			canRead = canWrite = true;
         }
 
         internal fsMetaProperty(PropertyInfo property) {
             _memberInfo = property;
             StorageType = property.PropertyType;
             Name = GetName(property);
+
+			canRead = property.CanRead;
+			canWrite = property.CanWrite;
         }
 
         /// <summary>
@@ -40,6 +48,10 @@ namespace FullSerializer.Internal {
             private set;
         }
 
+		public bool CanWrite() {
+			return canWrite;
+		}
+
         /// <summary>
         /// Writes a value to the property that this MetaProperty represents, using given object
         /// instance as the context.
@@ -59,6 +71,10 @@ namespace FullSerializer.Internal {
                 }
             }
         }
+
+		public bool CanRead() {
+			return canRead;
+		}
 
         /// <summary>
         /// Reads a value from the property that this MetaProperty represents, using the given
