@@ -90,6 +90,13 @@ namespace FullSerializer {
         public static fsData CreateList() {
             return new fsData(new List<fsData>());
         }
+
+        /// <summary>
+        /// Helper method to create a fsData instance that holds a list with the initial capacity.
+        /// </summary>
+        public static fsData CreateList(int capacity) {
+            return new fsData(new List<fsData>(capacity));
+        }
         #endregion
 
         #region Casting Predicates

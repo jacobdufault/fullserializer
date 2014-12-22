@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace FullSerializer.Internal {
     public class fsArrayConverter : fsConverter {
@@ -18,18 +16,24 @@ namespace FullSerializer.Internal {
         }
 
         public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
-            serialized = fsData.CreateList();
+            // note: IList[index] is **significantly** faster than Array.Get, so make sure we use
+            //       that instead.
 
-            Array arr = (Array)instance;
+            IList arr = (Array)instance;
             Type elementType = storageType.GetElementType();
-            for (int i = 0; i < arr.Length; ++i) {
-                object item = arr.GetValue(i);
+
+            serialized = fsData.CreateList(arr.Count);
+            var serializedList = serialized.AsList;
+
+            for (int i = 0; i < arr.Count; ++i) {
+                object item = arr[i];
+
                 fsData serializedItem;
 
                 var fail = Serializer.TrySerialize(elementType, item, out serializedItem);
                 if (fail.Failed) return fail;
 
-                serialized.AsList.Add(serializedItem);
+                serializedList.Add(serializedItem);
             }
 
             return fsFailure.Success;
@@ -38,8 +42,9 @@ namespace FullSerializer.Internal {
         public override fsFailure TryDeserialize(fsData data, ref object instance, Type storageType) {
             Type elementType = storageType.GetElementType();
 
-            var list = new ArrayList();
             var serializedList = data.AsList;
+            var list = new ArrayList(serializedList.Count);
+
             for (int i = 0; i < serializedList.Count; ++i) {
                 var serializedItem = serializedList[i];
                 object deserialized = null;
