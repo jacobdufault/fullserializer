@@ -10,12 +10,16 @@ namespace FullSerializer.Internal {
             _memberInfo = field;
             StorageType = field.FieldType;
             Name = GetName(field);
+            CanRead = true;
+            CanWrite = true;
         }
 
         internal fsMetaProperty(PropertyInfo property) {
             _memberInfo = property;
             StorageType = property.PropertyType;
             Name = GetName(property);
+            CanRead = property.CanRead;
+            CanWrite = property.CanWrite;
         }
 
         /// <summary>
@@ -28,6 +32,22 @@ namespace FullSerializer.Internal {
         /// StorageType will be typeof(int).
         /// </summary>
         public Type StorageType {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Can this property be read?
+        /// </summary>
+        public bool CanRead {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Can this property be written to?
+        /// </summary>
+        public bool CanWrite {
             get;
             private set;
         }

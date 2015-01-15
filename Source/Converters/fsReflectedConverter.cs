@@ -19,6 +19,7 @@ namespace FullSerializer.Internal {
             fsMetaType metaType = fsMetaType.Get(instance.GetType());
             for (int i = 0; i < metaType.Properties.Length; ++i) {
                 fsMetaProperty property = metaType.Properties[i];
+                if (property.CanRead == false) continue;
 
                 fsData serializedData;
 
@@ -40,6 +41,7 @@ namespace FullSerializer.Internal {
 
             for (int i = 0; i < metaType.Properties.Length; ++i) {
                 fsMetaProperty property = metaType.Properties[i];
+                if (property.CanWrite == false) continue;
 
                 fsData propertyData;
                 if (data.AsDictionary.TryGetValue(property.Name, out propertyData)) {

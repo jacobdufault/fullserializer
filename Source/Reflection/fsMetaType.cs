@@ -64,7 +64,7 @@ namespace FullSerializer {
             }
 
             MemberInfo[] members = reflectedType.GetDeclaredMembers();
-            foreach (MemberInfo member in members) {
+            foreach (var member in members) {
                 // We don't serialize members annotated with any of the ignore serialize attributes
                 if (fsConfig.IgnoreSerializeAttributes.Any(t => fsPortableReflection.HasAttribute(member, t))) {
                     continue;
@@ -83,7 +83,9 @@ namespace FullSerializer {
 
                 // If an opt-out annotation is required, then skip the property *only if* it has one of
                 // the not serialize attributes
-                if (requireOptOut && fsConfig.IgnoreSerializeAttributes.Any(t => fsPortableReflection.HasAttribute(member, t))) {
+                if (requireOptOut &&
+                    fsConfig.IgnoreSerializeAttributes.Any(t => fsPortableReflection.HasAttribute(member, t))) {
+
                     continue;
                 }
 
@@ -92,7 +94,6 @@ namespace FullSerializer {
                         properties.Add(new fsMetaProperty(property));
                     }
                 }
-
                 else if (field != null) {
                     if (CanSerializeField(field, requireOptOut)) {
                         properties.Add(new fsMetaProperty(field));
@@ -120,26 +121,18 @@ namespace FullSerializer {
             return false;
         }
 
-        private static bool CanSerializeProperty(PropertyInfo property, MemberInfo[] members, bool optOut) {
+        /// <summary>
+        /// Returns if the given property should be serialized.
+        /// </summary>
+        /// <param name="annotationFreeValue">Should a property without any annotations be serialized?</param>
+        private static bool CanSerializeProperty(PropertyInfo property, MemberInfo[] members, bool annotationFreeValue) {
             // We don't serialize delegates
             if (typeof(Delegate).IsAssignableFrom(property.PropertyType)) {
                 return false;
             }
 
-            // If the property cannot be both read and written to, we cannot serialize it
-            if (property.CanRead == false || property.CanWrite == false) {
-                return false;
-            }
-
             var publicGetMethod = property.GetGetMethod(/*nonPublic:*/ false);
             var publicSetMethod = property.GetSetMethod(/*nonPublic:*/ false);
-
-            // If it's an auto-property and it has either a public get or a public set method,
-            // then we serialize it
-            if (IsAutoProperty(property, members) &&
-                (publicGetMethod != null || publicSetMethod != null)) {
-                return true;
-            }
 
             // We do not bother to serialize static fields.
             if ((publicGetMethod != null && publicGetMethod.IsStatic) ||
@@ -156,11 +149,25 @@ namespace FullSerializer {
                 return true;
             }
 
+            // If the property cannot be both read and written to, we are not going to serialize it
+            // regardless of the default serialization mode
+            if (property.CanRead == false || property.CanWrite == false) {
+                return false;
+            }
+
+            // If it's an auto-property and it has either a public get or a public set method,
+            // then we serialize it
+            if (IsAutoProperty(property, members) &&
+                (publicGetMethod != null || publicSetMethod != null)) {
+                return true;
+            }
+
+
             // Otherwise, we don't bother with serialization
-            return optOut || false;
+            return annotationFreeValue;
         }
 
-        private static bool CanSerializeField(FieldInfo field, bool optOut) {
+        private static bool CanSerializeField(FieldInfo field, bool annotationFreeValue) {
             // We don't serialize delegates
             if (typeof(Delegate).IsAssignableFrom(field.FieldType)) {
                 return false;
@@ -185,7 +192,7 @@ namespace FullSerializer {
             }
 
             // We use !IsPublic because that also checks for internal, protected, and private.
-            if (!optOut && !field.IsPublic) {
+            if (!annotationFreeValue && !field.IsPublic) {
                 return false;
             }
 
