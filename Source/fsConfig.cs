@@ -1,5 +1,4 @@
 ﻿using System;
-using UnityEngine;
 
 namespace FullSerializer {
     /// <summary>
@@ -9,7 +8,12 @@ namespace FullSerializer {
         /// <summary>
         /// The attributes that will force a field or property to be serialized.
         /// </summary>
-        public static Type[] SerializeAttributes = { typeof(SerializeField), typeof(fsPropertyAttribute) };
+        public static Type[] SerializeAttributes = {
+#if !NO_UNITY
+            typeof(UnityEngine.SerializeField),
+#endif
+            typeof(fsPropertyAttribute)
+        };
 
         /// <summary>
         /// The attributes that will force a field or property to *not* be serialized.

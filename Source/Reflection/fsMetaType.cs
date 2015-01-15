@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Linq;
-using UnityEngine;
 
 namespace FullSerializer {
     /// <summary>
@@ -13,13 +12,15 @@ namespace FullSerializer {
     /// </summary>
     public class fsMetaType {
         static fsMetaType() {
+#if !NO_UNITY
             // Setup properties for Unity types that don't work well with the auto-rules.
-            fsMetaType.Get(typeof(Bounds)).SetProperties("center", "size");
-            fsMetaType.Get(typeof(Keyframe)).SetProperties("time", "value", "tangentMode", "inTangent", "outTangent");
-            fsMetaType.Get(typeof(AnimationCurve)).SetProperties("keys", "preWrapMode", "postWrapMode");
-            fsMetaType.Get(typeof(LayerMask)).SetProperties("value");
-            fsMetaType.Get(typeof(Gradient)).SetProperties("alphaKeys", "colorKeys");
-            fsMetaType.Get(typeof(Rect)).SetProperties("xMin", "yMin", "xMax", "yMax");
+            fsMetaType.Get(typeof(UnityEngine.Bounds)).SetProperties("center", "size");
+            fsMetaType.Get(typeof(UnityEngine.Keyframe)).SetProperties("time", "value", "tangentMode", "inTangent", "outTangent");
+            fsMetaType.Get(typeof(UnityEngine.AnimationCurve)).SetProperties("keys", "preWrapMode", "postWrapMode");
+            fsMetaType.Get(typeof(UnityEngine.LayerMask)).SetProperties("value");
+            fsMetaType.Get(typeof(UnityEngine.Gradient)).SetProperties("alphaKeys", "colorKeys");
+            fsMetaType.Get(typeof(UnityEngine.Rect)).SetProperties("xMin", "yMin", "xMax", "yMax");
+#endif
         }
 
         private static Dictionary<Type, fsMetaType> _metaTypes = new Dictionary<Type, fsMetaType>();
@@ -263,11 +264,13 @@ namespace FullSerializer {
                 throw new Exception("Cannot create an instance of an interface or abstract type for " + ReflectedType);
             }
 
+#if !NO_UNITY
             // Unity requires special construction logic for types that derive from
             // ScriptableObject.
-            if (typeof(ScriptableObject).IsAssignableFrom(ReflectedType)) {
-                return ScriptableObject.CreateInstance(ReflectedType);
+            if (typeof(UnityEngine.ScriptableObject).IsAssignableFrom(ReflectedType)) {
+                return UnityEngine.ScriptableObject.CreateInstance(ReflectedType);
             }
+#endif
 
             // Strings don't have default constructors but also fail when run through
             // FormatterSerivces.GetSafeUninitializedObject
