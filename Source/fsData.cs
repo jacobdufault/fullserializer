@@ -282,7 +282,7 @@ namespace FullSerializer {
                     return true;
 
                 case fsDataType.Double:
-                    return Math.Abs(AsDouble - other.AsDouble) < double.Epsilon;
+                    return AsDouble == other.AsDouble || Math.Abs(AsDouble - other.AsDouble) < double.Epsilon;
 
                 case fsDataType.Int64:
                     return AsInt64 == other.AsInt64;
