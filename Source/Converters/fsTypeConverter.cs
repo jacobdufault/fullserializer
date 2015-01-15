@@ -14,22 +14,22 @@ namespace FullSerializer.Internal {
             return false;
         }
 
-        public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
+        public override fsResult TrySerialize(object instance, out fsData serialized, Type storageType) {
             var type = (Type)instance;
             serialized = new fsData(type.FullName);
-            return fsFailure.Success;
+            return fsResult.Success;
         }
 
-        public override fsFailure TryDeserialize(fsData data, ref object instance, Type storageType) {
+        public override fsResult TryDeserialize(fsData data, ref object instance, Type storageType) {
             if (data.IsString == false) {
-                return fsFailure.Fail("Type converter requires a string");
+                return fsResult.Fail("Type converter requires a string");
             }
 
             instance = fsTypeLookup.GetType(data.AsString);
             if (instance == null) {
-                return fsFailure.Fail("Unable to find type " + data.AsString);
+                return fsResult.Fail("Unable to find type " + data.AsString);
             }
-            return fsFailure.Success;
+            return fsResult.Success;
         }
 
         public override object CreateInstance(fsData data, Type storageType) {

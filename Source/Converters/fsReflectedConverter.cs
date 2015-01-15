@@ -13,8 +13,9 @@ namespace FullSerializer.Internal {
             return true;
         }
 
-        public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
+        public override fsResult TrySerialize(object instance, out fsData serialized, Type storageType) {
             serialized = fsData.CreateDictionary();
+            var result = fsResult.Success;
 
             fsMetaType metaType = fsMetaType.Get(instance.GetType());
             for (int i = 0; i < metaType.Properties.Length; ++i) {
@@ -23,18 +24,24 @@ namespace FullSerializer.Internal {
 
                 fsData serializedData;
 
-                var failed = Serializer.TrySerialize(property.StorageType, property.Read(instance), out serializedData);
-                if (failed.Failed) return failed;
+                var itemResult = Serializer.TrySerialize(property.StorageType, property.Read(instance), out serializedData);
+                result.AddMessages(itemResult);
+                if (itemResult.Failed) {
+                    continue;
+                }
 
                 serialized.AsDictionary[property.Name] = serializedData;
             }
 
-            return fsFailure.Success;
+            return result;
         }
 
-        public override fsFailure TryDeserialize(fsData data, ref object instance, Type storageType) {
-            if (data.IsDictionary == false) {
-                return fsFailure.Fail("Reflected converter requires a dictionary for data");
+        public override fsResult TryDeserialize(fsData data, ref object instance, Type storageType) {
+            var result = fsResult.Success;
+
+            // Verify that we actually have an Object
+            if ((result += CheckType(data, fsDataType.Object)).Failed) {
+                return result;
             }
 
             fsMetaType metaType = fsMetaType.Get(storageType);
@@ -46,14 +53,16 @@ namespace FullSerializer.Internal {
                 fsData propertyData;
                 if (data.AsDictionary.TryGetValue(property.Name, out propertyData)) {
                     object deserializedValue = null;
-                    var failed = Serializer.TryDeserialize(propertyData, property.StorageType, ref deserializedValue);
-                    if (failed.Failed) return failed;
+
+                    var itemResult = Serializer.TryDeserialize(propertyData, property.StorageType, ref deserializedValue);
+                    result.AddMessages(itemResult);
+                    if (itemResult.Failed) continue;
 
                     property.Write(instance, deserializedValue);
                 }
             }
 
-            return fsFailure.Success;
+            return result;
         }
 
         public override object CreateInstance(fsData data, Type storageType) {

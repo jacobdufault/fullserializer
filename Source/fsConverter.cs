@@ -46,7 +46,7 @@ namespace FullSerializer {
         /// <param name="serialized">The serialized state.</param>
         /// <param name="storageType">The field/property type that is storing this instance.</param>
         /// <returns>If serialization was successful.</returns>
-        public abstract fsFailure TrySerialize(object instance, out fsData serialized, Type storageType);
+        public abstract fsResult TrySerialize(object instance, out fsData serialized, Type storageType);
 
         /// <summary>
         /// Deserialize data into the object instance.
@@ -55,7 +55,7 @@ namespace FullSerializer {
         /// <param name="instance">The object instance to deserialize into.</param>
         /// <param name="storageType">The field/property type that is storing the instance.</param>
         /// <returns>True if serialization was successful, false otherwise.</returns>
-        public abstract fsFailure TryDeserialize(fsData data, ref object instance, Type storageType);
+        public abstract fsResult TryDeserialize(fsData data, ref object instance, Type storageType);
 
         /// <summary>
         /// Construct an object instance that will be passed to TryDeserialize. This should **not**
@@ -75,18 +75,18 @@ namespace FullSerializer {
             return storageType;
         }
 
-        protected fsFailure CheckType(fsData data, fsDataType type) {
+        protected fsResult CheckType(fsData data, fsDataType type) {
             if (data.Type != type) {
-                return fsFailure.Fail("BoundsConverter expected " + type + " but got " + data.Type);
+                return fsResult.Fail(GetType().Name + " expected " + type + " but got " + data.Type + " in " + data);
             }
-            return fsFailure.Success;
+            return fsResult.Success;
         }
 
-        protected fsFailure CheckKey(fsData data, string key, out fsData subitem) {
+        protected fsResult CheckKey(fsData data, string key, out fsData subitem) {
             if (data.AsDictionary.TryGetValue(key, out subitem) == false) {
-                return fsFailure.Fail(GetType().Name + " requires a <" + key + "> key in the data " + data);
+                return fsResult.Fail(GetType().Name + " requires a <" + key + "> key in the data " + data);
             }
-            return fsFailure.Success;
+            return fsResult.Success;
         }
     }
 }

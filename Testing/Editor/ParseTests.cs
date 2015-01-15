@@ -119,14 +119,13 @@ namespace FullSerializer.Tests {
                 }
             }
         }
-        private static int ParseCount = 0;
+
         private static fsData Parse(string json) {
             fsData data;
-            fsFailure fail = fsJsonParser.Parse(json, out data);
+            fsResult fail = fsJsonParser.Parse(json, out data);
             if (fail.Failed) {
-                Assert.Fail(fail.FailureReason);
+                Assert.Fail(fail.FormattedMessages);
             }
-            ++ParseCount;
             return data;
         }
 

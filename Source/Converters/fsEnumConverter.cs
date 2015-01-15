@@ -18,28 +18,28 @@ namespace FullSerializer.Internal {
             return false;
         }
 
-        public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
+        public override fsResult TrySerialize(object instance, out fsData serialized, Type storageType) {
             if (fsPortableReflection.GetAttribute<FlagsAttribute>(storageType) != null) {
                 serialized = new fsData(Convert.ToInt32(instance));
             }
             else {
                 serialized = new fsData(Enum.GetName(storageType, instance));
             }
-            return fsFailure.Success;
+            return fsResult.Success;
         }
 
-        public override fsFailure TryDeserialize(fsData data, ref object instance, Type storageType) {
+        public override fsResult TryDeserialize(fsData data, ref object instance, Type storageType) {
             if (data.IsString) {
                 string enumValue = data.AsString;
 
                 // Verify that the enum name exists; Enum.TryParse is only available in .NET 4.0
                 // and above :(.
                 if (ArrayContains(Enum.GetNames(storageType), enumValue) == false) {
-                    return fsFailure.Fail("Cannot find enum name " + enumValue + " on type " + storageType);
+                    return fsResult.Fail("Cannot find enum name " + enumValue + " on type " + storageType);
                 }
 
                 instance = Enum.Parse(storageType, enumValue);
-                return fsFailure.Success;
+                return fsResult.Success;
             }
 
             else if (data.IsInt64) {
@@ -49,10 +49,10 @@ namespace FullSerializer.Internal {
                 // Enum.ToObject(Type, int) are not -- so we get around this by boxing the value.
                 instance = Enum.ToObject(storageType, (object)enumValue);
                 
-                return fsFailure.Success;
+                return fsResult.Success;
             }
 
-            return fsFailure.Fail("EnumConverter encountered an unknown JSON data type");
+            return fsResult.Fail("EnumConverter encountered an unknown JSON data type");
         }
 
         public override object CreateInstance(fsData data, Type storageType) {

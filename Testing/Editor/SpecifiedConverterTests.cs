@@ -1,7 +1,5 @@
 ﻿using System;
-using FullSerializer.Internal;
 using NUnit.Framework;
-using System.Collections.Generic;
 
 namespace FullSerializer.Tests {
     [fsObject(Converter = typeof(MyConverter))]
@@ -20,15 +18,15 @@ namespace FullSerializer.Tests {
             return new MyModel();
         }
 
-        public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
+        public override fsResult TrySerialize(object instance, out fsData serialized, Type storageType) {
             DidSerialize = true;
             serialized = new fsData();
-            return fsFailure.Success;
+            return fsResult.Success;
         }
 
-        public override fsFailure TryDeserialize(fsData data, ref object instance, Type storageType) {
+        public override fsResult TryDeserialize(fsData data, ref object instance, Type storageType) {
             DidDeserialize = true;
-            return fsFailure.Success;
+            return fsResult.Success;
         }
     }
 

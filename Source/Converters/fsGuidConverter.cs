@@ -17,19 +17,19 @@ namespace FullSerializer.Internal {
             return false;
         }
 
-        public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
+        public override fsResult TrySerialize(object instance, out fsData serialized, Type storageType) {
             var guid = (Guid)instance;
             serialized = new fsData(guid.ToString());
-            return fsFailure.Success;
+            return fsResult.Success;
         }
 
-        public override fsFailure TryDeserialize(fsData data, ref object instance, Type storageType) {
+        public override fsResult TryDeserialize(fsData data, ref object instance, Type storageType) {
             if (data.IsString) {
                 instance = new Guid(data.AsString);
-                return fsFailure.Success;
+                return fsResult.Success;
             }
 
-            return fsFailure.Fail("fsGuidConverter encountered an unknown JSON data type");
+            return fsResult.Fail("fsGuidConverter encountered an unknown JSON data type");
         }
 
         public override object CreateInstance(fsData data, Type storageType) {

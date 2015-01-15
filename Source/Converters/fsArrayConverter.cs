@@ -15,12 +15,14 @@ namespace FullSerializer.Internal {
             return false;
         }
 
-        public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
+        public override fsResult TrySerialize(object instance, out fsData serialized, Type storageType) {
             // note: IList[index] is **significantly** faster than Array.Get, so make sure we use
             //       that instead.
 
             IList arr = (Array)instance;
             Type elementType = storageType.GetElementType();
+
+            var result = fsResult.Success;
 
             serialized = fsData.CreateList(arr.Count);
             var serializedList = serialized.AsList;
@@ -30,16 +32,24 @@ namespace FullSerializer.Internal {
 
                 fsData serializedItem;
 
-                var fail = Serializer.TrySerialize(elementType, item, out serializedItem);
-                if (fail.Failed) return fail;
+                var itemResult = Serializer.TrySerialize(elementType, item, out serializedItem);
+                result.AddMessages(itemResult);
+                if (itemResult.Failed) continue;
 
                 serializedList.Add(serializedItem);
             }
 
-            return fsFailure.Success;
+            return result;
         }
 
-        public override fsFailure TryDeserialize(fsData data, ref object instance, Type storageType) {
+        public override fsResult TryDeserialize(fsData data, ref object instance, Type storageType) {
+            var result = fsResult.Success;
+
+            // Verify that we actually have an List
+            if ((result += CheckType(data, fsDataType.Array)).Failed) {
+                return result;
+            }
+
             Type elementType = storageType.GetElementType();
 
             var serializedList = data.AsList;
@@ -49,14 +59,15 @@ namespace FullSerializer.Internal {
                 var serializedItem = serializedList[i];
                 object deserialized = null;
 
-                var fail = Serializer.TryDeserialize(serializedItem, elementType, ref deserialized);
-                if (fail.Failed) return fail;
+                var itemResult = Serializer.TryDeserialize(serializedItem, elementType, ref deserialized);
+                result.AddMessages(itemResult);
+                if (itemResult.Failed) continue;
 
                 list.Add(deserialized);
             }
 
             instance = list.ToArray(elementType);
-            return fsFailure.Success;
+            return result;
         }
 
         public override object CreateInstance(fsData data, Type storageType) {

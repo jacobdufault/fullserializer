@@ -4,17 +4,17 @@ using System.Reflection;
 
 namespace FullSerializer.Internal {
     public static class fsVersionManager {
-        private static Dictionary<Type, fsOption<fsVersionedType>> _cache = new Dictionary<Type, fsOption<fsVersionedType>>();
+        private static readonly Dictionary<Type, fsOption<fsVersionedType>> _cache = new Dictionary<Type, fsOption<fsVersionedType>>();
 
-        public static fsFailure GetVersionImportPath(string currentVersion, fsVersionedType targetVersion, out List<fsVersionedType> path) {
+        public static fsResult GetVersionImportPath(string currentVersion, fsVersionedType targetVersion, out List<fsVersionedType> path) {
             path = new List<fsVersionedType>();
 
             if (GetVersionImportPathRecursive(path, currentVersion, targetVersion) == false) {
-                return fsFailure.Fail("There is no migration path from \"" + currentVersion + "\" to \"" + targetVersion.VersionString + "\"");
+                return fsResult.Fail("There is no migration path from \"" + currentVersion + "\" to \"" + targetVersion.VersionString + "\"");
             }
 
             path.Add(targetVersion);
-            return fsFailure.Success;
+            return fsResult.Success;
         }
 
         private static bool GetVersionImportPathRecursive(List<fsVersionedType> path, string currentVersion, fsVersionedType current) {

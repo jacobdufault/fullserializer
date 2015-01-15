@@ -18,27 +18,25 @@ namespace FullSerializer.Internal {
             return false;
         }
 
-        public override fsFailure TryDeserialize(fsData data, ref object instance, Type storageType) {
-            fsFailure failure;
+        public override fsResult TryDeserialize(fsData data, ref object instance, Type storageType) {
+            var result = fsResult.Success;
 
             fsData keyData, valueData;
-            if ((failure = CheckKey(data, "Key", out keyData)).Failed) return failure;
-            if ((failure = CheckKey(data, "Value", out valueData)).Failed) return failure;
+            if ((result += CheckKey(data, "Key", out keyData)).Failed) return result;
+            if ((result += CheckKey(data, "Value", out valueData)).Failed) return result;
 
             var genericArguments = storageType.GetGenericArguments();
             Type keyType = genericArguments[0], valueType = genericArguments[1];
 
             object keyObject = null, valueObject = null;
-            if ((failure = Serializer.TryDeserialize(keyData, keyType, ref keyObject)).Failed) return failure;
-            if ((failure = Serializer.TryDeserialize(valueData, valueType, ref valueObject)).Failed) return failure;
+            result.AddMessages(Serializer.TryDeserialize(keyData, keyType, ref keyObject));
+            result.AddMessages(Serializer.TryDeserialize(valueData, valueType, ref valueObject));
 
-            instance = Activator.CreateInstance(storageType, new object[] { keyObject, valueObject });
-            return fsFailure.Success;
+            instance = Activator.CreateInstance(storageType, keyObject, valueObject);
+            return result;
         }
 
-        public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
-            serialized = null;
-
+        public override fsResult TrySerialize(object instance, out fsData serialized, Type storageType) {
             PropertyInfo keyProperty = storageType.GetDeclaredProperty("Key");
             PropertyInfo valueProperty = storageType.GetDeclaredProperty("Value");
 
@@ -48,16 +46,17 @@ namespace FullSerializer.Internal {
             var genericArguments = storageType.GetGenericArguments();
             Type keyType = genericArguments[0], valueType = genericArguments[1];
 
-            fsFailure failure;
+            var result = fsResult.Success;
 
             fsData keyData, valueData;
-            if ((failure = Serializer.TrySerialize(keyType, keyObject, out keyData)).Failed) return failure;
-            if ((failure = Serializer.TrySerialize(valueType, valueObject, out valueData)).Failed) return failure;
+            result.AddMessages(Serializer.TrySerialize(keyType, keyObject, out keyData));
+            result.AddMessages(Serializer.TrySerialize(valueType, valueObject, out valueData));
 
             serialized = fsData.CreateDictionary();
-            serialized.AsDictionary["Key"] = keyData;
-            serialized.AsDictionary["Value"] = valueData;
-            return fsFailure.Success;
+            if (keyData != null) serialized.AsDictionary["Key"] = keyData;
+            if (valueData != null) serialized.AsDictionary["Value"] = valueData;
+
+            return result;
         }
     }
 }

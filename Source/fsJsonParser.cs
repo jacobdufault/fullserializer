@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace FullSerializer {
+    // TODO: properly propagate warnings/etc for fsResult states
+
     /// <summary>
     /// A simple recursive descent parser for JSON.
     /// </summary>
@@ -10,13 +12,13 @@ namespace FullSerializer {
         private int _start;
         private string _input;
 
-        private fsFailure MakeFailure(string message) {
+        private fsResult MakeFailure(string message) {
             int start = Math.Max(0, _start - 20);
             int length = Math.Min(50, _input.Length - start);
 
             string error = "Error while parsing: " + message + "; context = <" +
                 _input.Substring(start, length) + ">";
-            return fsFailure.Fail(error);
+            return fsResult.Fail(error);
         }
 
         private bool TryMoveNext() {
@@ -101,7 +103,7 @@ namespace FullSerializer {
             return p1 + p2 + p3 + p4;
         }
 
-        private fsFailure TryUnescapeChar(out char escaped) {
+        private fsResult TryUnescapeChar(out char escaped) {
             // skip leading backslash '\'
             TryMoveNext();
             if (HasValue() == false) {
@@ -110,15 +112,15 @@ namespace FullSerializer {
             }
 
             switch (Character()) {
-                case '\\': TryMoveNext(); escaped = '\\'; return fsFailure.Success;
-                case '"': TryMoveNext(); escaped = '\"'; return fsFailure.Success;
-                case 'a': TryMoveNext(); escaped = '\a'; return fsFailure.Success;
-                case 'b': TryMoveNext(); escaped = '\b'; return fsFailure.Success;
-                case 'f': TryMoveNext(); escaped = '\f'; return fsFailure.Success;
-                case 'n': TryMoveNext(); escaped = '\n'; return fsFailure.Success;
-                case 'r': TryMoveNext(); escaped = '\r'; return fsFailure.Success;
-                case 't': TryMoveNext(); escaped = '\t'; return fsFailure.Success;
-                case '0': TryMoveNext(); escaped = '\0'; return fsFailure.Success;
+                case '\\': TryMoveNext(); escaped = '\\'; return fsResult.Success;
+                case '"': TryMoveNext(); escaped = '\"'; return fsResult.Success;
+                case 'a': TryMoveNext(); escaped = '\a'; return fsResult.Success;
+                case 'b': TryMoveNext(); escaped = '\b'; return fsResult.Success;
+                case 'f': TryMoveNext(); escaped = '\f'; return fsResult.Success;
+                case 'n': TryMoveNext(); escaped = '\n'; return fsResult.Success;
+                case 'r': TryMoveNext(); escaped = '\r'; return fsResult.Success;
+                case 't': TryMoveNext(); escaped = '\t'; return fsResult.Success;
+                case '0': TryMoveNext(); escaped = '\0'; return fsResult.Success;
                 case 'u':
                     TryMoveNext();
                     if (IsHex(Character(0))
@@ -134,7 +136,7 @@ namespace FullSerializer {
                         TryMoveNext();
 
                         escaped = (char)codePoint;
-                        return fsFailure.Success;
+                        return fsResult.Success;
                     }
 
                     // invalid escape sequence
@@ -152,7 +154,7 @@ namespace FullSerializer {
         }
         #endregion
 
-        private fsFailure TryParseExact(string content) {
+        private fsResult TryParseExact(string content) {
             for (int i = 0; i < content.Length; ++i) {
                 if (Character() != content[i]) {
                     return MakeFailure("Expected " + content[i]);
@@ -163,39 +165,39 @@ namespace FullSerializer {
                 }
             }
 
-            return fsFailure.Success;
+            return fsResult.Success;
         }
 
-        private fsFailure TryParseTrue(out fsData data) {
+        private fsResult TryParseTrue(out fsData data) {
             var fail = TryParseExact("true");
 
             if (fail.Succeeded) {
                 data = new fsData(true);
-                return fsFailure.Success;
+                return fsResult.Success;
             }
 
             data = null;
             return fail;
         }
 
-        private fsFailure TryParseFalse(out fsData data) {
+        private fsResult TryParseFalse(out fsData data) {
             var fail = TryParseExact("false");
 
             if (fail.Succeeded) {
                 data = new fsData(false);
-                return fsFailure.Success;
+                return fsResult.Success;
             }
 
             data = null;
             return fail;
         }
 
-        private fsFailure TryParseNull(out fsData data) {
+        private fsResult TryParseNull(out fsData data) {
             var fail = TryParseExact("null");
 
             if (fail.Succeeded) {
                 data = new fsData();
-                return fsFailure.Success;
+                return fsResult.Success;
             }
 
             data = null;
@@ -210,7 +212,7 @@ namespace FullSerializer {
         /// <summary>
         /// Parses numbers that follow the regular expression [-+](\d+|\d*\.\d*)
         /// </summary>
-        private fsFailure TryParseNumber(out fsData data) {
+        private fsResult TryParseNumber(out fsData data) {
             int start = _start;
 
             // read until we get to a separator
@@ -231,7 +233,7 @@ namespace FullSerializer {
                 }
 
                 data = new fsData(doubleValue);
-                return fsFailure.Success;
+                return fsResult.Success;
             }
             else {
                 Int64 intValue;
@@ -241,14 +243,14 @@ namespace FullSerializer {
                 }
 
                 data = new fsData(intValue);
-                return fsFailure.Success;
+                return fsResult.Success;
             }
         }
 
         /// <summary>
         /// Parses a string
         /// </summary>
-        private fsFailure TryParseString(out string str) {
+        private fsResult TryParseString(out string str) {
             var result = new StringBuilder();
 
             // skip the first "
@@ -292,13 +294,13 @@ namespace FullSerializer {
             }
 
             str = result.ToString();
-            return fsFailure.Success;
+            return fsResult.Success;
         }
 
         /// <summary>
         /// Parses an array
         /// </summary>
-        private fsFailure TryParseArray(out fsData arr) {
+        private fsResult TryParseArray(out fsData arr) {
             if (Character() != '[') {
                 arr = null;
                 return MakeFailure("Expected initial [ when parsing an array");
@@ -339,10 +341,10 @@ namespace FullSerializer {
             }
 
             arr = new fsData(result);
-            return fsFailure.Success;
+            return fsResult.Success;
         }
 
-        private fsFailure TryParseObject(out fsData obj) {
+        private fsResult TryParseObject(out fsData obj) {
             if (Character() != '{') {
                 obj = null;
                 return MakeFailure("Expected initial { when parsing an object");
@@ -358,7 +360,7 @@ namespace FullSerializer {
             var result = new Dictionary<string, fsData>();
 
             while (HasValue() && Character() != '}') {
-                fsFailure failure;
+                fsResult failure;
 
                 // parse the key
                 SkipSpace();
@@ -402,10 +404,10 @@ namespace FullSerializer {
             }
 
             obj = new fsData(result);
-            return fsFailure.Success;
+            return fsResult.Success;
         }
 
-        private fsFailure RunParse(out fsData data) {
+        private fsResult RunParse(out fsData data) {
             SkipSpace();
 
             switch (Character()) {
@@ -426,13 +428,13 @@ namespace FullSerializer {
                 case '9': return TryParseNumber(out data);
                 case '"': {
                         string str;
-                        fsFailure fail = TryParseString(out str);
+                        fsResult fail = TryParseString(out str);
                         if (fail.Failed) {
                             data = null;
                             return fail;
                         }
                         data = new fsData(str);
-                        return fsFailure.Success;
+                        return fsResult.Success;
                     }
                 case '[': return TryParseArray(out data);
                 case '{': return TryParseObject(out data);
@@ -451,9 +453,19 @@ namespace FullSerializer {
         /// <param name="input">The input to parse.</param>
         /// <param name="data">The parsed data. This is undefined if parsing fails.</param>
         /// <returns>The parsed input.</returns>
-        public static fsFailure Parse(string input, out fsData data) {
+        public static fsResult Parse(string input, out fsData data) {
             var context = new fsJsonParser(input);
             return context.RunParse(out data);
+        }
+
+        /// <summary>
+        /// Helper method for Parse that does not allow the error information
+        /// to be recovered.
+        /// </summary>
+        public static fsData Parse(string input) {
+            fsData data;
+            Parse(input, out data).AssertSuccess();
+            return data;
         }
 
         private fsJsonParser(string input) {

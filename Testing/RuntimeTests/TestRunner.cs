@@ -4,6 +4,7 @@ using FullSerializer;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -15,7 +16,7 @@ public class FullSerializerSerializer : BaseSerializer {
         fsData data;
         var fail = serializer.TrySerialize(GetStorageType(storageType), value, out data);
         if (fail.Failed) {
-            throw new Exception(fail.FailureReason);
+            throw fail.AsException;
         }
 
         return fsJsonPrinter.CompressedJson(data);
@@ -24,12 +25,12 @@ public class FullSerializerSerializer : BaseSerializer {
     public override object Deserialize(MemberInfo storageType, string serializedState,
         ISerializationOperator serializationOperator) {
 
-        fsFailure fail;
+            fsResult fail;
 
         fsData data;
         fail = fsJsonParser.Parse(serializedState, out data);
         if (fail.Failed) {
-            throw new Exception(fail.FailureReason);
+            throw fail.AsException;
         }
 
         var serializer = new fsSerializer();
@@ -37,7 +38,7 @@ public class FullSerializerSerializer : BaseSerializer {
         object deserialized = null;
         fail = serializer.TryDeserialize(data, GetStorageType(storageType), ref deserialized);
         if (fail.Failed) {
-            throw new Exception(fail.FailureReason);
+            throw fail.AsException;
         }
 
         return deserialized;
@@ -74,19 +75,19 @@ public class TestRunner : BaseBehavior<FullSerializerSerializer> {
         fsData data;
         var fail = serializer.TrySerialize(type, value, out data);
         if (fail.Failed) {
-            throw new Exception(fail.FailureReason);
+            throw fail.AsException;
         }
 
         return fsJsonPrinter.CompressedJson(data);
     }
 
     public object Deserialize(Type type, string serializedState) {
-        fsFailure fail;
+        fsResult fail;
 
         fsData data;
         fail = fsJsonParser.Parse(serializedState, out data);
         if (fail.Failed) {
-            throw new Exception(fail.FailureReason);
+            throw fail.AsException;
         }
 
         var serializer = new fsSerializer();
@@ -94,7 +95,7 @@ public class TestRunner : BaseBehavior<FullSerializerSerializer> {
         object deserialized = null;
         fail = serializer.TryDeserialize(data, type, ref deserialized);
         if (fail.Failed) {
-            throw new Exception(fail.FailureReason);
+            throw fail.AsException;
         }
 
         return deserialized;

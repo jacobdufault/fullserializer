@@ -17,61 +17,61 @@ namespace FullSerializer.Internal {
                 type == typeof(TimeSpan);
         }
 
-        public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
+        public override fsResult TrySerialize(object instance, out fsData serialized, Type storageType) {
             if (instance is DateTime) {
                 var dateTime = (DateTime)instance;
                 serialized = new fsData(dateTime.ToString(DateTimeFormatString));
-                return fsFailure.Success;
+                return fsResult.Success;
             }
 
             if (instance is DateTimeOffset) {
                 var dateTimeOffset = (DateTimeOffset)instance;
                 serialized = new fsData(dateTimeOffset.ToString(DateTimeOffsetFormatString));
-                return fsFailure.Success;
+                return fsResult.Success;
             }
 
             if (instance is TimeSpan) {
                 var timeSpan = (TimeSpan)instance;
                 serialized = new fsData(timeSpan.ToString());
-                return fsFailure.Success;
+                return fsResult.Success;
             }
 
             throw new InvalidOperationException("FullSerializer Internal Error -- Unexpected serialization type");
         }
 
-        public override fsFailure TryDeserialize(fsData data, ref object instance, Type storageType) {
+        public override fsResult TryDeserialize(fsData data, ref object instance, Type storageType) {
             if (data.IsString == false) {
-                return fsFailure.Fail("Date deserialization requires a string, not " + data.Type);
+                return fsResult.Fail("Date deserialization requires a string, not " + data.Type);
             }
 
             if (storageType == typeof(DateTime)) {
                 DateTime result;
                 if (DateTime.TryParse(data.AsString, null, DateTimeStyles.RoundtripKind, out result)) {
                     instance = result;
-                    return fsFailure.Success;
+                    return fsResult.Success;
                 }
 
-                return fsFailure.Fail("Unable to parse " + data.AsString + " into a DateTime");
+                return fsResult.Fail("Unable to parse " + data.AsString + " into a DateTime");
             }
 
             if (storageType == typeof(DateTimeOffset)) {
                 DateTimeOffset result;
                 if (DateTimeOffset.TryParse(data.AsString, null, DateTimeStyles.RoundtripKind, out result)) {
                     instance = result;
-                    return fsFailure.Success;
+                    return fsResult.Success;
                 }
 
-                return fsFailure.Fail("Unable to parse " + data.AsString + " into a DateTimeOffset");
+                return fsResult.Fail("Unable to parse " + data.AsString + " into a DateTimeOffset");
             }
 
             if (storageType == typeof(TimeSpan)) {
                 TimeSpan result;
                 if (TimeSpan.TryParse(data.AsString, out result)) {
                     instance = result;
-                    return fsFailure.Success;
+                    return fsResult.Success;
                 }
 
-                return fsFailure.Fail("Unable to parse " + data.AsString + " into a TimeSpan");
+                return fsResult.Fail("Unable to parse " + data.AsString + " into a TimeSpan");
             }
 
             throw new InvalidOperationException("FullSerializer Internal Error -- Unexpected deserialization type");
