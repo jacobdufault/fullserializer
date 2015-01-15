@@ -7,7 +7,7 @@ namespace FullSerializer {
         /// <summary>
         /// Inserts the given number of indents into the builder.
         /// </summary>
-        private static void InsertSpacing(StreamWriter stream, int count) {
+        private static void InsertSpacing(TextWriter stream, int count) {
             for (int i = 0; i < count; ++i) {
                 stream.Write("    ");
             }
@@ -86,7 +86,7 @@ namespace FullSerializer {
             return result.ToString();
         }
 
-        private static void BuildCompressedString(fsData data, StreamWriter stream) {
+        private static void BuildCompressedString(fsData data, TextWriter stream) {
             switch (data.Type) {
                 case fsDataType.Null:
                     stream.Write("null");
@@ -145,7 +145,7 @@ namespace FullSerializer {
         /// <summary>
         /// Formats this data into the given builder.
         /// </summary>
-        private static void BuildPrettyString(fsData data, StreamWriter stream, int depth) {
+        private static void BuildPrettyString(fsData data, TextWriter stream, int depth) {
             switch (data.Type) {
                 case fsDataType.Null:
                     stream.Write("null");
@@ -227,7 +227,7 @@ namespace FullSerializer {
         /// </summary>
         /// <param name="data">The data to print.</param>
         /// <param name="outputStream">Where to write the printed data.</param>
-        public static void PrettyJson(fsData data, StreamWriter outputStream) {
+        public static void PrettyJson(fsData data, TextWriter outputStream) {
             BuildPrettyString(data, outputStream, 0);
         }
 
@@ -235,14 +235,10 @@ namespace FullSerializer {
         /// Returns the data in a pretty printed JSON format.
         /// </summary>
         public static string PrettyJson(fsData data) {
-            using (var stream = new MemoryStream()) {
-                var writer = new StreamWriter(stream);
+            var sb = new StringBuilder();
+            using (var writer = new StringWriter(sb)) {
                 BuildPrettyString(data, writer, 0);
-                writer.Flush();
-
-                stream.Position = 0;
-                var reader = new StreamReader(stream);
-                return reader.ReadToEnd();
+                return sb.ToString();
             }
         }
 
@@ -259,14 +255,10 @@ namespace FullSerializer {
         /// Returns the data in a relatively compressed JSON format.
         /// </summary>
         public static string CompressedJson(fsData data) {
-            using (var stream = new MemoryStream()) {
-                var writer = new StreamWriter(stream);
+            var sb = new StringBuilder();
+            using (var writer = new StringWriter(sb)) {
                 BuildCompressedString(data, writer);
-                writer.Flush();
-
-                stream.Position = 0;
-                var reader = new StreamReader(stream);
-                return reader.ReadToEnd();
+                return sb.ToString();
             }
         }
 

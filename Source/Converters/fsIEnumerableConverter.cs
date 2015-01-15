@@ -5,9 +5,30 @@ using System.Reflection;
 
 namespace FullSerializer.Internal {
     public interface fsIEnumerableSerializationAdapter {
+        /// <summary>
+        /// Can this adapter be used for this object type?
+        /// </summary>
         bool IsValid(Type objectType);
+
+        /// <summary>
+        /// Return an iterator to go over every item inside of the collection.
+        /// </summary>
         IEnumerable Iterate(object collection);
+
+        /// <summary>
+        /// Attempt to fetch a hint size for the collection so we can allocate objects
+        /// move efficiently. If no hint size can be computed, then this should return 0.
+        /// </summary>
+        int HintSize(object collection);
+
+        /// <summary>
+        /// Adds the given item to the collection.
+        /// </summary>
         void Add(object collection, object item);
+
+        /// <summary>
+        /// Fetches the element type for objects inside of the collection.
+        /// </summary>
         Type GetElementType(Type objectType);
     }
 
@@ -34,6 +55,11 @@ namespace FullSerializer.Internal {
                     Value = enumerator.Value
                 };
             }
+        }
+
+        public int HintSize(object collection) {
+            var dict = (IDictionary)collection;
+            return dict.Count;
         }
 
         public void Add(object collection, object item) {
@@ -83,6 +109,13 @@ namespace FullSerializer.Internal {
 
         public IEnumerable Iterate(object collection) {
             return (IEnumerable)collection;
+        }
+
+        public int HintSize(object collection) {
+            if (collection is ICollection) {
+                return ((ICollection)collection).Count;
+            }
+            return 0;
         }
 
         public void Add(object collection, object item) {
@@ -154,10 +187,11 @@ namespace FullSerializer.Internal {
         }
 
         public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
-            serialized = fsData.CreateList();
-
             fsIEnumerableSerializationAdapter adapter = GetAdapter(storageType);
             Type elementType = adapter.GetElementType(storageType);
+
+            serialized = fsData.CreateList(adapter.HintSize(instance));
+            var serializedList = serialized.AsList;
 
             foreach (object item in adapter.Iterate(instance)) {
                 fsData serializedItem;
@@ -165,7 +199,7 @@ namespace FullSerializer.Internal {
                 var fail = Serializer.TrySerialize(elementType, item, out serializedItem);
                 if (fail.Failed) return fail;
 
-                serialized.AsList.Add(serializedItem);
+                serializedList.Add(serializedItem);
             }
 
             return fsFailure.Success;
