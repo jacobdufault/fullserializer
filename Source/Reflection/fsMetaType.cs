@@ -126,11 +126,6 @@ namespace FullSerializer {
                 return false;
             }
 
-            // If the property cannot be both read and written to, we cannot serialize it
-            if (property.CanRead == false || property.CanWrite == false) {
-                return false;
-            }
-
             var publicGetMethod = property.GetGetMethod(/*nonPublic:*/ false);
             var publicSetMethod = property.GetSetMethod(/*nonPublic:*/ false);
 
