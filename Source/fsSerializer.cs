@@ -469,13 +469,29 @@ namespace FullSerializer {
             // objectType and data to the proper values so that when we construct an object instance later
             // and run deserialization we run it on the proper type.
             if (IsTypeSpecified(data)) {
-                string typeName = data.AsDictionary[Key_InstanceType].AsString;
-                Type type = fsTypeLookup.GetType(typeName);
-                if (type == null) {
-                    return fsFailure.Fail("Unable to find type " + typeName);
-                }
+                fsData typeNameData = data.AsDictionary[Key_InstanceType];
 
-                objectType = type;
+                // we wrap everything in a do while false loop so we can break out it
+                do {
+                    if (typeNameData.IsString == false) {
+                        deserializeResult.AddMessage(Key_InstanceType + " value must be a string (in " + data + ")");
+                        break;
+                    }
+
+                    string typeName = typeNameData.AsString;
+                    Type type = fsTypeLookup.GetType(typeName);
+                    if (type == null) {
+                        deserializeResult.AddMessage("Unable to locate specified type \"" + typeName + "\"");
+                        break;
+                    }
+
+                    if (storageType.IsAssignableFrom(type) == false) {
+                        deserializeResult.AddMessage("Ignoring type specifier; a field/property of type " + storageType + " cannot hold an instance of " + type);
+                        break;
+                    }
+
+                    objectType = type;
+                } while (false);
             }
 
             // Construct an object instance if we don't have one already. We also need to construct
