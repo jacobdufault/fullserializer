@@ -35,6 +35,9 @@ namespace FullSerializer.Tests {
     public class SpecifiedConverterTests {
         [Test]
         public void VerifyConversion() {
+            MyConverter.DidDeserialize = false;
+            MyConverter.DidSerialize = false;
+
             var serializer = new fsSerializer();
 
             fsData result;
