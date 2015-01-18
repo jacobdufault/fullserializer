@@ -57,6 +57,9 @@ You can specify a custom converter to use directly on the model. This is more ef
 Here is an example usage. See docs below for a more detailed explanation of `fsConverter`:
 
 ```c#
+using System;
+using FullSerializer;
+
 [fsObject(Converter = typeof(MyConverter))]
 public class MyModel {
 }
@@ -70,13 +73,13 @@ public class MyConverter : fsConverter {
         return new MyModel();
     }
 
-    public override fsFailure TrySerialize(object instance, out fsData serialized, Type storageType) {
+    public override fsResult TrySerialize(object instance, out fsData serialized, Type storageType) {
         serialized = new fsData();
-        return fsFailure.Success;
+        return fsResult.Success;
     }
 
-    public override fsFailure TryDeserialize(fsData data, ref object instance, Type storageType) {
-        return fsFailure.Success;
+    public override fsResult TryDeserialize(fsData data, ref object instance, Type storageType) {
+        return fsResult.Success;
     }
 }
 
