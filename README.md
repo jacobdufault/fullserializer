@@ -1,8 +1,8 @@
 # Full Serializer
 
-Full Serializer is an extremely easy to use serializer for Unity that *just works*.  It is as simple as possible but no simpler. It currently ships with a robust JSON parser and printer.
+Full Serializer is an extremely easy to use JSON serializer that *just works*.  It is as simple as possible but no simpler.
 
-Full Serializer has been designed to support all Unity export platforms, including tricky ones such as the WebPlayer and iOS. Additionally, it has been designed to support full stripping mode on iOS (Full Serializer does not use exceptions).
+Full Serializer has been designed to support all Unity export platforms, including tricky ones such as the WebPlayer and iOS. Additionally, it has been designed to support full stripping mode on iOS (Full Serializer does not use exceptions). Full Serializer can also be used outside of Unity; just make sure to define `NO_UNITY` in your project-level defines.
 
 Best of all, Full Serializer is completely free to use and available under the MIT license!
 
@@ -12,7 +12,7 @@ There were no serializers that just work in Unity that are free and target all e
 
 ## Installation
 
-Import the `Source` folder into your Unity project! You're good to go!
+Import the `Source` folder into your Unity project! You're good to go! (Also see the DLL based import at the bottom of this document).
 
 # Usage
 
@@ -123,40 +123,35 @@ We can easily introduce a new `Model` type and then we just rename `Model` to `M
 Here's a simple example of how to use the Full Serializer API to serialize objects to and from strings.
 
 ```c#
+using System;
 using FullSerializer;
 
 public static class StringSerializationAPI {
-    private static fsSerializer _serializer = new fsSerializer();
+    private static readonly fsSerializer _serializer = new fsSerializer();
 
     public static string Serialize(Type type, object value) {
         // serialize the data
         fsData data;
-        var fail = _serializer.TrySerialize(type, value, out data);
-        if (fail.Failed) throw new Exception(fail.FailureReason);
+        _serializer.TrySerialize(type, value, out data).AssertSuccessWithoutWarnings();
 
         // emit the data via JSON
         return fsJsonPrinter.CompressedJson(data);
     }
 
     public static object Deserialize(Type type, string serializedState) {
-        fsFailure fail;
-
         // step 1: parse the JSON data
-        fsData data;
-        fail = fsJsonParser.Parse(serializedState, out data);
-        if (fail.Failed) throw new Exception(fail.FailureReason);
+        fsData data = fsJsonParser.Parse(serializedState);
 
         // step 2: deserialize the data
         object deserialized = null;
-        fail = _serializer.TryDeserialize(data, type, ref deserialized);
-        if (fail.Failed) throw new Exception(fail.FailureReason);
+        _serializer.TryDeserialize(data, type, ref deserialized).AssertSuccessWithoutWarnings();
 
         return deserialized;
     }
 }
 ```
 
-While the API may look noisy, rest assured that it cleanly separates different library concerns, such as parsing and serialization. If you wanted to add BSON support, you would only have to write a parser and printer -- no need to touch any serialization or deserialization code.
+Note that this API example will throw exceptions if any errors occur. Additionally, error recovery is disabled in this example - if you wish to enable it, simply replace the `AssertSuccessWithoutWarnings` calls with `AssertSuccess`.
 
 ### Custom Serialization
 
@@ -167,6 +162,7 @@ Please see the next few sections for an example of how to define a custom conver
 #### Example Definition
 
 ```c#
+using System;
 using FullSerializer;
 
 public class MyType {
@@ -181,27 +177,27 @@ public class MyTypeConverter : fsConverter {
         return type == typeof(MyType);
     }
 
-    public override fsFailure TrySerialize(object instance,
+    public override fsResult TrySerialize(object instance,
         out fsData serialized, Type storageType) {
-        
+
         // Serialize the data into the serialized parameter. fsData is a
         // strongly typed object store that maps directly to a JSON object model.
         // It's really easy to use.
 
         var myType = (MyType)instance;
         serialized = new fsData(myType.Value);
-        return fsFailure.Success;
+        return fsResult.Success;
     }
 
-    public override fsFailure TryDeserialize(fsData storage,
+    public override fsResult TryDeserialize(fsData storage,
         ref object instance, Type storageType) {
-        
+
         // Always make to sure to verify that the deserialized data is the of
         // the expected type. Otherwise, on platforms where exceptions are
         // disabled bad things can happen (if the data was actually an object
         // and you try to access a string, an exception will be thrown).
         if (storage.Type != fsDataType.String) {
-            return fsFailure.Fail("Expected string fsData type but got " +
+            return fsResult.Fail("Expected string fsData type but got " +
                 storage.Type);
         }
 
@@ -211,7 +207,7 @@ public class MyTypeConverter : fsConverter {
 
         var myType = (MyType)instance;
         myType.Value = storage.AsString;
-        return fsFailure.Success;
+        return fsResult.Success;
     }
 
     // Object instance construction is separated from deserialization so that
@@ -254,17 +250,34 @@ Full Serializer has minimal limitations, however, there are as follows:
 
 # Adding Full Serializer to my project
 
+## Source Based Import
+
 Import the `Source` folder into your Unity project! You're good to go!
+
+## DLL Based Import
+
+These instructions are easy to follow and will set you up with the DLLs for any version of Full Serializer.
+
+- Download Full Serializer and unzip it to some directory.
+- Navigate to the `Build Files (DLL)` folder.
+- Open `CommonData.csproj` in your favorite text editor.
+- Change the `UnityInstallFolder` value on line 6 to point to your Unity installation directory
+    - On OSX this is likely `/Applications/Unity/Editor`
+    - On Windows this is likely `C:\Program Files (x86)\Unity\Editor`
+- Double click `FullSerializer.sln` to open up the solution
+- Run a build-all (F6 in visual studio). Alternatively, you can right-click any of the three projects to build only one of them.
+    - `FullSerializer - NoUnity` builds Full Serializer so that you can use it outside of Unity.
+    - `FullSerializer - Unity` builds Full Serializer to a DLL
+    - `FullSerializer - Unity - WinRT` builds Full Serializer with WinRT APIs (if you're targeting the Windows Store or the Windows Phone export platforms)
+- You will find the DLLs inside of the `Build` folder. Please add them to your Unity project's Asset folder.
+
 
 ## How do I run the tests?
 
 To run automated tests, please also import [Unity Test Tools](https://www.assetstore.unity3d.com/en/#!/content/13802) into your project. Then you can run the NUnit tests via the standard unit test menu `Unity Test Tools\Unit Tests\Run all unit tests`.
 
-There are also a set of manual tests; simply add `Testing\RuntimeTests\RuntimeTestObject.prefab` to an empty scene and enter play-mode.
-
-> note: You need [Full Inspector](http://forum.unity3d.com/threads/224270-Full-Inspector-Inspector-and-serialization-for-structs-dicts-generics-interfaces) to run the manual tests. You can use the trial for in-editor testing, but to actually test on export platforms you need the full version.
-
+Full Serializer also has a suite of runtime tests to ensure that various platform support actually works when deployed. You can run these tests by opening up the `Testing/test_scene` scene and hitting play.
 
 # License
 
-Full Serializer is freely available under the MIT license. If you make any improvements, it would be greatly appreciated if you would submit a pull request with them.
+Full Serializer is freely available under the MIT license. If you make any improvements, it would be greatly appreciated if you would submit a pull request with them (please match the existing code style).
