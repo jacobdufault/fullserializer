@@ -178,6 +178,7 @@ namespace FullSerializer {
                 new fsArrayConverter { Serializer = this },
                 new fsIEnumerableConverter { Serializer = this },
                 new fsKeyValuePairConverter { Serializer = this },
+                new fsWeakReferenceConverter { Serializer = this },
                 new fsReflectedConverter { Serializer = this }
             };
 
