@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FullSerializer - Unity", "FullSerializer - Unity.csproj", "{61A89EEC-36B9-49ED-8431-D6A7DBDD9EA7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FullSerializer - Unity - WinRT", "FullSerializer - Unity - WinRT.csproj", "{71A89EEC-36B9-49ED-8431-D6A7DBDD9EA7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FullSerializer - NoUnity", "FullSerializer - NoUnity.csproj", "{59861E1D-6E26-4851-9B1B-A31D7D3825AB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{61A89EEC-36B9-49ED-8431-D6A7DBDD9EA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61A89EEC-36B9-49ED-8431-D6A7DBDD9EA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61A89EEC-36B9-49ED-8431-D6A7DBDD9EA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61A89EEC-36B9-49ED-8431-D6A7DBDD9EA7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71A89EEC-36B9-49ED-8431-D6A7DBDD9EA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71A89EEC-36B9-49ED-8431-D6A7DBDD9EA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71A89EEC-36B9-49ED-8431-D6A7DBDD9EA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71A89EEC-36B9-49ED-8431-D6A7DBDD9EA7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{59861E1D-6E26-4851-9B1B-A31D7D3825AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{59861E1D-6E26-4851-9B1B-A31D7D3825AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{59861E1D-6E26-4851-9B1B-A31D7D3825AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{59861E1D-6E26-4851-9B1B-A31D7D3825AB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+ 
+  <PropertyGroup>
+    <!-- Please modify this folder with the path to your Unity installation -->
+  	<UnityInstallFolder>C:\Program Files (x86)\Unity 4.6.1f1\Editor</UnityInstallFolder>
+    
+    <!-- This is the path, relative to this file, of the FullSerializer folder containing the "Source" directory -->
+	<FullSerializerFolder>..</FullSerializerFolder>
+    
+    <OutputType>Library</OutputType>
+    <OutputPath>Build</OutputPath>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
+    <FileAlignment>512</FileAlignment>
+
+    <ReferencePath>$(UnityInstallFolder)\Data\Managed</ReferencePath>
+	<MonoMdbGenerator>$(UnityInstallFolder)\Data\MonoBleedingEdge\lib\mono\4.0\pdb2mdb.exe</MonoMdbGenerator>
+	
+	<ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>    
+  </PropertyGroup>
+  
+  <!-- Debug Properties -->
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG</DefineConstants>
+  </PropertyGroup>
+ 
+  <!-- Release Properties -->
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <DefineConstants></DefineConstants>
+  </PropertyGroup>
+  
+  <!-- Source Code -->
+  <ItemGroup>
+    <ExternalCompile
+		Include="$(FullSerializerFolder)\Source\**\*.cs*"
+		Exclude="$(FullSerializerFolder)\Source\**\Editor\**;
+				 $(FullSerializerFolder)\**\*.meta"/>
+  </ItemGroup>
+
+   
+  <!-- Use AfterUnityBuild from Blackbird.CSharp.targets. -->
+  <!--
+  <Target Name="AfterBuild">
+    <CallTarget Targets="GenerateMonoSymbols" Condition=" Exists('$(OutputPath)\$(AssemblyName).pdb') " />
+  </Target>
+  
+  <Target Name="GenerateMonoSymbols">
+    <Message Text="$(ProjectName) -> $(TargetPath).mdb" Importance="High" />
+    <Exec Command="$(MonoMdbGenerator) $(OutputPath)\$(AssemblyName).dll" WorkingDirectory="$(MSBuildProjectDirectory)\$(OutputPath)" />
+  </Target>
+  -->
+
+</Project>
