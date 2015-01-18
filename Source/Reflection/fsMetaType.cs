@@ -14,12 +14,12 @@ namespace FullSerializer {
         static fsMetaType() {
 #if !NO_UNITY
             // Setup properties for Unity types that don't work well with the auto-rules.
-            fsMetaType.Get(typeof(UnityEngine.Bounds)).SetProperties("center", "size");
-            fsMetaType.Get(typeof(UnityEngine.Keyframe)).SetProperties("time", "value", "tangentMode", "inTangent", "outTangent");
-            fsMetaType.Get(typeof(UnityEngine.AnimationCurve)).SetProperties("keys", "preWrapMode", "postWrapMode");
-            fsMetaType.Get(typeof(UnityEngine.LayerMask)).SetProperties("value");
-            fsMetaType.Get(typeof(UnityEngine.Gradient)).SetProperties("alphaKeys", "colorKeys");
-            fsMetaType.Get(typeof(UnityEngine.Rect)).SetProperties("xMin", "yMin", "xMax", "yMax");
+            Get(typeof(UnityEngine.Bounds)).SetProperties("center", "size");
+            Get(typeof(UnityEngine.Keyframe)).SetProperties("time", "value", "tangentMode", "inTangent", "outTangent");
+            Get(typeof(UnityEngine.AnimationCurve)).SetProperties("keys", "preWrapMode", "postWrapMode");
+            Get(typeof(UnityEngine.LayerMask)).SetProperties("value");
+            Get(typeof(UnityEngine.Gradient)).SetProperties("alphaKeys", "colorKeys");
+            Get(typeof(UnityEngine.Rect)).SetProperties("xMin", "yMin", "xMax", "yMax");
 #endif
         }
 
