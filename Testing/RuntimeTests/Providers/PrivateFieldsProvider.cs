@@ -1,5 +1,4 @@
-﻿using FullInspector;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,11 +10,9 @@ public class PrivateHolder {
         SerializedProperty = 2;
     }
 
-    [ShowInInspector]
     [SerializeField]
     private int SerializedField;
 
-    [ShowInInspector]
     [SerializeField]
     private int SerializedProperty { get; set; }
 

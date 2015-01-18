@@ -1,5 +1,4 @@
-﻿using FullInspector;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 public class PropertiesProvider : TestProvider<object> {
@@ -24,7 +23,6 @@ public class PropertiesProvider : TestProvider<object> {
 
     public struct PrivateGetPrivateSet {
         public PrivateGetPrivateSet(int value) : this() { Value = value; }
-        [ShowInInspector]
         private int Value { get; set; }
 
         public bool Verify() {

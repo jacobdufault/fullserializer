@@ -139,6 +139,16 @@ namespace FullSerializer {
         }
 
         /// <summary>
+        /// A simple utility method that will assert that this result is successful and that
+        /// there are no warning messages. This throws an exception if either of those
+        /// asserts are false.
+        /// </summary>
+        public fsResult AssertSuccessWithoutWarnings() {
+            if (Failed || RawMessages.Any()) throw AsException;
+            return this;
+        }
+
+        /// <summary>
         /// Utility method to convert the result to an exception. This method is only defined
         /// is `Failed` returns true.
         /// </summary>
