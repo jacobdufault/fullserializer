@@ -1,9 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace FullSerializer.Internal {
     public class fsCyclicReferenceManager {
-        private Dictionary<object, int> _objectIds = new Dictionary<object, int>();
+        // We use the default ReferenceEquals when comparing two objects because
+        // custom objects may override equals methods. These overriden equals may
+        // treat equals differently; we want to serialize/deserialize the object
+        // graph *identically* to how it currently exists.
+        class ObjectReferenceEqualityComparator : IEqualityComparer<object> {
+            bool IEqualityComparer<object>.Equals(object x, object y) {
+                return ReferenceEquals(x, y);
+            }
+
+            int IEqualityComparer<object>.GetHashCode(object obj) {
+                return RuntimeHelpers.GetHashCode(obj);
+            }
+        }
+
+        private Dictionary<object, int> _objectIds = new Dictionary<object, int>(new ObjectReferenceEqualityComparator());
         private int _nextId;
 
         private Dictionary<int, object> _marked = new Dictionary<int, object>();
