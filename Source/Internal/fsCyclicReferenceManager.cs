@@ -16,9 +16,11 @@ namespace FullSerializer.Internal {
             int IEqualityComparer<object>.GetHashCode(object obj) {
                 return RuntimeHelpers.GetHashCode(obj);
             }
+
+            public static readonly IEqualityComparer<object> Instance = new ObjectReferenceEqualityComparator();
         }
 
-        private Dictionary<object, int> _objectIds = new Dictionary<object, int>(new ObjectReferenceEqualityComparator());
+        private Dictionary<object, int> _objectIds = new Dictionary<object, int>(ObjectReferenceEqualityComparator.Instance);
         private int _nextId;
 
         private Dictionary<int, object> _marked = new Dictionary<int, object>();
@@ -32,7 +34,7 @@ namespace FullSerializer.Internal {
             _depth--;
 
             if (_depth == 0) {
-                _objectIds = new Dictionary<object, int>();
+                _objectIds = new Dictionary<object, int>(ObjectReferenceEqualityComparator.Instance);
                 _nextId = 0;
                 _marked = new Dictionary<int, object>();
             }
