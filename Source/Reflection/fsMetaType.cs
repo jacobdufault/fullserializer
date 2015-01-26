@@ -214,8 +214,9 @@ namespace FullSerializer {
                 MemberInfo[] members = ReflectedType.GetFlattenedMember(propertyNames[i]);
 
                 if (members.Length == 0) {
-                    throw new InvalidOperationException("Unable to find property " +
-                        propertyNames[i] + " on " + ReflectedType.Name);
+                    // We silently fail here b/c there could be stripping applied
+                    // on the platform that removed the member
+                    continue;
                 }
                 if (members.Length > 1) {
                     throw new InvalidOperationException("More than one property matches " +
