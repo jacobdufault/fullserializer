@@ -39,8 +39,9 @@ namespace FullSerializer.Internal {
     /// This wraps reflection types so that it is portable across different Unity runtimes.
     /// </summary>
     public static class fsPortableReflection {
-        public static Type[] EmptyTypes = new Type[] { };
+        public static Type[] EmptyTypes = { };
 
+        #region Attribute Queries
 #if USE_TYPEINFO
         public static TAttribute GetAttribute<TAttribute>(Type type)
             where TAttribute : Attribute {
@@ -57,19 +58,74 @@ namespace FullSerializer.Internal {
         }
 #endif
 
-        public static TAttribute GetAttribute<TAttribute>(MemberInfo memberInfo)
+        /// <summary>
+        /// Returns true if the given attribute is defined on the given element.
+        /// </summary>
+        public static bool HasAttribute(MemberInfo element, Type attributeType) {
+            return GetAttribute(element, attributeType) != null;
+        }
+
+        /// <summary>
+        /// Returns true if the given attribute is defined on the given element.
+        /// </summary>
+        public static bool HasAttribute<TAttribute>(MemberInfo element) {
+            return HasAttribute(element, typeof(TAttribute));
+        }
+
+        /// <summary>
+        /// Fetches the given attribute from the given MemberInfo. This method applies caching
+        /// and is allocation free (after caching has been performed).
+        /// </summary>
+        /// <param name="element">The MemberInfo the get the attribute from.</param>
+        /// <param name="attributeType">The type of attribute to fetch.</param>
+        /// <returns>The attribute or null.</returns>
+        public static Attribute GetAttribute(MemberInfo element, Type attributeType) {
+            var query = new AttributeQuery {
+                MemberInfo = element,
+                AttributeType = attributeType
+            };
+
+            Attribute attribute;
+            if (_cachedAttributeQueries.TryGetValue(query, out attribute) == false) {
+                var attributes = element.GetCustomAttributes(attributeType, /*inherit:*/ true);
+                attribute = (Attribute)attributes.FirstOrDefault();
+                _cachedAttributeQueries[query] = attribute;
+            }
+
+            return attribute;
+        }
+
+        /// <summary>
+        /// Fetches the given attribute from the given MemberInfo.
+        /// </summary>
+        /// <typeparam name="TAttribute">The type of attribute to fetch.</typeparam>
+        /// <param name="element">The MemberInfo to get the attribute from.</param>
+        /// <returns>The attribute or null.</returns>
+        public static TAttribute GetAttribute<TAttribute>(MemberInfo element)
             where TAttribute : Attribute {
 
-            return (TAttribute)memberInfo.GetCustomAttributes(typeof(TAttribute), /*inherit:*/ true).FirstOrDefault();
+            return (TAttribute)GetAttribute(element, typeof(TAttribute));
         }
+        private struct AttributeQuery {
+            public MemberInfo MemberInfo;
+            public Type AttributeType;
+        }
+        private static IDictionary<AttributeQuery, Attribute> _cachedAttributeQueries =
+            new Dictionary<AttributeQuery, Attribute>(new AttributeQueryComparator());
+        private class AttributeQueryComparator : IEqualityComparer<AttributeQuery> {
+            public bool Equals(AttributeQuery x, AttributeQuery y) {
+                return
+                    x.MemberInfo == y.MemberInfo &&
+                    x.AttributeType == y.AttributeType;
+            }
 
-        public static Attribute GetAttribute(MemberInfo memberInfo, Type attributeType) {
-            return (Attribute)memberInfo.GetCustomAttributes(attributeType, /*inherit:*/ true).FirstOrDefault();
+            public int GetHashCode(AttributeQuery obj) {
+                return
+                    obj.MemberInfo.GetHashCode() +
+                    (17 * obj.AttributeType.GetHashCode());
+            }
         }
-
-        public static bool HasAttribute(MemberInfo memberInfo, Type attributeType) {
-            return GetAttribute(memberInfo, attributeType) != null;
-        }
+        #endregion
 
 #if !USE_TYPEINFO
         private static BindingFlags DeclaredFlags =
