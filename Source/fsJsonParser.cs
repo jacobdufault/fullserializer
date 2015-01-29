@@ -247,11 +247,12 @@ namespace FullSerializer {
             }
         }
 
+        private readonly StringBuilder _cachedStringBuilder = new StringBuilder(256);
         /// <summary>
         /// Parses a string
         /// </summary>
         private fsResult TryParseString(out string str) {
-            var result = new StringBuilder();
+            _cachedStringBuilder.Length = 0;
 
             // skip the first "
             if (Character() != '"' || TryMoveNext() == false) {
@@ -272,12 +273,12 @@ namespace FullSerializer {
                         return fail;
                     }
 
-                    result.Append(unescaped);
+                    _cachedStringBuilder.Append(unescaped);
                 }
 
                 // no escaping necessary
                 else {
-                    result.Append(c);
+                    _cachedStringBuilder.Append(c);
 
                     // get the next character
                     if (TryMoveNext() == false) {
@@ -293,7 +294,7 @@ namespace FullSerializer {
                 return MakeFailure("No closing \" when parsing a string");
             }
 
-            str = result.ToString();
+            str = _cachedStringBuilder.ToString();
             return fsResult.Success;
         }
 
