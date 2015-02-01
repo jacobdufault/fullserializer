@@ -168,6 +168,9 @@ namespace FullSerializer {
             _references = new fsCyclicReferenceManager();
             _lazyReferenceWriter = new fsLazyCycleDefinitionWriter();
 
+            // note: The order here is important. Items at the beginning of this
+            //       list will be used before converters at the end. Converters
+            //       added via AddConverter() are added to the front of the list.
             _converters = new List<fsConverter> {
                 new fsNullableConverter { Serializer = this },
                 new fsGuidConverter { Serializer = this },
@@ -212,7 +215,7 @@ namespace FullSerializer {
         /// Fetches a converter that can serialize/deserialize the given type.
         /// </summary>
         private fsConverter GetConverter(Type type) {
-            fsConverter converter = null;
+            fsConverter converter;
 
             // Check to see if the user has defined a custom converter for the type. If they
             // have, then we don't need to scan through all of the converters to check which
@@ -360,8 +363,6 @@ namespace FullSerializer {
             if (optionalVersionedType.HasValue) {
                 fsVersionedType versionedType = optionalVersionedType.Value;
 
-                data = fsData.CreateDictionary();
-
                 // Serialize the actual object content; we'll just wrap it with versioning metadata here.
                 var result = InternalSerialize_4_Converter(instance, out data);
                 if (result.Failed) return result;
@@ -496,8 +497,8 @@ namespace FullSerializer {
             }
 
             // Construct an object instance if we don't have one already. We also need to construct
-            // an instance if the result type is of the wrong type, which is also important for
-            // versioning.
+            // an instance if the result type is of the wrong type, which may be the case when we
+            // have a versioned import graph.
             if (ReferenceEquals(result, null) || result.GetType() != objectType) {
                 result = GetConverter(objectType).CreateInstance(data, objectType);
             }
@@ -512,25 +513,27 @@ namespace FullSerializer {
         }
 
         private fsResult InternalDeserialize_4_Cycles(fsData data, Type resultType, ref object result) {
-            // object references are handled at stage 1
-
             if (IsObjectDefinition(data)) {
-                var dict = data.AsDictionary;
+                // NOTE: object references are handled at stage 1
 
-                int sourceId = int.Parse(dict[Key_ObjectDefinition].AsString);
+                // If this is a definition, then we have a serialization invariant that this is the
+                // first time we have encountered the object (TODO: verify in the deserialization logic)
 
-                // to get the reference object, we need to deserialize it, but doing so sends a
-                // request back to our _references group... so we just construct an instance
-                // before deserialization so that our _references group resolves correctly.
+                // Since at this stage in the deserialization process we already have access to the
+                // object instance, so we just need to sync the object id to the references database
+                // so that when we encounter the instance we lookup this same object. We want to do
+                // this before actually deserializing the object because when deserializing the object
+                // there may be references to itself.
+
+                int sourceId = int.Parse(data.AsDictionary[Key_ObjectDefinition].AsString);
                 _references.AddReferenceWithId(sourceId, result);
-                return InternalDeserialize_4_Converter(data, resultType, ref result);
             }
 
             // Nothing special, go through the standard deserialization logic.
-            return InternalDeserialize_4_Converter(data, resultType, ref result);
+            return InternalDeserialize_5_Converter(data, resultType, ref result);
         }
 
-        private fsResult InternalDeserialize_4_Converter(fsData data, Type resultType, ref object result) {
+        private fsResult InternalDeserialize_5_Converter(fsData data, Type resultType, ref object result) {
             if (IsWrappedData(data)) {
                 data = data.AsDictionary[Key_Content];
             }
