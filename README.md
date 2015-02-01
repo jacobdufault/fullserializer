@@ -2,7 +2,7 @@
 
 Full Serializer is an extremely easy to use JSON serializer that *just works*.  It is as simple as possible but no simpler.
 
-Full Serializer has been designed to support all Unity export platforms, including tricky ones such as the WebPlayer and iOS. Additionally, it has been designed to support full stripping mode on iOS (Full Serializer does not use exceptions). Full Serializer can also be used outside of Unity; just make sure to define `NO_UNITY` in your project-level defines.
+Full Serializer has been designed to support all Unity export platforms, including tricky ones such as the WebPlayer and iOS (it's also being used on consoles like the PS4). Additionally, it has been designed to support full stripping mode on iOS (Full Serializer does not use exceptions). Full Serializer can also be used outside of Unity; just make sure to define `NO_UNITY` in your project-level defines.
 
 Best of all, Full Serializer is completely free to use and available under the MIT license!
 
