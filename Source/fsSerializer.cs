@@ -98,6 +98,31 @@ namespace FullSerializer {
         }
         #endregion
 
+        #region Utility Methods
+        private static void Invoke_OnBeforeSerialize(List<fsObjectProcessor> processors, Type storageType, object instance) {
+            for (int i = 0; i < processors.Count; ++i) {
+                processors[i].OnBeforeSerialize(storageType, instance);
+            }
+        }
+        private static void Invoke_OnAfterSerialize(List<fsObjectProcessor> processors, Type storageType, object instance, ref fsData data) {
+            // We run the after calls in reverse order; this significantly reduces the interaction burden between
+            // multiple processors - it makes each one much more independent and ignorant of the other ones.
+
+            for (int i = processors.Count - 1; i >= 0; --i) {
+                processors[i].OnAfterSerialize(storageType, instance, ref data);
+            }
+        }
+        private static void Invoke_OnBeforeDeserialize(List<fsObjectProcessor> processors, Type storageType, ref fsData data) {
+            for (int i = 0; i < processors.Count; ++i) {
+                processors[i].OnBeforeDeserialize(storageType, ref data);
+            }
+        }
+        private static void Invoke_OnAfterDeserialize(List<fsObjectProcessor> processors, Type storageType, object instance) {
+            for (int i = processors.Count - 1; i >= 0; --i) {
+                processors[i].OnAfterDeserialize(storageType, instance);
+            }
+        }
+        #endregion
 
         /// <summary>
         /// Ensures that the data is a dictionary. If it is not, then it is wrapped inside of one.
@@ -153,9 +178,19 @@ namespace FullSerializer {
         private Dictionary<Type, fsConverter> _cachedConverters;
 
         /// <summary>
+        /// A cache from type to the set of processors that are interested in it.
+        /// </summary>
+        private Dictionary<Type, List<fsObjectProcessor>> _cachedProcessors;
+
+        /// <summary>
         /// Converters that are available.
         /// </summary>
         private readonly List<fsConverter> _converters;
+
+        /// <summary>
+        /// Processors that are available.
+        /// </summary>
+        private readonly List<fsObjectProcessor> _processors;
 
         /// <summary>
         /// Reference manager for cycle detection.
@@ -165,6 +200,8 @@ namespace FullSerializer {
 
         public fsSerializer() {
             _cachedConverters = new Dictionary<Type, fsConverter>();
+            _cachedProcessors = new Dictionary<Type, List<fsObjectProcessor>>();
+
             _references = new fsCyclicReferenceManager();
             _lazyReferenceWriter = new fsLazyCycleDefinitionWriter();
 
@@ -185,6 +222,8 @@ namespace FullSerializer {
                 new fsReflectedConverter { Serializer = this }
             };
 
+            _processors = new List<fsObjectProcessor>();
+
             Context = new fsContext();
         }
 
@@ -194,20 +233,59 @@ namespace FullSerializer {
         public fsContext Context;
 
         /// <summary>
+        /// Add a new processor to the serializer. Mutliple processors can run at the same time in the
+        /// same order they were added in.
+        /// </summary>
+        /// <param name="processor">The processor to add.</param>
+        public void AddProcessor(fsObjectProcessor processor) {
+            _processors.Add(processor);
+
+            // We need to reset our cached processor set, as it could be invalid with the new
+            // processor. Ideally, _cachedProcessors should be empty (as the user should fully setup
+            // the serializer before actually using it), but there is no guarantee.
+            _cachedProcessors = new Dictionary<Type, List<fsObjectProcessor>>();
+        }
+
+        /// <summary>
+        /// Fetches all of the processors for the given type.
+        /// </summary>
+        private List<fsObjectProcessor> GetProcessors(Type type) {
+            List<fsObjectProcessor> processors;
+
+            if (_cachedProcessors.TryGetValue(type, out processors) == false) {
+                processors = new List<fsObjectProcessor>();
+
+                for (int i = 0; i < _processors.Count; ++i) {
+                    var processor = _processors[i];
+                    if (processor.CanProcess(type)) {
+                        processors.Add(processor);
+                    }
+                }
+
+                _cachedProcessors[type] = processors;
+            }
+
+            return processors;
+        }
+
+
+        /// <summary>
         /// Adds a new converter that can be used to customize how an object is serialized and
         /// deserialized.
         /// </summary>
         public void AddConverter(fsConverter converter) {
             if (converter.Serializer != null) {
                 throw new InvalidOperationException("Cannot add a single converter instance to " +
-                    "multiple JsonConverters -- please construct a new instance for " + converter);
+                    "multiple fsConverters -- please construct a new instance for " + converter);
             }
 
+            // TODO: wrap inside of a ConverterManager so we can control _converters and _cachedConverters lifetime
             _converters.Insert(0, converter);
             converter.Serializer = this;
 
             // We need to reset our cached converter set, as it could be invalid with the new
-            // converter. Ideally, _cachedConverters should be empty, but there is no guarantee.
+            // converter. Ideally, _cachedConverters should be empty (as the user should fully setup
+            // the serializer before actually using it), but there is no guarantee.
             _cachedConverters = new Dictionary<Type, fsConverter>();
         }
 
@@ -276,13 +354,20 @@ namespace FullSerializer {
         /// <param name="data">The serialized state of the object.</param>
         /// <returns>If serialization was successful.</returns>
         public fsResult TrySerialize(Type storageType, object instance, out fsData data) {
+            var processors = GetProcessors(storageType);
+
+            Invoke_OnBeforeSerialize(processors, storageType, instance);
+
             // We always serialize null directly as null
             if (ReferenceEquals(instance, null)) {
                 data = new fsData();
+                Invoke_OnAfterSerialize(processors, storageType, instance, ref data);
                 return fsResult.Success;
             }
 
-            return InternalSerialize_1_ProcessCycles(storageType, instance, out data);
+            var result = InternalSerialize_1_ProcessCycles(storageType, instance, out data);
+            Invoke_OnAfterSerialize(processors, storageType, instance, ref data);
+            return result;
         }
 
         private fsResult InternalSerialize_1_ProcessCycles(Type storageType, object instance, out fsData data) {
@@ -390,8 +475,12 @@ namespace FullSerializer {
         /// <param name="result"></param>
         /// <returns></returns>
         public fsResult TryDeserialize(fsData data, Type storageType, ref object result) {
+            var processors = GetProcessors(storageType);
+            Invoke_OnBeforeDeserialize(processors, storageType, ref data);
+
             if (data.IsNull) {
                 result = null;
+                Invoke_OnAfterDeserialize(processors, storageType, null);
                 return fsResult.Success;
             }
 
@@ -408,6 +497,7 @@ namespace FullSerializer {
             }
             finally {
                 _references.Exit();
+                Invoke_OnAfterDeserialize(processors, storageType, null);
             }
         }
 
