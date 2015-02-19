@@ -169,7 +169,7 @@ namespace FullSerializer.Internal {
         }
 
         public override bool RequestInheritanceSupport(Type storageType) {
-            return false;
+            return true;
         }
 
         public override bool CanProcess(Type type) {
