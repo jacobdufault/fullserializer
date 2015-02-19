@@ -6,6 +6,7 @@ using UnityEngine.UI;
 
 public struct TestObject {
     public Func<object, object, bool> EqualityComparer;
+    public Type StorageType;
     public object Original;
     public string Serialized;
     public object Deserialized;
@@ -14,6 +15,7 @@ public struct TestObject {
 
 public struct TestItem {
     public object Item;
+    public Type ItemStorageType;
     public Func<object, object, bool> Comparer;
 }
 
@@ -21,15 +23,15 @@ public interface ITestProvider {
     IEnumerable<TestItem> GetValues();
 }
 
-
 public abstract class TestProvider<T> : ITestProvider {
     public abstract bool Compare(T before, T after);
     public abstract IEnumerable<T> GetValues();
 
     IEnumerable<TestItem> ITestProvider.GetValues() {
         foreach (T value in GetValues()) {
-            yield return new TestItem() {
+            yield return new TestItem {
                 Item = value,
+                ItemStorageType = typeof(T),
                 Comparer = (a, b) => Compare((T)a, (T)b)
             };
         }
@@ -38,6 +40,7 @@ public abstract class TestProvider<T> : ITestProvider {
 
 public class RuntimeTestRunner : MonoBehaviour {
     public Text MessageOutput;
+    public bool PrintSerializedData;
 
     public string Serialize(Type type, object value) {
         fsData data;
@@ -60,6 +63,7 @@ public class RuntimeTestRunner : MonoBehaviour {
         var TestValues = new List<TestObject>();
         foreach (var value in (new TProvider()).GetValues()) {
             TestValues.Add(new TestObject {
+                StorageType = value.ItemStorageType,
                 Original = value.Item,
                 EqualityComparer = value.Comparer
             });
@@ -70,15 +74,26 @@ public class RuntimeTestRunner : MonoBehaviour {
         for (int i = 0; i < TestValues.Count; ++i) {
             TestObject testObj = TestValues[i];
             try {
+                Exception failed = null;
 
-                testObj.Serialized = Serialize(testObj.Original.GetType(), testObj.Original);
-                testObj.Deserialized = Deserialize(testObj.Original.GetType(), testObj.Serialized);
+                try {
+                    testObj.Serialized = Serialize(testObj.StorageType, testObj.Original);
+                    testObj.Deserialized = Deserialize(testObj.StorageType, testObj.Serialized);
+
+                    if (PrintSerializedData) {
+                        Log(testObj.Serialized);
+                    }
+                }
+                catch (Exception e) {
+                    failed = e;
+                }
 
                 TestValues[i] = testObj;
 
-                if (testObj.EqualityComparer(testObj.Original, testObj.Deserialized) == false) {
-                    throw new Exception("Item " + i + " with type " + testObj.Original.GetType() +
-                        " is not equal to it's deserialized object");
+                if (failed != null || testObj.EqualityComparer(testObj.Original, testObj.Deserialized) == false) {
+                    if (failed != null) LogError("Caught exception " + failed);
+                    LogError("Item " + i + " with type " + testObj.Original.GetType() +
+                        " is not equal to it's deserialized object. The serialized state was " + testObj.Serialized);
                 }
 
 

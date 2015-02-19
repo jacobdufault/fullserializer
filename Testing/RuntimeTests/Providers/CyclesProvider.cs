@@ -27,6 +27,7 @@ public class CyclesProvider : ITestProvider {
 
         yield return new TestItem {
             Item = simpleCycle,
+            ItemStorageType = simpleCycle.GetType(),
             Comparer = (a, b) => {
                 var deserialized = (CycleDerivedA)b;
                 return
@@ -48,6 +49,7 @@ public class CyclesProvider : ITestProvider {
         simpleInheritCycle.Cycle = simpleInheritCycle;
         yield return new TestItem {
             Item = new ValueHolder<ICycle>(simpleInheritCycle),
+            ItemStorageType = typeof(ValueHolder<ICycle>),
             Comparer = (a, b) => {
                 var deserialized = (ValueHolder<ICycle>)b;
                 return
@@ -74,6 +76,7 @@ public class CyclesProvider : ITestProvider {
         complexInheritCycle.Cycle.Cycle = complexInheritCycle;
         yield return new TestItem {
             Item = new ValueHolder<ICycle>(complexInheritCycle),
+            ItemStorageType = typeof(ValueHolder<ICycle>),
             Comparer = (a, b) => {
                 var deserialized = (ValueHolder<ICycle>)b;
 
@@ -98,6 +101,7 @@ public class CyclesProvider : ITestProvider {
             Cyclic a0 = new Cyclic(), a1 = new Cyclic(), a2 = new Cyclic();
             yield return new TestItem {
                 Item = new List<object> { a0, a1, a2, a1, a2, a0, a0, a0, a0 },
+                ItemStorageType = typeof(List<object>),
                 Comparer = (a, b) => {
                     var listB = (List<object>)b;
 
