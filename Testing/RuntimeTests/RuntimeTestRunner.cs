@@ -129,7 +129,9 @@ public class RuntimeTestRunner : MonoBehaviour {
     }
 
     private void ExecuteAllTests() {
-        ExecuteTests<CustomIEnumerableProvider>();
+        ExecuteTests<CustomIEnumerableProviderWithAdd>();
+        ExecuteTests<CustomIEnumerableProviderWithoutAdd>();
+        ExecuteTests<CustomListProvider>();
         ExecuteTests<CyclesProvider>();
         ExecuteTests<DateTimeOffsetProvider>();
         ExecuteTests<DateTimeProvider>();
