@@ -151,7 +151,7 @@ namespace FullSerializer.Internal {
     }
 
     public class fsIEnumerableConverter : fsConverter {
-        private fsIEnumerableSerializationAdapter[] _adaptors = new fsIEnumerableSerializationAdapter[] {
+        private readonly fsIEnumerableSerializationAdapter[] _adaptors = {
             new fsIDictionaryAdapter(),
             new fsReflectedAdapter()
         };
