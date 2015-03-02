@@ -6,8 +6,8 @@ namespace FullSerializer.Internal {
     public class fsKeyValuePairConverter : fsConverter {
         public override bool CanProcess(Type type) {
             return
-                type.Resolve().IsGenericType &&
-                type.GetGenericTypeDefinition() == typeof(KeyValuePair<,>);
+                (type.Resolve().IsGenericType &&
+                type.GetGenericTypeDefinition() == typeof(KeyValuePair<,>)) || type == typeof(fsIDictionaryAdapter.DictionaryItem);
         }
 
         public override bool RequestCycleSupport(Type storageType) {
@@ -44,7 +44,19 @@ namespace FullSerializer.Internal {
             object valueObject = valueProperty.GetValue(instance, null);
 
             var genericArguments = storageType.GetGenericArguments();
-            Type keyType = genericArguments[0], valueType = genericArguments[1];
+            Type keyType, valueType;
+
+            // was KeyValuePair
+            if (genericArguments.Length > 0)
+            {
+                valueType = genericArguments[1];
+                keyType = genericArguments[0];
+            }
+            else // was fsIDictionaryAdapter.DictionaryItem
+            {
+                valueType = valueObject.GetType();
+                keyType = keyObject.GetType();
+            }
 
             var result = fsResult.Success;
 
