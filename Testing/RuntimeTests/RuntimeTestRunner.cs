@@ -135,6 +135,7 @@ public class RuntimeTestRunner : MonoBehaviour {
         ExecuteTests<CyclesProvider>();
         ExecuteTests<DateTimeOffsetProvider>();
         ExecuteTests<DateTimeProvider>();
+        ExecuteTests<EncodedDataProvider>();
         ExecuteTests<FlagsEnumProvider>();
         ExecuteTests<GuidProvider>();
         ExecuteTests<IDictionaryIntIntProvider>();
