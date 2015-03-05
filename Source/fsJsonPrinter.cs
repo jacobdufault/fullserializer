@@ -70,7 +70,7 @@ namespace FullSerializer {
                 // standard escape character
                 switch (c) {
                     case '"': result.Append("\\\""); continue;
-                    case '\\': result.Append(@"\"); continue;
+                    case '\\': result.Append(@"\\"); continue;
                     case '\a': result.Append(@"\a"); continue;
                     case '\b': result.Append(@"\b"); continue;
                     case '\f': result.Append(@"\f"); continue;
