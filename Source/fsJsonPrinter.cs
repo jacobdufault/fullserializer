@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 using System.Text;
 
@@ -265,10 +266,13 @@ namespace FullSerializer {
         /// <summary>
         /// Utility method that converts a double to a string.
         /// </summary>
-        private static String ConvertDoubleToString(double d) {
-            if (Double.IsInfinity(d) || Double.IsNaN(d)) return d.ToString();
-            String doubledString = d.ToString();
+        private static string ConvertDoubleToString(double d) {
+            if (Double.IsInfinity(d) || Double.IsNaN(d)) return d.ToString(CultureInfo.InvariantCulture);
+            string doubledString = d.ToString(CultureInfo.InvariantCulture);
+
+            // NOTE/HACK: If we don't serialize with a period, then the number will be deserialized as an Int64, not a double.
             if (doubledString.Contains(".") == false) doubledString += ".0";
+
             return doubledString;
         }
 
