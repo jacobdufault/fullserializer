@@ -5,6 +5,24 @@ using FullSerializer.Internal;
 namespace FullSerializer {
     public class fsSerializer {
         #region Keys
+        private static HashSet<string> _reservedKeywords;
+        static fsSerializer() {
+            _reservedKeywords = new HashSet<string> {
+                Key_ObjectReference,
+                Key_ObjectDefinition,
+                Key_InstanceType,
+                Key_Version,
+                Key_Content
+            };
+        }
+        /// <summary>
+        /// Returns true if the given key is a special keyword that full serializer uses to
+        /// add additional metadata on top of the emitted JSON.
+        /// </summary>
+        public static bool IsReservedKeyword(string key) {
+            return _reservedKeywords.Contains(key);
+        }
+
         /// <summary>
         /// This is an object reference in part of a cyclic graph.
         /// </summary>
@@ -137,7 +155,9 @@ namespace FullSerializer {
 
         /// <summary>
         /// This manages instance writing so that we do not write unnecessary $id fields. We
-        /// only need to write out an $id field when there is a corresponding $ref field.
+        /// only need to write out an $id field when there is a corresponding $ref field. This is able
+        /// to write $id references lazily because the fsData instance is not actually written out to text
+        /// until we have entirely finished serializing it.
         /// </summary>
         internal class fsLazyCycleDefinitionWriter {
             private Dictionary<int, Dictionary<string, fsData>> _definitions = new Dictionary<int, Dictionary<string, fsData>>();
@@ -216,6 +236,7 @@ namespace FullSerializer {
                 new fsEnumConverter { Serializer = this },
                 new fsPrimitiveConverter { Serializer = this },
                 new fsArrayConverter { Serializer = this },
+                new fsDictionaryConverter { Serializer = this },
                 new fsIEnumerableConverter { Serializer = this },
                 new fsKeyValuePairConverter { Serializer = this },
                 new fsWeakReferenceConverter { Serializer = this },

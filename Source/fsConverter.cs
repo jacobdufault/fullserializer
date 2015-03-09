@@ -1,5 +1,6 @@
 ﻿using FullSerializer.Internal;
 using System;
+using System.Linq;
 
 namespace FullSerializer {
     /// <summary>
@@ -73,6 +74,12 @@ namespace FullSerializer {
             }
 
             return storageType;
+        }
+
+        protected fsResult FailExpectedType(fsData data, params fsDataType[] types) {
+            return fsResult.Fail(GetType().Name + " expected one of " +
+                string.Join(", ", types.Select(t => t.ToString()).ToArray()) +
+                " but got " + data.Type + " in " + data);
         }
 
         protected fsResult CheckType(fsData data, fsDataType type) {

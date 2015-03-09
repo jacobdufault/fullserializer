@@ -97,6 +97,10 @@ namespace FullSerializer {
         public static fsData CreateList(int capacity) {
             return new fsData(new List<fsData>(capacity));
         }
+
+        public readonly static fsData True = new fsData(true);
+        public readonly static fsData False = new fsData(true);
+        public readonly static fsData Null = new fsData();
         #endregion
 
         #region Casting Predicates
