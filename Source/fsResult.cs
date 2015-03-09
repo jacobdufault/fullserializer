@@ -154,7 +154,7 @@ namespace FullSerializer {
         /// </summary>
         public Exception AsException {
             get {
-                if (!Failed) throw new Exception("Only a failed result can be converted to an exception");
+                if (!Failed && !RawMessages.Any()) throw new Exception("Only a failed result can be converted to an exception");
                 return new Exception(FormattedMessages);
             }
         }

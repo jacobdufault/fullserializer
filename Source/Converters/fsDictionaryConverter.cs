@@ -150,22 +150,6 @@ namespace FullSerializer.Internal {
             return fsResult.Success;
         }
 
-        private class FallbackDictionaryItem {
-            public object Key;
-            public object Value;
-        }
-
-        private static Type GetKeyValuePairType(Type dictionaryType) {
-            // Try to fetch the KeyValuePair<,> from ICollection, since we cannot construct it (as MakeGenericType
-            // is not available).
-            var collectionType = fsReflectionUtility.GetInterface(dictionaryType, typeof(ICollection<>));
-            if (collectionType != null) {
-                return collectionType.GetGenericArguments()[0];
-            }
-
-            return null;
-        }
-
         private static void GetKeyValueTypes(Type dictionaryType, out Type keyStorageType, out Type valueStorageType) {
             // All dictionaries extend IDictionary<TKey, TValue>, so we just fetch the generic arguments from it
             var interfaceType = fsReflectionUtility.GetInterface(dictionaryType, typeof(IDictionary<,>));

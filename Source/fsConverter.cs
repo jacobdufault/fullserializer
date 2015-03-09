@@ -20,6 +20,24 @@ namespace FullSerializer {
         public abstract bool CanProcess(Type type);
 
         /// <summary>
+        /// Construct an object instance that will be passed to TryDeserialize. This should **not**
+        /// deserialize the object.
+        /// </summary>
+        /// <param name="data">The data the object was serialized with.</param>
+        /// <param name="storageType">The field/property type that is storing the instance.</param>
+        /// <returns>An object instance</returns>
+        public virtual object CreateInstance(fsData data, Type storageType) {
+            if (RequestCycleSupport(storageType)) {
+                throw new InvalidOperationException("Please override CreateInstance for " +
+                    GetType().FullName + "; the object graph for " + storageType +
+                    " can contain potentially contain cycles, so separated instance creation " +
+                    "is needed");
+            }
+
+            return storageType;
+        }
+
+        /// <summary>
         /// If true, then the serializer will support cyclic references with the given converted
         /// type.
         /// </summary>
@@ -57,24 +75,6 @@ namespace FullSerializer {
         /// <param name="storageType">The field/property type that is storing the instance.</param>
         /// <returns>True if serialization was successful, false otherwise.</returns>
         public abstract fsResult TryDeserialize(fsData data, ref object instance, Type storageType);
-
-        /// <summary>
-        /// Construct an object instance that will be passed to TryDeserialize. This should **not**
-        /// deserialize the object.
-        /// </summary>
-        /// <param name="data">The data the object was serialized with.</param>
-        /// <param name="storageType">The field/property type that is storing the instance.</param>
-        /// <returns>An object instance</returns>
-        public virtual object CreateInstance(fsData data, Type storageType) {
-            if (RequestCycleSupport(storageType)) {
-                throw new InvalidOperationException("Please override CreateInstance for " +
-                    GetType().FullName + "; the object graph for " + storageType +
-                    " can contain potentially contain cycles, so separated instance creation " +
-                    "is needed");
-            }
-
-            return storageType;
-        }
 
         protected fsResult FailExpectedType(fsData data, params fsDataType[] types) {
             return fsResult.Fail(GetType().Name + " expected one of " +

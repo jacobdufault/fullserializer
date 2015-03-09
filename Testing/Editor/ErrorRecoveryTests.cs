@@ -91,8 +91,9 @@ namespace FullSerializer.Tests {
 
         private static void TestCollectionDeserializeBadCollectionMemberHelper<TElement, TCollection>(fsData data)
             where TCollection : IList<TElement> {
+
             var coll = default(TCollection);
-            Assert.IsTrue((new fsSerializer()).TryDeserialize(data, ref coll).Succeeded);
+            (new fsSerializer()).TryDeserialize(data, ref coll).AssertSuccess();
 
             Assert.AreEqual(5, coll.Count);
             Assert.AreEqual(new Model { a = 0, b = 1, c = 1 }, coll[0]);
