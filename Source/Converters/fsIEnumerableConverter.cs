@@ -37,8 +37,8 @@ namespace FullSerializer.Internal {
         // always return the type we expect, so we get around that by creating our own iteration
         // type that we convert everything to.
         public struct DictionaryItem {
-            public object Key;
-            public object Value;
+            public object Key { get; set; }
+            public object Value { get; set; }
         }
 
         public bool IsValid(Type objectType) {
