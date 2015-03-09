@@ -37,6 +37,13 @@ namespace FullSerializer {
         /// </summary>
         public Type Converter;
 
+        /// <summary>
+        /// Specify a custom processor to use during serialization. The processor type needs
+        /// to derive from fsObjectProcessor and the call to CanProcess is not invoked. This
+        /// defaults to null.
+        /// </summary>
+        public Type Processor;
+
         public fsObjectAttribute() { }
         public fsObjectAttribute(string versionString, params Type[] previousModels) {
             VersionString = versionString;

@@ -273,7 +273,18 @@ namespace FullSerializer {
         private List<fsObjectProcessor> GetProcessors(Type type) {
             List<fsObjectProcessor> processors;
 
-            if (_cachedProcessors.TryGetValue(type, out processors) == false) {
+            // Check to see if the user has defined a custom processor for the type. If they
+            // have, then we don't need to scan through all of the processor to check which
+            // one can process the type; instead, we directly use the specified processor.
+            var attr = fsPortableReflection.GetAttribute<fsObjectAttribute>(type);
+            if (attr != null && attr.Processor != null) {
+                var processor = (fsObjectProcessor)Activator.CreateInstance(attr.Processor);
+                processors = new List<fsObjectProcessor>();
+                processors.Add(processor);
+                _cachedProcessors[type] = processors;
+            }
+
+            else if (_cachedProcessors.TryGetValue(type, out processors) == false) {
                 processors = new List<fsObjectProcessor>();
 
                 for (int i = 0; i < _processors.Count; ++i) {
