@@ -56,7 +56,12 @@ public class SortedDictionaryProvider : TestProvider<IDictionary> {
     }
     [Flags]
     public enum FlagsEnum {
-        A, B, C, D, E, F
+        FlagA = 1 << 0,
+        FlagB = 1 << 1,
+        FlagC = 1 << 2,
+        FlagD = 1 << 3,
+        FlagE = 1 << 4,
+        FlagF = 1 << 5
     }
 
     public override bool Compare(IDictionary before, IDictionary after) {
@@ -126,13 +131,13 @@ public class SortedDictionaryProvider : TestProvider<IDictionary> {
         };
 
         yield return new SortedDictionary<FlagsEnum, int> {
-            { FlagsEnum.A, 3 }
+            { FlagsEnum.FlagA, 3 }
         };
 
         yield return new SortedDictionary<FlagsEnum, int> {
-            { FlagsEnum.A | FlagsEnum.B, 1 },
-            { FlagsEnum.C, 2 },
-            { FlagsEnum.D | FlagsEnum.E | FlagsEnum.F, 3 },
+            { FlagsEnum.FlagA | FlagsEnum.FlagB, 1 },
+            { FlagsEnum.FlagC, 2 },
+            { FlagsEnum.FlagD | FlagsEnum.FlagE | FlagsEnum.FlagF, 3 },
         };
 #endif
 
