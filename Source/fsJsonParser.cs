@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 
 namespace FullSerializer {
@@ -227,7 +228,7 @@ namespace FullSerializer {
             // double -- includes a .
             if (numberString.Contains(".") || numberString == "Infinity" || numberString == "-Infinity" || numberString == "NaN") {
                 double doubleValue;
-                if (double.TryParse(numberString, out doubleValue) == false) {
+                if (double.TryParse(numberString, NumberStyles.Any, CultureInfo.InvariantCulture, out doubleValue) == false) {
                     data = null;
                     return MakeFailure("Bad double format with " + numberString);
                 }
@@ -237,7 +238,7 @@ namespace FullSerializer {
             }
             else {
                 Int64 intValue;
-                if (Int64.TryParse(numberString, out intValue) == false) {
+                if (Int64.TryParse(numberString, NumberStyles.Any, CultureInfo.InvariantCulture, out intValue) == false) {
                     data = null;
                     return MakeFailure("Bad Int64 format with " + numberString);
                 }
