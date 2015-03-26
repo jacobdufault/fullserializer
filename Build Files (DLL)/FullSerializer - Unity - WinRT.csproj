@@ -1,24 +1,166 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="CommonData.csproj" />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
-    <ProjectGuid>{71A89EEC-36B9-49ED-8431-D6A7DBDD9EA7}</ProjectGuid>
-    <AssemblyName>FullSerializer-Unity-WinRT</AssemblyName>
-    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
-    
-    <DefineConstant>UNITY_METRO</DefineConstant>
+    <MinimumVisualStudioVersion>12.0</MinimumVisualStudioVersion>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{CEB8A51E-7E2A-4657-BBB7-A2D27461C693}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>FullSerializer</RootNamespace>
+    <AssemblyName>FullSerializer - Unity - WinRT</AssemblyName>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <TargetFrameworkProfile>Profile32</TargetFrameworkProfile>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
   </PropertyGroup>
-
-  <!-- Source Code -->
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;UNITY_METRO</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE;UNITY_METRO</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
   <ItemGroup>
-    <Compile Include="@(ExternalCompile)" />
+    <TargetPlatform Include="WindowsPhoneApp, Version=8.1" />
+    <TargetPlatform Include="Windows, Version=8.1" />
   </ItemGroup>
- 
-  <!-- References -->
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="UnityEngine" />
+    <Compile Include="..\Source\Converters\fsArrayConverter.cs">
+      <Link>fsArrayConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Converters\fsDateConverter.cs">
+      <Link>fsDateConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Converters\fsDictionaryConverter.cs">
+      <Link>fsDictionaryConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Converters\fsEnumConverter.cs">
+      <Link>fsEnumConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Converters\fsGuidConverter.cs">
+      <Link>fsGuidConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Converters\fsIEnumerableConverter.cs">
+      <Link>fsIEnumerableConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Converters\fsKeyValuePairConverter.cs">
+      <Link>fsKeyValuePairConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Converters\fsNullableConverter.cs">
+      <Link>fsNullableConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Converters\fsPrimitiveConverter.cs">
+      <Link>fsPrimitiveConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Converters\fsReflectedConverter.cs">
+      <Link>fsReflectedConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Converters\fsTypeConverter.cs">
+      <Link>fsTypeConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Converters\fsWeakReferenceConverter.cs">
+      <Link>fsWeakReferenceConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\fsConfig.cs">
+      <Link>fsConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\fsContext.cs">
+      <Link>fsContext.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\fsConverter.cs">
+      <Link>fsConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\fsData.cs">
+      <Link>fsData.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\fsExceptions.cs">
+      <Link>fsExceptions.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\fsIgnoreAttribute.cs">
+      <Link>fsIgnoreAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\fsJsonParser.cs">
+      <Link>fsJsonParser.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\fsJsonPrinter.cs">
+      <Link>fsJsonPrinter.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\fsMemberSerialization.cs">
+      <Link>fsMemberSerialization.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\fsObjectAttribute.cs">
+      <Link>fsObjectAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\fsObjectProcessor.cs">
+      <Link>fsObjectProcessor.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\fsPropertyAttribute.cs">
+      <Link>fsPropertyAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\fsResult.cs">
+      <Link>fsResult.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\fsSerializer.cs">
+      <Link>fsSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Internal\fsCyclicReferenceManager.cs">
+      <Link>fsCyclicReferenceManager.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Internal\fsOption.cs">
+      <Link>fsOption.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Internal\fsPortableReflection.cs">
+      <Link>fsPortableReflection.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Internal\fsVersionedType.cs">
+      <Link>fsVersionedType.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Internal\fsVersionManager.cs">
+      <Link>fsVersionManager.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Reflection\fsMetaProperty.cs">
+      <Link>fsMetaProperty.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Reflection\fsMetaType.cs">
+      <Link>fsMetaType.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Reflection\fsReflectionUtility.cs">
+      <Link>fsReflectionUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Reflection\fsTypeLookup.cs">
+      <Link>fsTypeLookup.cs</Link>
+    </Compile>
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="UnityEngine">
+      <HintPath>..\..\..\..\..\..\Program Files\Unity\Editor\Data\Managed\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="WinRTLegacy">
+      <HintPath>..\..\..\..\..\..\Program Files\Unity\Editor\Data\PlaybackEngines\wp8support\Managed\WinRTLegacy.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
 </Project>
