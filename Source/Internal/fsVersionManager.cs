@@ -1,4 +1,8 @@
-﻿using System;
+#if !UNITY_EDITOR && UNITY_METRO
+#define USE_TYPEINFO
+#endif
+
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -80,13 +84,18 @@ namespace FullSerializer.Internal {
         /// Verifies that the given type has constructors to migrate from all ancestor types.
         /// </summary>
         private static void VerifyConstructors(fsVersionedType type) {
+
+#if USE_TYPEINFO
+            ConstructorInfo[] publicConstructors = type.ModelType.GetConstructors();
+#else
             var flags =
                 BindingFlags.Public | BindingFlags.NonPublic |
                 BindingFlags.DeclaredOnly | BindingFlags.Instance;
 
             ConstructorInfo[] publicConstructors = type.ModelType.GetConstructors(flags);
+#endif
 
-            for (int i = 0; i < type.Ancestors.Length; ++i) {
+                                                                         for (int i = 0; i < type.Ancestors.Length; ++i) {
                 Type requiredConstructorType = type.Ancestors[i].ModelType;
 
                 bool found = false;
