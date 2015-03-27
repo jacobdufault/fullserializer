@@ -223,6 +223,20 @@ namespace FullSerializer.Internal {
             return null;
         }
 
+        public static IEnumerable<MethodInfo> GetFlattenedMethods(this Type type, string methodName) {
+            while (type != null) {
+                var methods = GetDeclaredMethods(type);
+
+                for (int i = 0; i < methods.Length; ++i) {
+                    if (methods[i].Name == methodName) {
+                        yield return methods[i];
+                    }
+                }
+
+                type = type.Resolve().BaseType;
+            }
+        }
+
         public static PropertyInfo GetFlattenedProperty(this Type type, string propertyName) {
             while (type != null) {
                 var properties = GetDeclaredProperties(type);
