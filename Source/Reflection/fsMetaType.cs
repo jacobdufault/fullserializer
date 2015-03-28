@@ -302,7 +302,7 @@ namespace FullSerializer {
             }
 
             try {
-                return Activator.CreateInstance(ReflectedType);
+                return Activator.CreateInstance(ReflectedType, /*nonPublic:*/ true);
             }
 #if (!UNITY_EDITOR && (UNITY_METRO)) == false
             catch (MissingMethodException e) {
