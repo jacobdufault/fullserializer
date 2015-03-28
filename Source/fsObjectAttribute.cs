@@ -32,8 +32,7 @@ namespace FullSerializer {
 
         /// <summary>
         /// Specify a custom converter to use for serialization. The converter type needs
-        /// to derive from fsConverter and the call to CanProcess can be skipped. This
-        /// defaults to null.
+        /// to derive from fsBaseConverter. This defaults to null.
         /// </summary>
         public Type Converter;
 

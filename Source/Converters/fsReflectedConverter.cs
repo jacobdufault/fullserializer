@@ -18,6 +18,8 @@ namespace FullSerializer.Internal {
             var result = fsResult.Success;
 
             fsMetaType metaType = fsMetaType.Get(instance.GetType());
+            metaType.EmitAotData();
+
             for (int i = 0; i < metaType.Properties.Length; ++i) {
                 fsMetaProperty property = metaType.Properties[i];
                 if (property.CanRead == false) continue;
@@ -30,7 +32,7 @@ namespace FullSerializer.Internal {
                     continue;
                 }
 
-                serialized.AsDictionary[property.Name] = serializedData;
+                serialized.AsDictionary[property.JsonName] = serializedData;
             }
 
             return result;
@@ -45,13 +47,14 @@ namespace FullSerializer.Internal {
             }
 
             fsMetaType metaType = fsMetaType.Get(storageType);
+            metaType.EmitAotData();
 
             for (int i = 0; i < metaType.Properties.Length; ++i) {
                 fsMetaProperty property = metaType.Properties[i];
                 if (property.CanWrite == false) continue;
 
                 fsData propertyData;
-                if (data.AsDictionary.TryGetValue(property.Name, out propertyData)) {
+                if (data.AsDictionary.TryGetValue(property.JsonName, out propertyData)) {
                     object deserializedValue = null;
 
                     var itemResult = Serializer.TryDeserialize(propertyData, property.StorageType, ref deserializedValue);

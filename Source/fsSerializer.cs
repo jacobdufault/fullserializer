@@ -195,7 +195,7 @@ namespace FullSerializer {
         /// <summary>
         /// A cache from type to it's converter.
         /// </summary>
-        private Dictionary<Type, fsConverter> _cachedConverters;
+        private Dictionary<Type, fsBaseConverter> _cachedConverters;
 
         /// <summary>
         /// A cache from type to the set of processors that are interested in it.
@@ -203,9 +203,17 @@ namespace FullSerializer {
         private Dictionary<Type, List<fsObjectProcessor>> _cachedProcessors;
 
         /// <summary>
-        /// Converters that are available.
+        /// Converters that can be used for type registration.
         /// </summary>
-        private readonly List<fsConverter> _converters;
+        private readonly List<fsConverter> _availableConverters;
+
+        /// <summary>
+        /// Direct converters (optimized _converters). We use these so we don't have to
+        /// perform a scan through every item in _converters and can instead just do an O(1)
+        /// lookup. This is potentially important to perf when there are a ton of direct
+        /// converters.
+        /// </summary>
+        private readonly Dictionary<Type, fsDirectConverter> _availableDirectConverters;
 
         /// <summary>
         /// Processors that are available.
@@ -219,7 +227,7 @@ namespace FullSerializer {
         private readonly fsLazyCycleDefinitionWriter _lazyReferenceWriter;
 
         public fsSerializer() {
-            _cachedConverters = new Dictionary<Type, fsConverter>();
+            _cachedConverters = new Dictionary<Type, fsBaseConverter>();
             _cachedProcessors = new Dictionary<Type, List<fsObjectProcessor>>();
 
             _references = new fsCyclicReferenceManager();
@@ -228,7 +236,7 @@ namespace FullSerializer {
             // note: The order here is important. Items at the beginning of this
             //       list will be used before converters at the end. Converters
             //       added via AddConverter() are added to the front of the list.
-            _converters = new List<fsConverter> {
+            _availableConverters = new List<fsConverter> {
                 new fsNullableConverter { Serializer = this },
                 new fsGuidConverter { Serializer = this },
                 new fsTypeConverter { Serializer = this },
@@ -242,10 +250,16 @@ namespace FullSerializer {
                 new fsWeakReferenceConverter { Serializer = this },
                 new fsReflectedConverter { Serializer = this }
             };
+            _availableDirectConverters = new Dictionary<Type, fsDirectConverter>();
 
             _processors = new List<fsObjectProcessor>();
 
             Context = new fsContext();
+
+            // Register the converters from the registrar
+            foreach (var converterType in fsConverterRegistrar.Converters) {
+                AddConverter((fsBaseConverter)Activator.CreateInstance(converterType));
+            }
         }
 
         /// <summary>
@@ -254,7 +268,7 @@ namespace FullSerializer {
         public fsContext Context;
 
         /// <summary>
-        /// Add a new processor to the serializer. Mutliple processors can run at the same time in the
+        /// Add a new processor to the serializer. Multiple processors can run at the same time in the
         /// same order they were added in.
         /// </summary>
         /// <param name="processor">The processor to add.</param>
@@ -305,34 +319,46 @@ namespace FullSerializer {
         /// Adds a new converter that can be used to customize how an object is serialized and
         /// deserialized.
         /// </summary>
-        public void AddConverter(fsConverter converter) {
+        public void AddConverter(fsBaseConverter converter) {
             if (converter.Serializer != null) {
                 throw new InvalidOperationException("Cannot add a single converter instance to " +
                     "multiple fsConverters -- please construct a new instance for " + converter);
             }
 
             // TODO: wrap inside of a ConverterManager so we can control _converters and _cachedConverters lifetime
-            _converters.Insert(0, converter);
+            if (converter is fsDirectConverter) {
+                var directConverter = (fsDirectConverter)converter;
+                _availableDirectConverters[directConverter.ModelType] = directConverter;
+            }
+            else if (converter is fsConverter) {
+                _availableConverters.Insert(0, (fsConverter)converter);
+            }
+            else {
+                throw new InvalidOperationException("Unable to add converter " + converter +
+                    "; the type association strategy is unknown. Please use either " +
+                    "fsDirectConverter or fsConverter as your base type.");
+            }
+
             converter.Serializer = this;
 
             // We need to reset our cached converter set, as it could be invalid with the new
             // converter. Ideally, _cachedConverters should be empty (as the user should fully setup
             // the serializer before actually using it), but there is no guarantee.
-            _cachedConverters = new Dictionary<Type, fsConverter>();
+            _cachedConverters = new Dictionary<Type, fsBaseConverter>();
         }
 
         /// <summary>
         /// Fetches a converter that can serialize/deserialize the given type.
         /// </summary>
-        private fsConverter GetConverter(Type type) {
-            fsConverter converter;
+        private fsBaseConverter GetConverter(Type type) {
+            fsBaseConverter converter;
 
             // Check to see if the user has defined a custom converter for the type. If they
             // have, then we don't need to scan through all of the converters to check which
             // one can process the type; instead, we directly use the specified converter.
             var attr = fsPortableReflection.GetAttribute<fsObjectAttribute>(type);
             if (attr != null && attr.Converter != null) {
-                converter = (fsConverter)Activator.CreateInstance(attr.Converter);
+                converter = (fsBaseConverter)Activator.CreateInstance(attr.Converter);
                 converter.Serializer = this;
                 _cachedConverters[type] = converter;
             }
@@ -341,11 +367,17 @@ namespace FullSerializer {
             // which ones matches.
             else {
                 if (_cachedConverters.TryGetValue(type, out converter) == false) {
-                    for (int i = 0; i < _converters.Count; ++i) {
-                        if (_converters[i].CanProcess(type)) {
-                            converter = _converters[i];
-                            _cachedConverters[type] = converter;
-                            break;
+                    if (_availableDirectConverters.ContainsKey(type)) {
+                        converter = _availableDirectConverters[type];
+                        _cachedConverters[type] = converter;
+                    }
+                    else {
+                        for (int i = 0; i < _availableConverters.Count; ++i) {
+                            if (_availableConverters[i].CanProcess(type)) {
+                                converter = _availableConverters[i];
+                                _cachedConverters[type] = converter;
+                                break;
+                            }
                         }
                     }
                 }
