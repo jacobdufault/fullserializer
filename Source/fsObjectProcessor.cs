@@ -34,6 +34,7 @@ namespace FullSerializer {
         /// </summary>
         /// <param name="storageType">The field/property type that is storing the instance.</param>
         /// <param name="instance">The type of the instance.</param>
+        /// <param name="data">The data that was serialized.</param>
         public abstract void OnAfterSerialize(Type storageType, object instance, ref fsData data);
 
         /// <summary>

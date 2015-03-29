@@ -15,7 +15,25 @@ namespace FullSerializer {
         /// The generated serializer is completely independent and you don't need to do anything. Simply add the file to
         /// your project and it'll get used instead of the reflection based one.
         /// </summary>
-        public static readonly Dictionary<Type, string> AvailableAotCompilations = new Dictionary<Type, string>();
+        public static Dictionary<Type, string> AvailableAotCompilations {
+            get {
+                for (int i = 0; i < _uncomputedAotCompilations.Count; ++i) {
+                    var item = _uncomputedAotCompilations[i];
+                    _computedAotCompilations[item.Type] = GenerateDirectConverterForTypeInCSharp(item.Type, item.Members, item.IsConstructorPublic);
+                }
+                _uncomputedAotCompilations.Clear();
+
+                return _computedAotCompilations;
+            }
+        }
+        private static Dictionary<Type, string> _computedAotCompilations = new Dictionary<Type, string>();
+
+        private struct AotCompilation {
+            public Type Type;
+            public fsMetaProperty[] Members;
+            public bool IsConstructorPublic;
+        }
+        private static List<AotCompilation> _uncomputedAotCompilations = new List<AotCompilation>();
 
         /// <summary>
         /// This is a helper method that makes it simple to run an AOT compilation on the given type.
@@ -24,8 +42,13 @@ namespace FullSerializer {
         /// <param name="aotCompiledClassInCSharp">The AOT class. Add this C# code to your project.</param>
         /// <returns>True if AOT compilation was successful.</returns>
         public static bool TryToPerformAotCompilation(Type type, out string aotCompiledClassInCSharp) {
-            fsMetaType.Get(type).EmitAotData();
-            return AvailableAotCompilations.TryGetValue(type, out aotCompiledClassInCSharp);
+            if (fsMetaType.Get(type).EmitAotData()) {
+                aotCompiledClassInCSharp = AvailableAotCompilations[type];
+                return true;
+            }
+
+            aotCompiledClassInCSharp = default(string);
+            return false;
         }
 
         /// <summary>
@@ -34,8 +57,11 @@ namespace FullSerializer {
         /// <param name="type">The type of object we are AOT compiling.</param>
         /// <param name="members">The members on the object which will be serialized/deserialized.</param>
         public static void AddAotCompilation(Type type, fsMetaProperty[] members, bool isConstructorPublic) {
-            if (AvailableAotCompilations.ContainsKey(type)) return;
-            AvailableAotCompilations[type] = GenerateDirectConverterForTypeInCSharp(type, members, isConstructorPublic);
+            _uncomputedAotCompilations.Add(new AotCompilation {
+                Type = type,
+                Members = members,
+                IsConstructorPublic = isConstructorPublic
+            });
         }
 
         /// <summary>

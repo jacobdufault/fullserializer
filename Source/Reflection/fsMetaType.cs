@@ -190,7 +190,8 @@ namespace FullSerializer {
         /// <summary>
         /// Attempt to emit an AOT compiled direct converter for this type.
         /// </summary>
-        public void EmitAotData() {
+        /// <returns>True if AOT data was emitted, false otherwise.</returns>
+        public bool EmitAotData() {
             if (_hasEmittedAotData == false) {
                 _hasEmittedAotData = true;
 
@@ -200,14 +201,17 @@ namespace FullSerializer {
                 // similar will be used for the derived type instead of our AOT compiled one.
 
                 for (int i = 0; i < Properties.Length; ++i) {
-                    if (Properties[i].IsPublic == false) return; // cannot do a speedup
+                    if (Properties[i].IsPublic == false) return false; // cannot do a speedup
                 }
 
                 // we need a default ctor
-                if (HasDefaultConstructor == false) return;
+                if (HasDefaultConstructor == false) return false;
 
                 fsAotCompilationManager.AddAotCompilation(ReflectedType, Properties, _isDefaultConstructorPublic);
+                return true;
             }
+
+            return false;
         }
         private bool _hasEmittedAotData;
 
