@@ -7,7 +7,7 @@
     <ProjectGuid>{71A89EEC-36B9-49ED-8431-D6A7DBDD9EA7}</ProjectGuid>
     <AssemblyName>FullSerializer-Unity-WinRT</AssemblyName>
     <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
-    
+
     <DefineConstant>UNITY_METRO</DefineConstant>
   </PropertyGroup>
 
@@ -15,7 +15,7 @@
   <ItemGroup>
     <Compile Include="@(ExternalCompile)" />
   </ItemGroup>
- 
+
   <!-- References -->
   <ItemGroup>
     <Reference Include="System" />
