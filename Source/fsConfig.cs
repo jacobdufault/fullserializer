@@ -34,5 +34,11 @@ namespace FullSerializer {
         }
 
         private static fsMemberSerialization _defaultMemberSerialization = fsMemberSerialization.Default;
+
+        /// <summary>
+        /// Should deserialization be case sensitive? If this is false and the JSON has multiple members with the
+        /// same keys only separated by case, then this results in undefined behavior.
+        /// </summary>
+        public static bool IsCaseSensitive = true;
     }
 }

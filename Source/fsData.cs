@@ -81,7 +81,8 @@ namespace FullSerializer {
         /// Helper method to create a fsData instance that holds a dictionary.
         /// </summary>
         public static fsData CreateDictionary() {
-            return new fsData(new Dictionary<string, fsData>());
+            return new fsData(new Dictionary<string, fsData>(
+                fsConfig.IsCaseSensitive ? StringComparer.InvariantCulture : StringComparer.InvariantCultureIgnoreCase));
         }
 
         /// <summary>
