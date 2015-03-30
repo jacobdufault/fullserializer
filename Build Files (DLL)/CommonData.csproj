@@ -41,9 +41,9 @@
   <!-- Source Code -->
   <ItemGroup>
     <ExternalCompile
-		Include="$(FullSerializerFolder)\Source\**\*.cs*"
-		Exclude="$(FullSerializerFolder)\Source\**\Editor\**;
-				 $(FullSerializerFolder)\**\*.meta"/>
+      Include="$(FullSerializerFolder)\Source\**\*.cs*"
+      Exclude="$(FullSerializerFolder)\Source\**\Editor\**;
+               $(FullSerializerFolder)\**\*.meta"/>
   </ItemGroup>
 
 
