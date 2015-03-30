@@ -368,27 +368,6 @@ namespace FullSerializer.Internal {
         public static Type[] GetGenericArguments(this Type type) {
             return type.GetTypeInfo().GenericTypeArguments.ToArray();
         }
-
-        private const BindingFlags Default = BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance;
-
-        public static ConstructorInfo GetConstructor(this Type type, Type[] paramTypes) {
-            return GetConstructors(type, Default).FirstOrDefault(c => c.GetParameters().Select(p => p.ParameterType).SequenceEqual(paramTypes));
-        }
-
-        public static ConstructorInfo[] GetConstructors(this Type type) {
-            return GetConstructors(type, Default);
-        }
-
-        public static ConstructorInfo[] GetConstructors(this Type type, BindingFlags flags) {
-            var props = type.GetTypeInfo().DeclaredConstructors;
-            return props.Where(p =>
-              ((flags.HasFlag(BindingFlags.Static) == p.IsStatic) ||
-               (flags.HasFlag(BindingFlags.Instance) == !p.IsStatic)
-              ) &&
-              ((flags.HasFlag(BindingFlags.Public) == p.IsPublic) ||
-                (flags.HasFlag(BindingFlags.NonPublic) == p.IsPrivate)
-              )).ToArray();
-        }
 #endif
         #endregion
     }

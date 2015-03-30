@@ -1,10 +1,9 @@
-﻿using FullSerializer.Internal;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
-using System.Linq;
+using FullSerializer.Internal;
 
 namespace FullSerializer {
     /// <summary>
@@ -282,7 +281,7 @@ namespace FullSerializer {
                 throw new InvalidOperationException("The selected Unity platform requires " +
                     ReflectedType.FullName + " to have a default constructor. Please add one.");
 #else
-                return FormatterServices.GetSafeUninitializedObject(ReflectedType);
+                return System.Runtime.Serialization.FormatterServices.GetSafeUninitializedObject(ReflectedType);
 #endif
             }
 

@@ -1,20 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+  <!-- LOOK HERE! Improtant! -->
   <PropertyGroup>
     <!-- Please modify this folder with the path to your Unity installation -->
-  	<UnityInstallFolder>C:\Program Files (x86)\Unity 4.6.1f1\Editor</UnityInstallFolder>
+  	<UnityInstallFolder>C:\Program Files\Unity 5.0.0f4\Editor</UnityInstallFolder>
 
     <!-- This is the path, relative to this file, of the FullSerializer folder containing the "Source" directory -->
     <FullSerializerFolder>..</FullSerializerFolder>
+  </PropertyGroup>
 
+  <PropertyGroup>
     <OutputType>Library</OutputType>
     <OutputPath>Build</OutputPath>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile />
     <FileAlignment>512</FileAlignment>
 
-    <ReferencePath>$(UnityInstallFolder)\Data\Managed</ReferencePath>
+    <ReferencePath>$(UnityInstallFolder)\Data\Managed;$(UnityInstallFolder)\Data\PlaybackEngines\wp8support\Managed</ReferencePath>
     <MonoMdbGenerator>$(UnityInstallFolder)\Data\MonoBleedingEdge\lib\mono\4.0\pdb2mdb.exe</MonoMdbGenerator>
 
     <ErrorReport>prompt</ErrorReport>

@@ -80,11 +80,7 @@ namespace FullSerializer.Internal {
         /// Verifies that the given type has constructors to migrate from all ancestor types.
         /// </summary>
         private static void VerifyConstructors(fsVersionedType type) {
-            var flags =
-                BindingFlags.Public | BindingFlags.NonPublic |
-                BindingFlags.DeclaredOnly | BindingFlags.Instance;
-
-            ConstructorInfo[] publicConstructors = type.ModelType.GetConstructors(flags);
+            ConstructorInfo[] publicConstructors = type.ModelType.GetDeclaredConstructors();
 
             for (int i = 0; i < type.Ancestors.Length; ++i) {
                 Type requiredConstructorType = type.Ancestors[i].ModelType;
