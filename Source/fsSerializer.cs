@@ -72,6 +72,25 @@ namespace FullSerializer {
         }
 
         /// <summary>
+        /// Strips all deserialization metadata from the object, like $type and $content fields.
+        /// </summary>
+        /// <remarks>After making this call, you will *not* be able to deserialize the same object instance. The metadata is
+        /// strictly necessary for deserialization!</remarks>
+        public static void StripDeserializationMetadata(ref fsData data) {
+            if (data.IsDictionary && data.AsDictionary.ContainsKey(Key_Content)) {
+                data = data.AsDictionary[Key_Content];
+            }
+
+            if (data.IsDictionary) {
+                var dict = data.AsDictionary;
+                data.AsDictionary.Remove(Key_ObjectReference);
+                data.AsDictionary.Remove(Key_ObjectDefinition);
+                data.AsDictionary.Remove(Key_InstanceType);
+                data.AsDictionary.Remove(Key_Version);
+            }
+        }
+
+        /// <summary>
         /// This function converts legacy serialization data into the new format, so that
         /// the import process can be unified and ignore the old format.
         /// </summary>
