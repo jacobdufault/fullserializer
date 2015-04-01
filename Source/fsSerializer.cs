@@ -83,10 +83,10 @@ namespace FullSerializer {
 
             if (data.IsDictionary) {
                 var dict = data.AsDictionary;
-                data.AsDictionary.Remove(Key_ObjectReference);
-                data.AsDictionary.Remove(Key_ObjectDefinition);
-                data.AsDictionary.Remove(Key_InstanceType);
-                data.AsDictionary.Remove(Key_Version);
+                dict.Remove(Key_ObjectReference);
+                dict.Remove(Key_ObjectDefinition);
+                dict.Remove(Key_InstanceType);
+                dict.Remove(Key_Version);
             }
         }
 
@@ -152,6 +152,11 @@ namespace FullSerializer {
         private static void Invoke_OnBeforeDeserialize(List<fsObjectProcessor> processors, Type storageType, ref fsData data) {
             for (int i = 0; i < processors.Count; ++i) {
                 processors[i].OnBeforeDeserialize(storageType, ref data);
+            }
+        }
+        private static void Invoke_OnBeforeDeserializeAfterInstanceCreation(List<fsObjectProcessor> processors, Type storageType, object instance, ref fsData data) {
+            for (int i = 0; i < processors.Count; ++i) {
+                processors[i].OnBeforeDeserializeAfterInstanceCreation(storageType, instance, ref data);
             }
         }
         private static void Invoke_OnAfterDeserialize(List<fsObjectProcessor> processors, Type storageType, object instance) {
@@ -271,7 +276,9 @@ namespace FullSerializer {
             };
             _availableDirectConverters = new Dictionary<Type, fsDirectConverter>();
 
-            _processors = new List<fsObjectProcessor>();
+            _processors = new List<fsObjectProcessor>() {
+                new fsSerializationCallbackProcessor()
+            };
 
             Context = new fsContext();
 
@@ -576,15 +583,15 @@ namespace FullSerializer {
                 // w.r.t. the list
                 _references.Enter();
 
-                return InternalDeserialize_1_CycleReference(data, storageType, ref result);
+                return InternalDeserialize_1_CycleReference(data, storageType, ref result, processors);
             }
             finally {
                 _references.Exit();
-                Invoke_OnAfterDeserialize(processors, storageType, null);
+                Invoke_OnAfterDeserialize(processors, storageType, result);
             }
         }
 
-        private fsResult InternalDeserialize_1_CycleReference(fsData data, Type storageType, ref object result) {
+        private fsResult InternalDeserialize_1_CycleReference(fsData data, Type storageType, ref object result, List<fsObjectProcessor> processors) {
             // We handle object references first because we could be deserializing a cyclic type that is
             // inherited. If that is the case, then if we handle references after inheritances we will try
             // to create an object instance for an abstract/interface type.
@@ -601,10 +608,10 @@ namespace FullSerializer {
                 return fsResult.Success;
             }
 
-            return InternalDeserialize_2_Version(data, storageType, ref result);
+            return InternalDeserialize_2_Version(data, storageType, ref result, processors);
         }
 
-        private fsResult InternalDeserialize_2_Version(fsData data, Type storageType, ref object result) {
+        private fsResult InternalDeserialize_2_Version(fsData data, Type storageType, ref object result, List<fsObjectProcessor> processors) {
             if (IsVersioned(data)) {
                 // data is versioned, but we might not need to do a migration
                 string version = data.AsDictionary[Key_Version].AsString;
@@ -621,7 +628,7 @@ namespace FullSerializer {
                     if (deserializeResult.Failed) return deserializeResult;
 
                     // deserialize as the original type
-                    deserializeResult += InternalDeserialize_3_Inheritance(data, path[0].ModelType, ref result);
+                    deserializeResult += InternalDeserialize_3_Inheritance(data, path[0].ModelType, ref result, processors);
                     if (deserializeResult.Failed) return deserializeResult;
 
                     for (int i = 1; i < path.Count; ++i) {
@@ -632,10 +639,10 @@ namespace FullSerializer {
                 }
             }
 
-            return InternalDeserialize_3_Inheritance(data, storageType, ref result);
+            return InternalDeserialize_3_Inheritance(data, storageType, ref result, processors);
         }
 
-        private fsResult InternalDeserialize_3_Inheritance(fsData data, Type storageType, ref object result) {
+        private fsResult InternalDeserialize_3_Inheritance(fsData data, Type storageType, ref object result, List<fsObjectProcessor> processors) {
             var deserializeResult = fsResult.Success;
 
             Type objectType = storageType;
@@ -675,6 +682,10 @@ namespace FullSerializer {
             if (ReferenceEquals(result, null) || result.GetType() != objectType) {
                 result = GetConverter(objectType).CreateInstance(data, objectType);
             }
+
+            // We call OnBeforeDeserializeAfterInstanceCreation here because we still want to invoke the
+            // method even if the user passed in an existing instance.
+            Invoke_OnBeforeDeserializeAfterInstanceCreation(processors, storageType, result, ref data);
 
             // NOTE: It is critically important that we pass the actual objectType down instead of
             //       using result.GetType() because it is not guaranteed that result.GetType()

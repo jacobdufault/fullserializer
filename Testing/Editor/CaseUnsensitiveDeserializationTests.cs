@@ -14,7 +14,7 @@ namespace FullSerializer.Tests.CaseUnsensitiveDeserializationTests {
 
     public class CaseUnsensitiveDeserializationTests {
         [Test]
-        public void TestDefinedFlagsEnum() {
+        public void TestCaseUnsensitiveDeserialization() {
             try {
                 fsConfig.IsCaseSensitive = false;
 
