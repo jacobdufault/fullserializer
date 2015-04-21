@@ -130,6 +130,16 @@ namespace FullSerializer {
         }
 
         /// <summary>
+        /// Does this result have any warnings? This says nothing about if it failed
+        /// or succeeded, just if it has warning messages associated with it.
+        /// </summary>
+        public bool HasWarnings {
+            get {
+                return _messages.Any();
+            }
+        }
+
+        /// <summary>
         /// A simply utility method that will assert that this result is successful. If it
         /// is not, then an exception is thrown.
         /// </summary>
