@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace FullSerializer.Internal {
+namespace FullSerializer {
     public static class fsTypeExtensions {
         /// <summary>
         /// Returns a pretty name for the type in the style of one that you'd see in C# without the namespace.
