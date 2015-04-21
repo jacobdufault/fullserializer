@@ -112,7 +112,7 @@ namespace FullSerializer {
             // type specifier
             if (dict.Count == 2 && dict.ContainsKey(typeString) && dict.ContainsKey(typeDataString)) {
                 data = dict[typeDataString];
-                EnsureDictionary(ref data);
+                EnsureDictionary(data);
                 ConvertLegacyData(ref data);
 
                 data.AsDictionary[Key_InstanceType] = dict[typeString];
@@ -121,7 +121,7 @@ namespace FullSerializer {
             // object definition
             else if (dict.Count == 2 && dict.ContainsKey(sourceIdString) && dict.ContainsKey(sourceDataString)) {
                 data = dict[sourceDataString];
-                EnsureDictionary(ref data);
+                EnsureDictionary(data);
                 ConvertLegacyData(ref data);
 
                 data.AsDictionary[Key_ObjectDefinition] = dict[sourceIdString];
@@ -169,11 +169,11 @@ namespace FullSerializer {
         /// <summary>
         /// Ensures that the data is a dictionary. If it is not, then it is wrapped inside of one.
         /// </summary>
-        private static void EnsureDictionary(ref fsData data) {
+        private static void EnsureDictionary(fsData data) {
             if (data.IsDictionary == false) {
-                var dict = fsData.CreateDictionary();
-                dict.AsDictionary[Key_Content] = data;
-                data = dict;
+                var existingData = data.Clone();
+                data.BecomeDictionary();
+                data.AsDictionary[Key_Content] = existingData;
             }
         }
 
@@ -184,24 +184,27 @@ namespace FullSerializer {
         /// until we have entirely finished serializing it.
         /// </summary>
         internal class fsLazyCycleDefinitionWriter {
-            private Dictionary<int, Dictionary<string, fsData>> _definitions = new Dictionary<int, Dictionary<string, fsData>>();
+            private Dictionary<int, fsData> _pendingDefinitions = new Dictionary<int, fsData>();
             private HashSet<int> _references = new HashSet<int>();
 
-            public void WriteDefinition(int id, Dictionary<string, fsData> dict) {
+            public void WriteDefinition(int id, fsData data) {
                 if (_references.Contains(id)) {
-                    dict[Key_ObjectDefinition] = new fsData(id.ToString());
+                    EnsureDictionary(data);
+                    data.AsDictionary[Key_ObjectDefinition] = new fsData(id.ToString());
                 }
 
                 else {
-                    _definitions[id] = dict;
+                    _pendingDefinitions[id] = data;
                 }
             }
 
             public void WriteReference(int id, Dictionary<string, fsData> dict) {
                 // Write the actual definition if necessary
-                if (_definitions.ContainsKey(id)) {
-                    _definitions[id][Key_ObjectDefinition] = new fsData(id.ToString());
-                    _definitions.Remove(id);
+                if (_pendingDefinitions.ContainsKey(id)) {
+                    var data = _pendingDefinitions[id];
+                    EnsureDictionary(data);
+                    data.AsDictionary[Key_ObjectDefinition] = new fsData(id.ToString());
+                    _pendingDefinitions.Remove(id);
                 }
                 else {
                     _references.Add(id);
@@ -212,7 +215,7 @@ namespace FullSerializer {
             }
 
             public void Clear() {
-                _definitions.Clear();
+                _pendingDefinitions.Clear();
             }
         }
 
@@ -494,8 +497,7 @@ namespace FullSerializer {
                 var result = InternalSerialize_2_Inheritance(storageType, instance, out data);
                 if (result.Failed) return result;
 
-                EnsureDictionary(ref data);
-                _lazyReferenceWriter.WriteDefinition(_references.GetReferenceId(instance), data.AsDictionary);
+                _lazyReferenceWriter.WriteDefinition(_references.GetReferenceId(instance), data);
 
                 return result;
             }
@@ -519,9 +521,8 @@ namespace FullSerializer {
             if (storageType != instance.GetType() &&
                 GetConverter(storageType).RequestInheritanceSupport(storageType)) {
 
-                EnsureDictionary(ref data);
-
                 // Add the inheritance metadata
+                EnsureDictionary(data);
                 data.AsDictionary[Key_InstanceType] = new fsData(instance.GetType().FullName);
             }
 
@@ -543,7 +544,7 @@ namespace FullSerializer {
                 if (result.Failed) return result;
 
                 // Add the versioning information
-                EnsureDictionary(ref data);
+                EnsureDictionary(data);
                 data.AsDictionary[Key_Version] = new fsData(versionedType.VersionString);
 
                 return result;

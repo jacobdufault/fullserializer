@@ -20,7 +20,7 @@ namespace FullSerializer.Tests {
 
         public override fsResult TrySerialize(object instance, out fsData serialized, Type storageType) {
             DidSerialize = true;
-            serialized = new fsData();
+            serialized = fsData.CreateDictionary();
             return fsResult.Success;
         }
 

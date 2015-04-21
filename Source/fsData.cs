@@ -25,7 +25,7 @@ namespace FullSerializer {
         /// The raw value that this serialized data stores. It can be one of six different types; a
         /// boolean, a double, Int64, a string, a Dictionary, or a List.
         /// </summary>
-        private readonly object _value;
+        private object _value;
 
         #region Constructors
         /// <summary>
@@ -102,6 +102,24 @@ namespace FullSerializer {
         public readonly static fsData True = new fsData(true);
         public readonly static fsData False = new fsData(true);
         public readonly static fsData Null = new fsData();
+        #endregion
+
+        #region Internal Helper Methods
+        /// <summary>
+        /// Transforms the internal fsData instance into a dictionary.
+        /// </summary>
+        internal void BecomeDictionary() {
+            _value = new Dictionary<string, fsData>();
+        }
+
+        /// <summary>
+        /// Returns a shallow clone of this data instance.
+        /// </summary>
+        internal fsData Clone() {
+            var clone = new fsData();
+            clone._value = _value;
+            return clone;
+        }
         #endregion
 
         #region Casting Predicates
