@@ -512,17 +512,75 @@ We can easily introduce a new `Model` type and then we just rename `Model` to `M
 
 # AOT Compilation
 
-Full Serializer has introduced some support for automatically creating converters when appropriate. These converters will provide a speedup because they can completely eliminate the usage of reflection. Further, these AOT compiled converters enable usage of Full Serializer on Unity platforms where reflection is broken, or where reflection requires the full .NET framework target (ie, il2cpp).
+Full Serializer has introduced some support for automatically creating converters when appropriate. These converters will provide a speedup because they can completely eliminate the usage of reflection. Further, these AOT compiled converters enable usage of Full Serializer on Unity platforms where reflection is broken (ie, consoles), or where reflection requires the full .NET framework target (ie, il2cpp).
 
-The AOT compiled serializers are a bit interesting. As Full Serializer runs serialization and it notices a type can be AOT compiled, it will emit the AOT compilation data. You then check the AOT manager to see if there are any models that can be AOT compiled - if there are, add the compiled C# file to your project.
+The AOT compiled serializers are a bit interesting. As Full Serializer runs serialization and it notices a type can be AOT compiled, it will emit metadata to perform the AOT compilation. After having run some serialization code, you can check `fsAotCompilationManager` to see if there are any available compilations (also see below for a function which will automatically generate AOT compilations for types which contain `[fsProperty]` or `[fsObject]`). If there are AOT compilations available, the output will be in the form of a C# file (stored as a `string`). You should save this file to your project / `Assets` folder.
 
-If you're using Unity, then you can just add this method and available AOT classes will automatically be added to your project:
+The following class makes using the AOT system easier. There are two methods, `AddSeenAotCompilations`, and `AddDiscoverableAotCompilations`. `AddSenAotCompilations` will emit AOT compilations for types that the serializer has actually seen and serialized or deserialized (so you're guaranteed to use them), whereas `AddDiscoverableAotCompilations` tries to compile all types which have either a `[fsObject]` or `[fsProperty]` annotation.
 
 ```c#
-public void AddAotCompilations() {
-    foreach (var aot in fsAotCompilationManager.AvailableAotCompilations) {
-        var path = "Assets/AotConverter_" + aot.Key.CSharpName(true, true) + ".cs";
-        System.IO.File.WriteAllText(path, aot.Value);
+using System;
+using System.IO;
+using System.Reflection;
+using FullSerializer;
+using UnityEngine;
+
+public static class AotHelpers {
+    public const string OutputDirectory = "Assets/fsAotCompilations/";
+
+    [UnityEditor.MenuItem("FullSerializer/Add Seen Aot Compilations (minimal output)")]
+    public static void AddSeenAotCompilations() {
+        if (Directory.Exists(OutputDirectory) == false) {
+            Directory.CreateDirectory(OutputDirectory);
+        }
+
+        foreach (var aot in fsAotCompilationManager.AvailableAotCompilations) {
+            Debug.Log("Performing AOT compilation for " + aot.Key.CSharpName(true));
+            var path = Path.Combine(OutputDirectory, "AotConverter_" + aot.Key.CSharpName(true, true) + ".cs");
+            var compilation = aot.Value;
+            File.WriteAllText(path, compilation);
+        }
+    }
+
+    [UnityEditor.MenuItem("FullSerializer/Add Discoverable Aot Compilations (more output)")]
+    public static void AddAllDiscoverableAotCompilations() {
+        if (Directory.Exists(OutputDirectory) == false) {
+            Directory.CreateDirectory(OutputDirectory);
+        }
+
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+            foreach (Type t in assembly.GetTypes()) {
+                bool performAot = false;
+
+                // check for [fsObject]
+                {
+                    var props = t.GetCustomAttributes(typeof(fsObjectAttribute), true);
+                    if (props != null && props.Length > 0) performAot = true;
+                }
+
+                // check for [fsProperty]
+                if (!performAot) {
+                    foreach (PropertyInfo p in t.GetProperties()) {
+                        var props = p.GetCustomAttributes(typeof(fsPropertyAttribute), true);
+                        if (props.Length > 0) {
+                            performAot = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (performAot) {
+                    string compilation = null;
+                    if (fsAotCompilationManager.TryToPerformAotCompilation(t, out compilation)) {
+                        Debug.Log("Performing AOT compilation for " + t);
+                        string path = Path.Combine(OutputDirectory, "AotConverter_" + t.CSharpName(true, true) + ".cs");
+                        File.WriteAllText(path, compilation);
+                    } else {
+                        Debug.Log("Failed AOT compilation for " + t.CSharpName(true));
+                    }
+                }
+            }
+        }
     }
 }
 ```
