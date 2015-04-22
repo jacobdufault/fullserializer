@@ -241,7 +241,9 @@ namespace FullSerializer {
                         // consider private constructors as well
                         var ctor = ReflectedType.GetDeclaredConstructor(fsPortableReflection.EmptyTypes);
                         _hasDefaultConstructorCache = ctor != null;
-                        _isDefaultConstructorPublic = ctor.IsPublic;
+                        if (ctor != null) {
+                            _isDefaultConstructorPublic = ctor.IsPublic;
+                        }
                     }
                 }
 
