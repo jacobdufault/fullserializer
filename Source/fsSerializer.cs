@@ -447,7 +447,7 @@ namespace FullSerializer {
         /// <param name="data">The serialized state of the object.</param>
         /// <returns>If serialization was successful.</returns>
         public fsResult TrySerialize(Type storageType, object instance, out fsData data) {
-            var processors = GetProcessors(storageType);
+            var processors = GetProcessors(instance == null ? storageType : instance.GetType());
 
             Invoke_OnBeforeSerialize(processors, storageType, instance);
 
@@ -566,11 +566,10 @@ namespace FullSerializer {
         /// <param name="result"></param>
         /// <returns></returns>
         public fsResult TryDeserialize(fsData data, Type storageType, ref object result) {
-            var processors = GetProcessors(storageType);
-            Invoke_OnBeforeDeserialize(processors, storageType, ref data);
-
             if (data.IsNull) {
                 result = null;
+                var processors = GetProcessors(storageType);
+                Invoke_OnBeforeDeserialize(processors, storageType, ref data);
                 Invoke_OnAfterDeserialize(processors, storageType, null);
                 return fsResult.Success;
             }
@@ -584,15 +583,19 @@ namespace FullSerializer {
                 // w.r.t. the list
                 _references.Enter();
 
-                return InternalDeserialize_1_CycleReference(data, storageType, ref result, processors);
+                List<fsObjectProcessor> processors;
+                var r = InternalDeserialize_1_CycleReference(data, storageType, ref result, out processors);
+                if (r.Succeeded) {
+                    Invoke_OnAfterDeserialize(processors, storageType, result);
+                }
+                return r;
             }
             finally {
                 _references.Exit();
-                Invoke_OnAfterDeserialize(processors, storageType, result);
             }
         }
 
-        private fsResult InternalDeserialize_1_CycleReference(fsData data, Type storageType, ref object result, List<fsObjectProcessor> processors) {
+        private fsResult InternalDeserialize_1_CycleReference(fsData data, Type storageType, ref object result, out List<fsObjectProcessor> processors) {
             // We handle object references first because we could be deserializing a cyclic type that is
             // inherited. If that is the case, then if we handle references after inheritances we will try
             // to create an object instance for an abstract/interface type.
@@ -606,13 +609,14 @@ namespace FullSerializer {
             if (IsObjectReference(data)) {
                 int refId = int.Parse(data.AsDictionary[Key_ObjectReference].AsString);
                 result = _references.GetReferenceObject(refId);
+                processors = GetProcessors(result.GetType());
                 return fsResult.Success;
             }
 
-            return InternalDeserialize_2_Version(data, storageType, ref result, processors);
+            return InternalDeserialize_2_Version(data, storageType, ref result, out processors);
         }
 
-        private fsResult InternalDeserialize_2_Version(fsData data, Type storageType, ref object result, List<fsObjectProcessor> processors) {
+        private fsResult InternalDeserialize_2_Version(fsData data, Type storageType, ref object result, out List<fsObjectProcessor> processors) {
             if (IsVersioned(data)) {
                 // data is versioned, but we might not need to do a migration
                 string version = data.AsDictionary[Key_Version].AsString;
@@ -626,24 +630,29 @@ namespace FullSerializer {
 
                     List<fsVersionedType> path;
                     deserializeResult += fsVersionManager.GetVersionImportPath(version, versionedType.Value, out path);
-                    if (deserializeResult.Failed) return deserializeResult;
+                    if (deserializeResult.Failed) {
+                        processors = GetProcessors(storageType);
+                        return deserializeResult;
+                    }
 
                     // deserialize as the original type
-                    deserializeResult += InternalDeserialize_3_Inheritance(data, path[0].ModelType, ref result, processors);
+                    deserializeResult += InternalDeserialize_3_Inheritance(data, path[0].ModelType, ref result, out processors);
                     if (deserializeResult.Failed) return deserializeResult;
 
+                    // TODO: we probably should be invoking object processors all along this pipeline
                     for (int i = 1; i < path.Count; ++i) {
                         result = path[i].Migrate(result);
                     }
 
+                    processors = GetProcessors(deserializeResult.GetType());
                     return deserializeResult;
                 }
             }
 
-            return InternalDeserialize_3_Inheritance(data, storageType, ref result, processors);
+            return InternalDeserialize_3_Inheritance(data, storageType, ref result, out processors);
         }
 
-        private fsResult InternalDeserialize_3_Inheritance(fsData data, Type storageType, ref object result, List<fsObjectProcessor> processors) {
+        private fsResult InternalDeserialize_3_Inheritance(fsData data, Type storageType, ref object result, out List<fsObjectProcessor> processors) {
             var deserializeResult = fsResult.Success;
 
             Type objectType = storageType;
@@ -676,6 +685,12 @@ namespace FullSerializer {
                     objectType = type;
                 } while (false);
             }
+
+            // We wait until here to actually Invoke_OnBeforeDeserialize because we do not
+            // have the correct set of processors to invoke until *after* we have resolved
+            // the proper type to use for deserialization.
+            processors = GetProcessors(storageType);
+            Invoke_OnBeforeDeserialize(processors, storageType, ref data);
 
             // Construct an object instance if we don't have one already. We also need to construct
             // an instance if the result type is of the wrong type, which may be the case when we
