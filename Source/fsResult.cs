@@ -135,7 +135,7 @@ namespace FullSerializer {
         /// </summary>
         public bool HasWarnings {
             get {
-                return _messages.Any();
+                return _messages != null && _messages.Any();
             }
         }
 
