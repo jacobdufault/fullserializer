@@ -294,7 +294,12 @@ namespace FullSerializer {
             }
 
             try {
+#if (!UNITY_EDITOR && (UNITY_METRO))
+                // In WinRT/WinStore builds, Activator.CreateInstance(..., true) is broken
+                return Activator.CreateInstance(ReflectedType);
+#else
                 return Activator.CreateInstance(ReflectedType, /*nonPublic:*/ true);
+#endif
             }
 #if (!UNITY_EDITOR && (UNITY_METRO)) == false
             catch (MissingMethodException e) {
