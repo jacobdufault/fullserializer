@@ -54,16 +54,19 @@ namespace FullSerializer.Internal {
 
             var serializedList = data.AsList;
             var list = new ArrayList(serializedList.Count);
+            int existingCount = list.Count;
 
             for (int i = 0; i < serializedList.Count; ++i) {
                 var serializedItem = serializedList[i];
                 object deserialized = null;
+                if (i < existingCount) deserialized = list[i];
 
                 var itemResult = Serializer.TryDeserialize(serializedItem, elementType, ref deserialized);
                 result.AddMessages(itemResult);
                 if (itemResult.Failed) continue;
 
-                list.Add(deserialized);
+                if (i < existingCount) list[i] = deserialized;
+                else list.Add(deserialized);
             }
 
             instance = list.ToArray(elementType);

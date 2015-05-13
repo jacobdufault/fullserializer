@@ -46,20 +46,34 @@ namespace FullSerializer.Internal {
 
             if ((result += CheckType(data, fsDataType.Array)).Failed) return result;
 
+            // For general strategy, instance may already have items in it. We will try to deserialize into
+            // the existing element.
             var elementStorageType = GetElementType(storageType);
             var addMethod = GetAddMethod(storageType);
+            var getMethod = storageType.GetFlattenedMethod("get_Item");
+            var setMethod = storageType.GetFlattenedMethod("set_Item");
+            if (setMethod == null) TryClear(storageType, instance);
+            var existingSize = TryGetExistingSize(storageType, instance);
 
             var serializedList = data.AsList;
             for (int i = 0; i < serializedList.Count; ++i) {
                 var itemData = serializedList[i];
                 object itemInstance = null;
+                if (getMethod != null && i < existingSize) {
+                    itemInstance = getMethod.Invoke(instance, new object[] { i });
+                }
 
                 // note: We don't fail the entire deserialization even if the item failed
                 var itemResult = Serializer.TryDeserialize(itemData, elementStorageType, ref itemInstance);
                 result.AddMessages(itemResult);
                 if (itemResult.Failed) continue;
 
-                addMethod.Invoke(instance, new object[] { itemInstance });
+                if (setMethod != null && i < existingSize) {
+                    setMethod.Invoke(instance, new object[] { i, itemInstance });
+                }
+                else {
+                    addMethod.Invoke(instance, new object[] { itemInstance });
+                }
             }
 
             return result;
@@ -82,6 +96,21 @@ namespace FullSerializer.Internal {
             if (enumerableList != null) return enumerableList.GetGenericArguments()[0];
 
             return typeof(object);
+        }
+
+        private static void TryClear(Type type, object instance) {
+            var clear = type.GetFlattenedMethod("Clear");
+            if (clear != null) {
+                clear.Invoke(instance, null);
+            }
+        }
+
+        private static int TryGetExistingSize(Type type, object instance) {
+            var count = type.GetFlattenedProperty("Count");
+            if (count != null) {
+                return (int)count.GetGetMethod().Invoke(instance, null);
+            }
+            return 0;
         }
 
         private static MethodInfo GetAddMethod(Type type) {
