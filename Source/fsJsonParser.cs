@@ -60,16 +60,30 @@ namespace FullSerializer {
                     continue;
                 }
 
-                // comment? they begin with //
-                if (HasValue(1) &&
-                    (Character(0) == '/' && Character(1) == '/')) {
-
-                    // skip the rest of the line
-                    while (HasValue() && Environment.NewLine.Contains("" + Character()) == false) {
+                // comment?
+                if (HasValue(1) && Character(0) == '/') {
+                    if (Character(1) == '/') {
+                        // skip the rest of the line
+                        while (HasValue() && Environment.NewLine.Contains("" + Character()) == false) {
+                            TryMoveNext();
+                        }
+                        continue;
+                    } else if (Character(1) == '*') {
+                        // skip to comment close
                         TryMoveNext();
+                        TryMoveNext();
+                        while (HasValue(1)) {
+                            if (Character(0) == '*' && Character(1) == '/') {
+                                TryMoveNext();
+                                TryMoveNext();
+                                TryMoveNext();
+                                break;
+                            } else {
+                                TryMoveNext();
+                            }
+                        }
                     }
-
-                    // we still need to skip whitespace on the next line
+                    // let other checks to check fail
                     continue;
                 }
 
