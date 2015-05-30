@@ -210,5 +210,46 @@ namespace FullSerializer.Tests {
             fsData escapeRequired = new fsData(fsJsonPrinter.PrettyJson(data));
             Assert.AreEqual(escapeRequired, Parse(fsJsonPrinter.PrettyJson(escapeRequired)));
         }
+
+        [Test]
+        public void TestComment() {
+            string jsonString = @"
+                /* 
+                * comment
+                */
+                // comment
+                { 
+                    // comment
+                    /* comment */
+                    ""ls"": [
+                        1,
+                        // comment
+                        2,
+                        /* comment */
+                        3
+                    ],
+                    // comment
+                    ""obj"" : {
+                    // comment
+                    ""a"" : ""b"",
+                    // comment
+                    ""c"" : /*  comment  */
+                    ""d""
+                    // comment
+                    }  /* comment */
+                    // comment
+                }
+                /* comment */ // comment
+                ";
+            fsData data = new fsData(new Dictionary<string, fsData>() {
+                    {"ls", new fsData(new List<fsData> {new fsData(1), new fsData(2), new fsData(3)})},
+                    {"obj", new fsData(new Dictionary<string, fsData>() {
+                        {"a", new fsData("b")},
+                        {"c", new fsData("d")}
+                    })}
+                });
+            fsData parsedData = Parse(jsonString);
+            Assert.AreEqual(data, parsedData);
+        }
     }
 }
