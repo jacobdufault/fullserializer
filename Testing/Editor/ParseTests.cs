@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 // It may not look like it, but at last check there were 17915 test cases. Combinatorics is used
 // to test a huge number of different variants, mainly dealing with whitespace.
