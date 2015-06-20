@@ -128,6 +128,7 @@ namespace FullSerializer {
 
             switch (Character()) {
                 case '\\': TryMoveNext(); escaped = '\\'; return fsResult.Success;
+                case '/': TryMoveNext(); escaped = '/'; return fsResult.Success;
                 case '"': TryMoveNext(); escaped = '\"'; return fsResult.Success;
                 case 'a': TryMoveNext(); escaped = '\a'; return fsResult.Success;
                 case 'b': TryMoveNext(); escaped = '\b'; return fsResult.Success;
