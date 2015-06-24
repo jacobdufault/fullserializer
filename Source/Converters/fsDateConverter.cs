@@ -7,8 +7,14 @@ namespace FullSerializer.Internal {
     /// </summary>
     public class fsDateConverter : fsConverter {
         // The format strings that we use when serializing DateTime and DateTimeOffset types.
-        private const string DateTimeFormatString = @"o";
+        private const string DefaultDateTimeFormatString = @"o";
         private const string DateTimeOffsetFormatString = @"o";
+
+        private string DateTimeFormatString {
+            get {
+                return fsConfig.CustomDateTimeFormatString ?? DefaultDateTimeFormatString;
+            }
+        }
 
         public override bool CanProcess(Type type) {
             return
