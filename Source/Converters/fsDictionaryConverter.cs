@@ -146,7 +146,9 @@ namespace FullSerializer.Internal {
                 return fsResult.Success;
             }
 
-            dictionary.Add(key, value);
+            // We use the inline set methods instead of dictionary.Add; dictionary.Add will throw an exception
+            // if the key already exists.
+            dictionary[key] = value;
             return fsResult.Success;
         }
 
