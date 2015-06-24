@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
+// Needed for WinRT compatibility
+using FullSerializer.Internal;
+
 namespace FullSerializer {
     public static class fsTypeExtensions {
         /// <summary>
