@@ -40,5 +40,10 @@ namespace FullSerializer {
         /// same keys only separated by case, then this results in undefined behavior.
         /// </summary>
         public static bool IsCaseSensitive = true;
+
+        /// <summary>
+        /// Int64 and UInt64 will be serialized and deserialized as string for compatibility
+        /// </summary>
+        public static bool Serialize64BitIntegerAsString = false;
     }
 }
