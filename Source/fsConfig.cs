@@ -45,5 +45,10 @@ namespace FullSerializer {
         /// If not null, this string format will be used for DateTime instead of the default one.
         /// </summary>
         public static string CustomDateTimeFormatString = null;
+
+		/// <summary>
+        /// Int64 and UInt64 will be serialized and deserialized as string for compatibility
+        /// </summary>
+        public static bool Serialize64BitIntegerAsString = false;
     }
 }
