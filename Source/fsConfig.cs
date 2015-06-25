@@ -46,7 +46,7 @@ namespace FullSerializer {
         /// </summary>
         public static string CustomDateTimeFormatString = null;
 
-		/// <summary>
+        /// <summary>
         /// Int64 and UInt64 will be serialized and deserialized as string for compatibility
         /// </summary>
         public static bool Serialize64BitIntegerAsString = false;
