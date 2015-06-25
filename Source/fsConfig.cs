@@ -40,5 +40,10 @@ namespace FullSerializer {
         /// same keys only separated by case, then this results in undefined behavior.
         /// </summary>
         public static bool IsCaseSensitive = true;
+
+        /// <summary>
+        /// If not null, this string format will be used for DateTime instead of the default one.
+        /// </summary>
+        public static string CustomDateTimeFormatString = null;
     }
 }
