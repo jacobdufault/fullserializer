@@ -60,5 +60,10 @@ namespace FullSerializer {
         /// Int64 and UInt64 will be serialized and deserialized as string for compatibility
         /// </summary>
         public static bool Serialize64BitIntegerAsString = false;
+
+        /// <summary>
+        /// Enums are serialized using their names by default. Setting this to true will serialize them as integers instead.
+        /// </summary>
+        public static bool SerializeEnumsAsInteger = false;
     }
 }
