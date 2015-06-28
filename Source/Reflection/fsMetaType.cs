@@ -142,10 +142,10 @@ namespace FullSerializer {
                 return false;
             }
 
-            // If it's an auto-property and it has either a public get or a public set method,
-            // then we serialize it
-            if (IsAutoProperty(property, members) &&
-                (publicGetMethod != null || publicSetMethod != null)) {
+            // Depending on the configuration options, check whether the property is automatic
+            // and if it has a public setter to determine whether it should be serialized
+            if ((fsConfig.SerializeNonAutoProperties || IsAutoProperty(property, members)) &&
+                (publicGetMethod != null && (fsConfig.SerializeNonPublicSetProperties || publicSetMethod != null))) {
                 return true;
             }
 
