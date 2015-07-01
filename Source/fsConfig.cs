@@ -36,6 +36,16 @@ namespace FullSerializer {
         private static fsMemberSerialization _defaultMemberSerialization = fsMemberSerialization.Default;
 
         /// <summary>
+        /// Should the default serialization behaviour include non-auto properties?
+        /// </summary>
+        public static bool SerializeNonAutoProperties = false;
+
+        /// <summary>
+        /// Should the default serialization behaviour include properties with non-public setters?
+        /// </summary>
+        public static bool SerializeNonPublicSetProperties = true;
+
+        /// <summary>
         /// Should deserialization be case sensitive? If this is false and the JSON has multiple members with the
         /// same keys only separated by case, then this results in undefined behavior.
         /// </summary>
