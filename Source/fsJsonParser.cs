@@ -428,6 +428,11 @@ namespace FullSerializer {
         private fsResult RunParse(out fsData data) {
             SkipSpace();
 
+            if (HasValue() == false) {
+                data = default(fsData);
+                return MakeFailure("Unexpected end of input");
+            }
+
             switch (Character()) {
                 case 'I': // Infinity
                 case 'N': // NaN
@@ -461,7 +466,7 @@ namespace FullSerializer {
                 case 'n': return TryParseNull(out data);
                 default:
                     data = null;
-                    return MakeFailure("unable to parse; invalid initial token \"" + Character() + "\"");
+                    return MakeFailure("unable to parse; invalid token \"" + Character() + "\"");
             }
         }
 
@@ -472,6 +477,11 @@ namespace FullSerializer {
         /// <param name="data">The parsed data. This is undefined if parsing fails.</param>
         /// <returns>The parsed input.</returns>
         public static fsResult Parse(string input, out fsData data) {
+            if (string.IsNullOrEmpty(input)) {
+                data = default(fsData);
+                return fsResult.Fail("No input");
+            }
+
             var context = new fsJsonParser(input);
             return context.RunParse(out data);
         }
