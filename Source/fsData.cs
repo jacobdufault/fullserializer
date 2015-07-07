@@ -100,7 +100,7 @@ namespace FullSerializer {
         }
 
         public readonly static fsData True = new fsData(true);
-        public readonly static fsData False = new fsData(true);
+        public readonly static fsData False = new fsData(false);
         public readonly static fsData Null = new fsData();
         #endregion
 
