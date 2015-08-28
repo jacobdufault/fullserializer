@@ -381,41 +381,51 @@ namespace FullSerializer {
         /// </summary>
         private fsBaseConverter GetConverter(Type type) {
             fsBaseConverter converter;
+            if (_cachedConverters.TryGetValue(type, out converter)) {
+                return converter;
+            }
 
             // Check to see if the user has defined a custom converter for the type. If they
             // have, then we don't need to scan through all of the converters to check which
             // one can process the type; instead, we directly use the specified converter.
-            var attr = fsPortableReflection.GetAttribute<fsObjectAttribute>(type);
-            if (attr != null && attr.Converter != null) {
-                converter = (fsBaseConverter)Activator.CreateInstance(attr.Converter);
-                converter.Serializer = this;
-                _cachedConverters[type] = converter;
+            {
+                var attr = fsPortableReflection.GetAttribute<fsObjectAttribute>(type);
+                if (attr != null && attr.Converter != null) {
+                    converter = (fsBaseConverter)Activator.CreateInstance(attr.Converter);
+                    converter.Serializer = this;
+                    return _cachedConverters[type] = converter;
+                }
             }
+
+            // Check for a [fsForward] attribute.
+            {
+                var attr = fsPortableReflection.GetAttribute<fsForwardAttribute>(type);
+                if (attr != null) {
+                    converter = new fsForwardConverter(attr);
+                    converter.Serializer = this;
+                    return _cachedConverters[type] = converter;
+                }
+            }
+
 
             // There is no specific converter specified; try all of the general ones to see
             // which ones matches.
-            else {
-                if (_cachedConverters.TryGetValue(type, out converter) == false) {
-                    if (_availableDirectConverters.ContainsKey(type)) {
-                        converter = _availableDirectConverters[type];
-                        _cachedConverters[type] = converter;
-                    }
-                    else {
-                        for (int i = 0; i < _availableConverters.Count; ++i) {
-                            if (_availableConverters[i].CanProcess(type)) {
-                                converter = _availableConverters[i];
-                                _cachedConverters[type] = converter;
-                                break;
-                            }
+            if (_cachedConverters.TryGetValue(type, out converter) == false) {
+                if (_availableDirectConverters.ContainsKey(type)) {
+                    converter = _availableDirectConverters[type];
+                    return _cachedConverters[type] = converter;
+                }
+                else {
+                    for (int i = 0; i < _availableConverters.Count; ++i) {
+                        if (_availableConverters[i].CanProcess(type)) {
+                            converter = _availableConverters[i];
+                            return _cachedConverters[type] = converter;
                         }
                     }
                 }
             }
 
-            if (converter == null) {
-                throw new InvalidOperationException("Internal error -- could not find a converter for " + type);
-            }
-            return converter;
+            throw new InvalidOperationException("Internal error -- could not find a converter for " + type);
         }
 
         /// <summary>
