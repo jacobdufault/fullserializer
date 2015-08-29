@@ -62,7 +62,7 @@ namespace FullSerializer.Internal {
         /// Returns true if the given attribute is defined on the given element.
         /// </summary>
         public static bool HasAttribute(MemberInfo element, Type attributeType) {
-            return GetAttribute(element, attributeType) != null;
+            return GetAttribute(element, attributeType, true) != null;
         }
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace FullSerializer.Internal {
         /// <param name="element">The MemberInfo the get the attribute from.</param>
         /// <param name="attributeType">The type of attribute to fetch.</param>
         /// <returns>The attribute or null.</returns>
-        public static Attribute GetAttribute(MemberInfo element, Type attributeType) {
+        public static Attribute GetAttribute(MemberInfo element, Type attributeType, bool shouldCache) {
             var query = new AttributeQuery {
                 MemberInfo = element,
                 AttributeType = attributeType
@@ -89,7 +89,8 @@ namespace FullSerializer.Internal {
             if (_cachedAttributeQueries.TryGetValue(query, out attribute) == false) {
                 var attributes = element.GetCustomAttributes(attributeType, /*inherit:*/ true);
                 attribute = (Attribute)attributes.FirstOrDefault();
-                _cachedAttributeQueries[query] = attribute;
+                if (shouldCache)
+                    _cachedAttributeQueries[query] = attribute;
             }
 
             return attribute;
@@ -100,11 +101,16 @@ namespace FullSerializer.Internal {
         /// </summary>
         /// <typeparam name="TAttribute">The type of attribute to fetch.</typeparam>
         /// <param name="element">The MemberInfo to get the attribute from.</param>
+        /// <param name="shouldCache">Should this computation be cached? If this is the only time it will ever be done, don't bother caching.</param>
         /// <returns>The attribute or null.</returns>
-        public static TAttribute GetAttribute<TAttribute>(MemberInfo element)
+        public static TAttribute GetAttribute<TAttribute>(MemberInfo element, bool shouldCache)
             where TAttribute : Attribute {
 
-            return (TAttribute)GetAttribute(element, typeof(TAttribute));
+            return (TAttribute)GetAttribute(element, typeof(TAttribute), shouldCache);
+        }
+        public static TAttribute GetAttribute<TAttribute>(MemberInfo element)
+            where TAttribute : Attribute {
+            return GetAttribute<TAttribute>(element, /*shouldCache:*/true);
         }
         private struct AttributeQuery {
             public MemberInfo MemberInfo;
