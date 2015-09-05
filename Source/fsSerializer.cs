@@ -284,10 +284,10 @@ namespace FullSerializer {
             };
 
 #if !NO_UNITY
-			_processors.Add(new fsSerializationCallbackReceiverProcessor());
+            _processors.Add(new fsSerializationCallbackReceiverProcessor());
 #endif
 
-			Context = new fsContext();
+            Context = new fsContext();
 
             // Register the converters from the registrar
             foreach (var converterType in fsConverterRegistrar.Converters) {

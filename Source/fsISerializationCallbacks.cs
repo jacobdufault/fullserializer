@@ -62,7 +62,6 @@ namespace FullSerializer.Internal {
     }
 
 #if !NO_UNITY
-
     public class fsSerializationCallbackReceiverProcessor : fsObjectProcessor {
         public override bool CanProcess(Type type) {
             return typeof(ISerializationCallbackReceiver).IsAssignableFrom(type);
@@ -76,6 +75,5 @@ namespace FullSerializer.Internal {
             ((ISerializationCallbackReceiver)instance).OnAfterDeserialize();
         }
     }
-
 #endif
 }
