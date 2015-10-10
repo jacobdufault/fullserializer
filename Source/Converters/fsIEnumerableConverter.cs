@@ -37,7 +37,17 @@ namespace FullSerializer.Internal {
                 serializedList.Add(itemData);
             }
 
+            // Stacks iterate from back to front, which means when we deserialize we will deserialize
+            // the items in the wrong order, so the stack will get reversed.
+            if (IsStack(instance.GetType())) {
+                serializedList.Reverse();
+            }
+
             return result;
+        }
+
+        private bool IsStack(Type type) {
+            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Stack<>);
         }
 
         public override fsResult TryDeserialize(fsData data, ref object instance_, Type storageType) {
