@@ -1,6 +1,6 @@
-﻿using System;
+﻿using FullSerializer;
+using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 public class PropertiesProvider : TestProvider<object> {
     public struct PublicGetPublicSet {
@@ -10,7 +10,7 @@ public class PropertiesProvider : TestProvider<object> {
 
     public struct PrivateGetPublicSet {
         public PrivateGetPublicSet(int value) : this() { Value = value; }
-        [SerializeField]
+        [fsProperty]
         public int Value { private get; set; }
 
         public static bool Compare(PrivateGetPublicSet a, PrivateGetPublicSet b) {
