@@ -60,4 +60,20 @@ namespace FullSerializer.Internal {
             ((fsISerializationCallbacks)instance).OnAfterDeserialize(storageType);
         }
     }
+
+#if !NO_UNITY
+    public class fsSerializationCallbackReceiverProcessor : fsObjectProcessor {
+        public override bool CanProcess(Type type) {
+            return typeof(ISerializationCallbackReceiver).IsAssignableFrom(type);
+        }
+
+        public override void OnBeforeSerialize(Type storageType, object instance) {
+            ((ISerializationCallbackReceiver)instance).OnBeforeSerialize();
+        }
+
+        public override void OnAfterDeserialize(Type storageType, object instance) {
+            ((ISerializationCallbackReceiver)instance).OnAfterDeserialize();
+        }
+    }
+#endif
 }
