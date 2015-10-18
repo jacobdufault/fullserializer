@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
+using FullSerializer;
 
 public class PrivateHolder {
     public PrivateHolder() { }
@@ -9,10 +9,10 @@ public class PrivateHolder {
         SerializedProperty = 2;
     }
 
-    [SerializeField]
+    [fsProperty]
     private int SerializedField;
 
-    [SerializeField]
+    [fsProperty]
     private int SerializedProperty { get; set; }
 
     public override bool Equals(object obj) {
