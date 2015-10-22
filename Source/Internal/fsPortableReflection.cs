@@ -50,7 +50,7 @@ namespace FullSerializer.Internal {
         }
 
         public static Attribute GetAttribute(Type type, Type attributeType) {
-            return GetAttribute(type.GetTypeInfo(), attributeType);
+            return GetAttribute(type.GetTypeInfo().AsType(), attributeType);
         }
 
         public static bool HasAttribute(Type type, Type attributeType) {

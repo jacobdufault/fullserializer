@@ -47,7 +47,13 @@ namespace FullSerializer.Internal {
         }
 
         private bool IsStack(Type type) {
-            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Stack<>);
+#if UNITY_METRO
+            return type.GetTypeInfo().IsGenericType && type.GetGenericTypeDefinition() == typeof(Stack<>);
+#else
+           return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Stack<>);
+#endif
+
+
         }
 
         public override fsResult TryDeserialize(fsData data, ref object instance_, Type storageType) {
