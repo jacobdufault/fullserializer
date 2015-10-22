@@ -1,5 +1,7 @@
 ﻿using System;
-
+#if !NO_UNITY
+using UnityEngine;
+#endif
 namespace FullSerializer {
     /// <summary>
     /// Extend this interface on your type to receive notifications about serialization/deserialization events. If you don't
