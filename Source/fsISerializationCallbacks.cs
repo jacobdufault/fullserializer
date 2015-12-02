@@ -1,4 +1,7 @@
-﻿using System;
+using System;
+#if !NO_UNITY
+using UnityEngine;
+#endif
 
 namespace FullSerializer {
     /// <summary>
