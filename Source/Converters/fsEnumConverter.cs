@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace FullSerializer.Internal {
     /// <summary>
@@ -18,9 +19,33 @@ namespace FullSerializer.Internal {
             return false;
         }
 
+        public override object CreateInstance(fsData data, Type storageType) {
+            // In .NET compact, Enum.ToObject(Type, Object) is defined but the overloads like
+            // Enum.ToObject(Type, int) are not -- so we get around this by boxing the value.
+            return Enum.ToObject(storageType, (object)0);
+        }
+
         public override fsResult TrySerialize(object instance, out fsData serialized, Type storageType) {
-            if (fsPortableReflection.GetAttribute<FlagsAttribute>(storageType) != null) {
-                serialized = new fsData(Convert.ToInt32(instance));
+            if (fsConfig.SerializeEnumsAsInteger) {
+                serialized = new fsData(Convert.ToInt64(instance));
+            }
+            else if (fsPortableReflection.GetAttribute<FlagsAttribute>(storageType) != null) {
+                long instanceValue = Convert.ToInt64(instance);
+                var result = new StringBuilder();
+
+                bool first = true;
+                foreach (var value in Enum.GetValues(storageType)) {
+                    int integralValue = (int)value;
+                    bool isSet = (instanceValue & integralValue) != 0;
+
+                    if (isSet) {
+                        if (first == false) result.Append(",");
+                        first = false;
+                        result.Append(value.ToString());
+                    }
+                }
+
+                serialized = new fsData(result.ToString());
             }
             else {
                 serialized = new fsData(Enum.GetName(storageType, instance));
@@ -30,15 +55,23 @@ namespace FullSerializer.Internal {
 
         public override fsResult TryDeserialize(fsData data, ref object instance, Type storageType) {
             if (data.IsString) {
-                string enumValue = data.AsString;
+                string[] enumValues = data.AsString.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
-                // Verify that the enum name exists; Enum.TryParse is only available in .NET 4.0
-                // and above :(.
-                if (ArrayContains(Enum.GetNames(storageType), enumValue) == false) {
-                    return fsResult.Fail("Cannot find enum name " + enumValue + " on type " + storageType);
+                long instanceValue = 0;
+                for (int i = 0; i < enumValues.Length; ++i) {
+                    string enumValue = enumValues[i];
+
+                    // Verify that the enum name exists; Enum.TryParse is only available in .NET 4.0
+                    // and above :(.
+                    if (ArrayContains(Enum.GetNames(storageType), enumValue) == false) {
+                        return fsResult.Fail("Cannot find enum name " + enumValue + " on type " + storageType);
+                    }
+
+                    long flagValue = (long)Convert.ChangeType(Enum.Parse(storageType, enumValue), typeof(long));
+                    instanceValue |= flagValue;
                 }
 
-                instance = Enum.Parse(storageType, enumValue);
+                instance = Enum.ToObject(storageType, (object)instanceValue);
                 return fsResult.Success;
             }
 
@@ -48,17 +81,11 @@ namespace FullSerializer.Internal {
                 // In .NET compact, Enum.ToObject(Type, Object) is defined but the overloads like
                 // Enum.ToObject(Type, int) are not -- so we get around this by boxing the value.
                 instance = Enum.ToObject(storageType, (object)enumValue);
-                
+
                 return fsResult.Success;
             }
 
             return fsResult.Fail("EnumConverter encountered an unknown JSON data type");
-        }
-
-        public override object CreateInstance(fsData data, Type storageType) {
-            // In .NET compact, Enum.ToObject(Type, Object) is defined but the overloads like
-            // Enum.ToObject(Type, int) are not -- so we get around this by boxing the value.
-            return Enum.ToObject(storageType, (object)0);
         }
 
         /// <summary>

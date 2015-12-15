@@ -141,6 +141,7 @@ public class RuntimeTestRunner : MonoBehaviour {
         ExecuteTests<IDictionaryIntIntProvider>();
         ExecuteTests<IDictionaryStringIntProvider>();
         ExecuteTests<IDictionaryStringStringProvider>();
+        ExecuteTests<KeyedCollectionProvider>();
         ExecuteTests<KeyValuePairProvider>();
         ExecuteTests<NullableDateTimeOffsetProvider>();
         ExecuteTests<NullableDateTimeProvider>();

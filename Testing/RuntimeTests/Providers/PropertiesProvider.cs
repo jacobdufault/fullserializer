@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FullSerializer;
+using System;
 using System.Collections.Generic;
 
 public class PropertiesProvider : TestProvider<object> {
@@ -9,6 +10,7 @@ public class PropertiesProvider : TestProvider<object> {
 
     public struct PrivateGetPublicSet {
         public PrivateGetPublicSet(int value) : this() { Value = value; }
+        [fsProperty]
         public int Value { private get; set; }
 
         public static bool Compare(PrivateGetPublicSet a, PrivateGetPublicSet b) {

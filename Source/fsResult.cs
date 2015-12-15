@@ -130,6 +130,16 @@ namespace FullSerializer {
         }
 
         /// <summary>
+        /// Does this result have any warnings? This says nothing about if it failed
+        /// or succeeded, just if it has warning messages associated with it.
+        /// </summary>
+        public bool HasWarnings {
+            get {
+                return _messages != null && _messages.Any();
+            }
+        }
+
+        /// <summary>
         /// A simply utility method that will assert that this result is successful. If it
         /// is not, then an exception is thrown.
         /// </summary>
@@ -154,7 +164,7 @@ namespace FullSerializer {
         /// </summary>
         public Exception AsException {
             get {
-                if (!Failed) throw new Exception("Only a failed result can be converted to an exception");
+                if (!Failed && !RawMessages.Any()) throw new Exception("Only a failed result can be converted to an exception");
                 return new Exception(FormattedMessages);
             }
         }

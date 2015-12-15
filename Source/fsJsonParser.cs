@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 
 namespace FullSerializer {
@@ -59,16 +60,30 @@ namespace FullSerializer {
                     continue;
                 }
 
-                // comment? they begin with //
-                if (HasValue(1) &&
-                    (Character(0) == '/' && Character(1) == '/')) {
-
-                    // skip the rest of the line
-                    while (HasValue() && Environment.NewLine.Contains("" + Character()) == false) {
+                // comment?
+                if (HasValue(1) && Character(0) == '/') {
+                    if (Character(1) == '/') {
+                        // skip the rest of the line
+                        while (HasValue() && Environment.NewLine.Contains("" + Character()) == false) {
+                            TryMoveNext();
+                        }
+                        continue;
+                    } else if (Character(1) == '*') {
+                        // skip to comment close
                         TryMoveNext();
+                        TryMoveNext();
+                        while (HasValue(1)) {
+                            if (Character(0) == '*' && Character(1) == '/') {
+                                TryMoveNext();
+                                TryMoveNext();
+                                TryMoveNext();
+                                break;
+                            } else {
+                                TryMoveNext();
+                            }
+                        }
                     }
-
-                    // we still need to skip whitespace on the next line
+                    // let other checks to check fail
                     continue;
                 }
 
@@ -113,6 +128,7 @@ namespace FullSerializer {
 
             switch (Character()) {
                 case '\\': TryMoveNext(); escaped = '\\'; return fsResult.Success;
+                case '/': TryMoveNext(); escaped = '/'; return fsResult.Success;
                 case '"': TryMoveNext(); escaped = '\"'; return fsResult.Success;
                 case 'a': TryMoveNext(); escaped = '\a'; return fsResult.Success;
                 case 'b': TryMoveNext(); escaped = '\b'; return fsResult.Success;
@@ -227,7 +243,7 @@ namespace FullSerializer {
             // double -- includes a .
             if (numberString.Contains(".") || numberString == "Infinity" || numberString == "-Infinity" || numberString == "NaN") {
                 double doubleValue;
-                if (double.TryParse(numberString, out doubleValue) == false) {
+                if (double.TryParse(numberString, NumberStyles.Any, CultureInfo.InvariantCulture, out doubleValue) == false) {
                     data = null;
                     return MakeFailure("Bad double format with " + numberString);
                 }
@@ -237,7 +253,7 @@ namespace FullSerializer {
             }
             else {
                 Int64 intValue;
-                if (Int64.TryParse(numberString, out intValue) == false) {
+                if (Int64.TryParse(numberString, NumberStyles.Any, CultureInfo.InvariantCulture, out intValue) == false) {
                     data = null;
                     return MakeFailure("Bad Int64 format with " + numberString);
                 }
@@ -358,7 +374,8 @@ namespace FullSerializer {
             }
             SkipSpace();
 
-            var result = new Dictionary<string, fsData>();
+            var result = new Dictionary<string, fsData>(
+                fsConfig.IsCaseSensitive ? StringComparer.CurrentCulture : StringComparer.CurrentCultureIgnoreCase);
 
             while (HasValue() && Character() != '}') {
                 fsResult failure;
@@ -411,6 +428,11 @@ namespace FullSerializer {
         private fsResult RunParse(out fsData data) {
             SkipSpace();
 
+            if (HasValue() == false) {
+                data = default(fsData);
+                return MakeFailure("Unexpected end of input");
+            }
+
             switch (Character()) {
                 case 'I': // Infinity
                 case 'N': // NaN
@@ -444,7 +466,7 @@ namespace FullSerializer {
                 case 'n': return TryParseNull(out data);
                 default:
                     data = null;
-                    return MakeFailure("unable to parse; invalid initial token \"" + Character() + "\"");
+                    return MakeFailure("unable to parse; invalid token \"" + Character() + "\"");
             }
         }
 
@@ -455,6 +477,11 @@ namespace FullSerializer {
         /// <param name="data">The parsed data. This is undefined if parsing fails.</param>
         /// <returns>The parsed input.</returns>
         public static fsResult Parse(string input, out fsData data) {
+            if (string.IsNullOrEmpty(input)) {
+                data = default(fsData);
+                return fsResult.Fail("No input");
+            }
+
             var context = new fsJsonParser(input);
             return context.RunParse(out data);
         }

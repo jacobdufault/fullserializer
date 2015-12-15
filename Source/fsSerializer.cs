@@ -5,6 +5,24 @@ using FullSerializer.Internal;
 namespace FullSerializer {
     public class fsSerializer {
         #region Keys
+        private static HashSet<string> _reservedKeywords;
+        static fsSerializer() {
+            _reservedKeywords = new HashSet<string> {
+                Key_ObjectReference,
+                Key_ObjectDefinition,
+                Key_InstanceType,
+                Key_Version,
+                Key_Content
+            };
+        }
+        /// <summary>
+        /// Returns true if the given key is a special keyword that full serializer uses to
+        /// add additional metadata on top of the emitted JSON.
+        /// </summary>
+        public static bool IsReservedKeyword(string key) {
+            return _reservedKeywords.Contains(key);
+        }
+
         /// <summary>
         /// This is an object reference in part of a cyclic graph.
         /// </summary>
@@ -54,6 +72,25 @@ namespace FullSerializer {
         }
 
         /// <summary>
+        /// Strips all deserialization metadata from the object, like $type and $content fields.
+        /// </summary>
+        /// <remarks>After making this call, you will *not* be able to deserialize the same object instance. The metadata is
+        /// strictly necessary for deserialization!</remarks>
+        public static void StripDeserializationMetadata(ref fsData data) {
+            if (data.IsDictionary && data.AsDictionary.ContainsKey(Key_Content)) {
+                data = data.AsDictionary[Key_Content];
+            }
+
+            if (data.IsDictionary) {
+                var dict = data.AsDictionary;
+                dict.Remove(Key_ObjectReference);
+                dict.Remove(Key_ObjectDefinition);
+                dict.Remove(Key_InstanceType);
+                dict.Remove(Key_Version);
+            }
+        }
+
+        /// <summary>
         /// This function converts legacy serialization data into the new format, so that
         /// the import process can be unified and ignore the old format.
         /// </summary>
@@ -75,7 +112,7 @@ namespace FullSerializer {
             // type specifier
             if (dict.Count == 2 && dict.ContainsKey(typeString) && dict.ContainsKey(typeDataString)) {
                 data = dict[typeDataString];
-                EnsureDictionary(ref data);
+                EnsureDictionary(data);
                 ConvertLegacyData(ref data);
 
                 data.AsDictionary[Key_InstanceType] = dict[typeString];
@@ -84,7 +121,7 @@ namespace FullSerializer {
             // object definition
             else if (dict.Count == 2 && dict.ContainsKey(sourceIdString) && dict.ContainsKey(sourceDataString)) {
                 data = dict[sourceDataString];
-                EnsureDictionary(ref data);
+                EnsureDictionary(data);
                 ConvertLegacyData(ref data);
 
                 data.AsDictionary[Key_ObjectDefinition] = dict[sourceIdString];
@@ -117,6 +154,11 @@ namespace FullSerializer {
                 processors[i].OnBeforeDeserialize(storageType, ref data);
             }
         }
+        private static void Invoke_OnBeforeDeserializeAfterInstanceCreation(List<fsObjectProcessor> processors, Type storageType, object instance, ref fsData data) {
+            for (int i = 0; i < processors.Count; ++i) {
+                processors[i].OnBeforeDeserializeAfterInstanceCreation(storageType, instance, ref data);
+            }
+        }
         private static void Invoke_OnAfterDeserialize(List<fsObjectProcessor> processors, Type storageType, object instance) {
             for (int i = processors.Count - 1; i >= 0; --i) {
                 processors[i].OnAfterDeserialize(storageType, instance);
@@ -127,37 +169,42 @@ namespace FullSerializer {
         /// <summary>
         /// Ensures that the data is a dictionary. If it is not, then it is wrapped inside of one.
         /// </summary>
-        private static void EnsureDictionary(ref fsData data) {
+        private static void EnsureDictionary(fsData data) {
             if (data.IsDictionary == false) {
-                var dict = fsData.CreateDictionary();
-                dict.AsDictionary[Key_Content] = data;
-                data = dict;
+                var existingData = data.Clone();
+                data.BecomeDictionary();
+                data.AsDictionary[Key_Content] = existingData;
             }
         }
 
         /// <summary>
         /// This manages instance writing so that we do not write unnecessary $id fields. We
-        /// only need to write out an $id field when there is a corresponding $ref field.
+        /// only need to write out an $id field when there is a corresponding $ref field. This is able
+        /// to write $id references lazily because the fsData instance is not actually written out to text
+        /// until we have entirely finished serializing it.
         /// </summary>
         internal class fsLazyCycleDefinitionWriter {
-            private Dictionary<int, Dictionary<string, fsData>> _definitions = new Dictionary<int, Dictionary<string, fsData>>();
+            private Dictionary<int, fsData> _pendingDefinitions = new Dictionary<int, fsData>();
             private HashSet<int> _references = new HashSet<int>();
 
-            public void WriteDefinition(int id, Dictionary<string, fsData> dict) {
+            public void WriteDefinition(int id, fsData data) {
                 if (_references.Contains(id)) {
-                    dict[Key_ObjectDefinition] = new fsData(id.ToString());
+                    EnsureDictionary(data);
+                    data.AsDictionary[Key_ObjectDefinition] = new fsData(id.ToString());
                 }
 
                 else {
-                    _definitions[id] = dict;
+                    _pendingDefinitions[id] = data;
                 }
             }
 
             public void WriteReference(int id, Dictionary<string, fsData> dict) {
                 // Write the actual definition if necessary
-                if (_definitions.ContainsKey(id)) {
-                    _definitions[id][Key_ObjectDefinition] = new fsData(id.ToString());
-                    _definitions.Remove(id);
+                if (_pendingDefinitions.ContainsKey(id)) {
+                    var data = _pendingDefinitions[id];
+                    EnsureDictionary(data);
+                    data.AsDictionary[Key_ObjectDefinition] = new fsData(id.ToString());
+                    _pendingDefinitions.Remove(id);
                 }
                 else {
                     _references.Add(id);
@@ -168,14 +215,14 @@ namespace FullSerializer {
             }
 
             public void Clear() {
-                _definitions.Clear();
+                _pendingDefinitions.Clear();
             }
         }
 
         /// <summary>
         /// A cache from type to it's converter.
         /// </summary>
-        private Dictionary<Type, fsConverter> _cachedConverters;
+        private Dictionary<Type, fsBaseConverter> _cachedConverters;
 
         /// <summary>
         /// A cache from type to the set of processors that are interested in it.
@@ -183,9 +230,17 @@ namespace FullSerializer {
         private Dictionary<Type, List<fsObjectProcessor>> _cachedProcessors;
 
         /// <summary>
-        /// Converters that are available.
+        /// Converters that can be used for type registration.
         /// </summary>
-        private readonly List<fsConverter> _converters;
+        private readonly List<fsConverter> _availableConverters;
+
+        /// <summary>
+        /// Direct converters (optimized _converters). We use these so we don't have to
+        /// perform a scan through every item in _converters and can instead just do an O(1)
+        /// lookup. This is potentially important to perf when there are a ton of direct
+        /// converters.
+        /// </summary>
+        private readonly Dictionary<Type, fsDirectConverter> _availableDirectConverters;
 
         /// <summary>
         /// Processors that are available.
@@ -199,7 +254,7 @@ namespace FullSerializer {
         private readonly fsLazyCycleDefinitionWriter _lazyReferenceWriter;
 
         public fsSerializer() {
-            _cachedConverters = new Dictionary<Type, fsConverter>();
+            _cachedConverters = new Dictionary<Type, fsBaseConverter>();
             _cachedProcessors = new Dictionary<Type, List<fsObjectProcessor>>();
 
             _references = new fsCyclicReferenceManager();
@@ -208,7 +263,7 @@ namespace FullSerializer {
             // note: The order here is important. Items at the beginning of this
             //       list will be used before converters at the end. Converters
             //       added via AddConverter() are added to the front of the list.
-            _converters = new List<fsConverter> {
+            _availableConverters = new List<fsConverter> {
                 new fsNullableConverter { Serializer = this },
                 new fsGuidConverter { Serializer = this },
                 new fsTypeConverter { Serializer = this },
@@ -216,15 +271,28 @@ namespace FullSerializer {
                 new fsEnumConverter { Serializer = this },
                 new fsPrimitiveConverter { Serializer = this },
                 new fsArrayConverter { Serializer = this },
+                new fsDictionaryConverter { Serializer = this },
                 new fsIEnumerableConverter { Serializer = this },
                 new fsKeyValuePairConverter { Serializer = this },
                 new fsWeakReferenceConverter { Serializer = this },
                 new fsReflectedConverter { Serializer = this }
             };
+            _availableDirectConverters = new Dictionary<Type, fsDirectConverter>();
 
-            _processors = new List<fsObjectProcessor>();
+            _processors = new List<fsObjectProcessor>() {
+                new fsSerializationCallbackProcessor()
+            };
+
+#if !NO_UNITY
+            _processors.Add(new fsSerializationCallbackReceiverProcessor());
+#endif
 
             Context = new fsContext();
+
+            // Register the converters from the registrar
+            foreach (var converterType in fsConverterRegistrar.Converters) {
+                AddConverter((fsBaseConverter)Activator.CreateInstance(converterType));
+            }
         }
 
         /// <summary>
@@ -233,7 +301,7 @@ namespace FullSerializer {
         public fsContext Context;
 
         /// <summary>
-        /// Add a new processor to the serializer. Mutliple processors can run at the same time in the
+        /// Add a new processor to the serializer. Multiple processors can run at the same time in the
         /// same order they were added in.
         /// </summary>
         /// <param name="processor">The processor to add.</param>
@@ -252,7 +320,18 @@ namespace FullSerializer {
         private List<fsObjectProcessor> GetProcessors(Type type) {
             List<fsObjectProcessor> processors;
 
-            if (_cachedProcessors.TryGetValue(type, out processors) == false) {
+            // Check to see if the user has defined a custom processor for the type. If they
+            // have, then we don't need to scan through all of the processor to check which
+            // one can process the type; instead, we directly use the specified processor.
+            var attr = fsPortableReflection.GetAttribute<fsObjectAttribute>(type);
+            if (attr != null && attr.Processor != null) {
+                var processor = (fsObjectProcessor)Activator.CreateInstance(attr.Processor);
+                processors = new List<fsObjectProcessor>();
+                processors.Add(processor);
+                _cachedProcessors[type] = processors;
+            }
+
+            else if (_cachedProcessors.TryGetValue(type, out processors) == false) {
                 processors = new List<fsObjectProcessor>();
 
                 for (int i = 0; i < _processors.Count; ++i) {
@@ -273,56 +352,84 @@ namespace FullSerializer {
         /// Adds a new converter that can be used to customize how an object is serialized and
         /// deserialized.
         /// </summary>
-        public void AddConverter(fsConverter converter) {
+        public void AddConverter(fsBaseConverter converter) {
             if (converter.Serializer != null) {
                 throw new InvalidOperationException("Cannot add a single converter instance to " +
                     "multiple fsConverters -- please construct a new instance for " + converter);
             }
 
             // TODO: wrap inside of a ConverterManager so we can control _converters and _cachedConverters lifetime
-            _converters.Insert(0, converter);
+            if (converter is fsDirectConverter) {
+                var directConverter = (fsDirectConverter)converter;
+                _availableDirectConverters[directConverter.ModelType] = directConverter;
+            }
+            else if (converter is fsConverter) {
+                _availableConverters.Insert(0, (fsConverter)converter);
+            }
+            else {
+                throw new InvalidOperationException("Unable to add converter " + converter +
+                    "; the type association strategy is unknown. Please use either " +
+                    "fsDirectConverter or fsConverter as your base type.");
+            }
+
             converter.Serializer = this;
 
             // We need to reset our cached converter set, as it could be invalid with the new
             // converter. Ideally, _cachedConverters should be empty (as the user should fully setup
             // the serializer before actually using it), but there is no guarantee.
-            _cachedConverters = new Dictionary<Type, fsConverter>();
+            _cachedConverters = new Dictionary<Type, fsBaseConverter>();
         }
 
         /// <summary>
         /// Fetches a converter that can serialize/deserialize the given type.
         /// </summary>
-        private fsConverter GetConverter(Type type) {
-            fsConverter converter;
+        private fsBaseConverter GetConverter(Type type) {
+            fsBaseConverter converter;
+            if (_cachedConverters.TryGetValue(type, out converter)) {
+                return converter;
+            }
 
             // Check to see if the user has defined a custom converter for the type. If they
             // have, then we don't need to scan through all of the converters to check which
             // one can process the type; instead, we directly use the specified converter.
-            var attr = fsPortableReflection.GetAttribute<fsObjectAttribute>(type);
-            if (attr != null && attr.Converter != null) {
-                converter = (fsConverter)Activator.CreateInstance(attr.Converter);
-                converter.Serializer = this;
-                _cachedConverters[type] = converter;
+            {
+                var attr = fsPortableReflection.GetAttribute<fsObjectAttribute>(type);
+                if (attr != null && attr.Converter != null) {
+                    converter = (fsBaseConverter)Activator.CreateInstance(attr.Converter);
+                    converter.Serializer = this;
+                    return _cachedConverters[type] = converter;
+                }
             }
+
+            // Check for a [fsForward] attribute.
+            {
+                var attr = fsPortableReflection.GetAttribute<fsForwardAttribute>(type);
+                if (attr != null) {
+                    converter = new fsForwardConverter(attr);
+                    converter.Serializer = this;
+                    return _cachedConverters[type] = converter;
+                }
+            }
+
 
             // There is no specific converter specified; try all of the general ones to see
             // which ones matches.
-            else {
-                if (_cachedConverters.TryGetValue(type, out converter) == false) {
-                    for (int i = 0; i < _converters.Count; ++i) {
-                        if (_converters[i].CanProcess(type)) {
-                            converter = _converters[i];
-                            _cachedConverters[type] = converter;
-                            break;
+            if (_cachedConverters.TryGetValue(type, out converter) == false) {
+                if (_availableDirectConverters.ContainsKey(type)) {
+                    converter = _availableDirectConverters[type];
+                    return _cachedConverters[type] = converter;
+                }
+                else {
+                    for (int i = 0; i < _availableConverters.Count; ++i) {
+                        if (_availableConverters[i].CanProcess(type)) {
+                            converter = _availableConverters[i];
+                            return _cachedConverters[type] = converter;
                         }
                     }
                 }
             }
 
-            if (converter == null) {
-                throw new InvalidOperationException("Internal error -- could not find a converter for " + type);
-            }
-            return converter;
+            throw new InvalidOperationException("Internal error -- could not find a converter for " + type);
         }
 
         /// <summary>
@@ -354,7 +461,7 @@ namespace FullSerializer {
         /// <param name="data">The serialized state of the object.</param>
         /// <returns>If serialization was successful.</returns>
         public fsResult TrySerialize(Type storageType, object instance, out fsData data) {
-            var processors = GetProcessors(storageType);
+            var processors = GetProcessors(instance == null ? storageType : instance.GetType());
 
             Invoke_OnBeforeSerialize(processors, storageType, instance);
 
@@ -404,8 +511,7 @@ namespace FullSerializer {
                 var result = InternalSerialize_2_Inheritance(storageType, instance, out data);
                 if (result.Failed) return result;
 
-                EnsureDictionary(ref data);
-                _lazyReferenceWriter.WriteDefinition(_references.GetReferenceId(instance), data.AsDictionary);
+                _lazyReferenceWriter.WriteDefinition(_references.GetReferenceId(instance), data);
 
                 return result;
             }
@@ -429,9 +535,8 @@ namespace FullSerializer {
             if (storageType != instance.GetType() &&
                 GetConverter(storageType).RequestInheritanceSupport(storageType)) {
 
-                EnsureDictionary(ref data);
-
                 // Add the inheritance metadata
+                EnsureDictionary(data);
                 data.AsDictionary[Key_InstanceType] = new fsData(instance.GetType().FullName);
             }
 
@@ -453,7 +558,7 @@ namespace FullSerializer {
                 if (result.Failed) return result;
 
                 // Add the versioning information
-                EnsureDictionary(ref data);
+                EnsureDictionary(data);
                 data.AsDictionary[Key_Version] = new fsData(versionedType.VersionString);
 
                 return result;
@@ -475,11 +580,10 @@ namespace FullSerializer {
         /// <param name="result"></param>
         /// <returns></returns>
         public fsResult TryDeserialize(fsData data, Type storageType, ref object result) {
-            var processors = GetProcessors(storageType);
-            Invoke_OnBeforeDeserialize(processors, storageType, ref data);
-
             if (data.IsNull) {
                 result = null;
+                var processors = GetProcessors(storageType);
+                Invoke_OnBeforeDeserialize(processors, storageType, ref data);
                 Invoke_OnAfterDeserialize(processors, storageType, null);
                 return fsResult.Success;
             }
@@ -493,15 +597,19 @@ namespace FullSerializer {
                 // w.r.t. the list
                 _references.Enter();
 
-                return InternalDeserialize_1_CycleReference(data, storageType, ref result);
+                List<fsObjectProcessor> processors;
+                var r = InternalDeserialize_1_CycleReference(data, storageType, ref result, out processors);
+                if (r.Succeeded) {
+                    Invoke_OnAfterDeserialize(processors, storageType, result);
+                }
+                return r;
             }
             finally {
                 _references.Exit();
-                Invoke_OnAfterDeserialize(processors, storageType, null);
             }
         }
 
-        private fsResult InternalDeserialize_1_CycleReference(fsData data, Type storageType, ref object result) {
+        private fsResult InternalDeserialize_1_CycleReference(fsData data, Type storageType, ref object result, out List<fsObjectProcessor> processors) {
             // We handle object references first because we could be deserializing a cyclic type that is
             // inherited. If that is the case, then if we handle references after inheritances we will try
             // to create an object instance for an abstract/interface type.
@@ -515,13 +623,14 @@ namespace FullSerializer {
             if (IsObjectReference(data)) {
                 int refId = int.Parse(data.AsDictionary[Key_ObjectReference].AsString);
                 result = _references.GetReferenceObject(refId);
+                processors = GetProcessors(result.GetType());
                 return fsResult.Success;
             }
 
-            return InternalDeserialize_2_Version(data, storageType, ref result);
+            return InternalDeserialize_2_Version(data, storageType, ref result, out processors);
         }
 
-        private fsResult InternalDeserialize_2_Version(fsData data, Type storageType, ref object result) {
+        private fsResult InternalDeserialize_2_Version(fsData data, Type storageType, ref object result, out List<fsObjectProcessor> processors) {
             if (IsVersioned(data)) {
                 // data is versioned, but we might not need to do a migration
                 string version = data.AsDictionary[Key_Version].AsString;
@@ -535,25 +644,40 @@ namespace FullSerializer {
 
                     List<fsVersionedType> path;
                     deserializeResult += fsVersionManager.GetVersionImportPath(version, versionedType.Value, out path);
-                    if (deserializeResult.Failed) return deserializeResult;
+                    if (deserializeResult.Failed) {
+                        processors = GetProcessors(storageType);
+                        return deserializeResult;
+                    }
 
                     // deserialize as the original type
-                    deserializeResult += InternalDeserialize_3_Inheritance(data, path[0].ModelType, ref result);
+                    deserializeResult += InternalDeserialize_3_Inheritance(data, path[0].ModelType, ref result, out processors);
                     if (deserializeResult.Failed) return deserializeResult;
 
+                    // TODO: we probably should be invoking object processors all along this pipeline
                     for (int i = 1; i < path.Count; ++i) {
                         result = path[i].Migrate(result);
                     }
 
+                    processors = GetProcessors(deserializeResult.GetType());
                     return deserializeResult;
                 }
             }
 
-            return InternalDeserialize_3_Inheritance(data, storageType, ref result);
+            return InternalDeserialize_3_Inheritance(data, storageType, ref result, out processors);
         }
 
-        private fsResult InternalDeserialize_3_Inheritance(fsData data, Type storageType, ref object result) {
+        private fsResult InternalDeserialize_3_Inheritance(fsData data, Type storageType, ref object result, out List<fsObjectProcessor> processors) {
             var deserializeResult = fsResult.Success;
+
+            // We wait until here to actually Invoke_OnBeforeDeserialize because we do not
+            // have the correct set of processors to invoke until *after* we have resolved
+            // the proper type to use for deserialization.
+            // TODO: Consider if we want to use the objectType for fetching processors instead
+            //       the type that the user passed in. If we move this check to also consider
+            //       the object type, then we have to handle the scenario where a processor is
+            //       recovering stale data and the object type lookup fails.
+            processors = GetProcessors(storageType);
+            Invoke_OnBeforeDeserialize(processors, storageType, ref data);
 
             Type objectType = storageType;
 
@@ -592,6 +716,10 @@ namespace FullSerializer {
             if (ReferenceEquals(result, null) || result.GetType() != objectType) {
                 result = GetConverter(objectType).CreateInstance(data, objectType);
             }
+
+            // We call OnBeforeDeserializeAfterInstanceCreation here because we still want to invoke the
+            // method even if the user passed in an existing instance.
+            Invoke_OnBeforeDeserializeAfterInstanceCreation(processors, storageType, result, ref data);
 
             // NOTE: It is critically important that we pass the actual objectType down instead of
             //       using result.GetType() because it is not guaranteed that result.GetType()

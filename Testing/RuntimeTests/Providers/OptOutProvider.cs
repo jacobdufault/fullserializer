@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-using System.Collections;
-using FullSerializer;
+﻿using FullSerializer;
 using System.Collections.Generic;
 
 [fsObject(MemberSerialization = fsMemberSerialization.OptOut)]

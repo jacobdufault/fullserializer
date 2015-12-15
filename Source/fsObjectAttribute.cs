@@ -32,10 +32,16 @@ namespace FullSerializer {
 
         /// <summary>
         /// Specify a custom converter to use for serialization. The converter type needs
-        /// to derive from fsConverter and the call to CanProcess can be skipped. This
-        /// defaults to null.
+        /// to derive from fsBaseConverter. This defaults to null.
         /// </summary>
         public Type Converter;
+
+        /// <summary>
+        /// Specify a custom processor to use during serialization. The processor type needs
+        /// to derive from fsObjectProcessor and the call to CanProcess is not invoked. This
+        /// defaults to null.
+        /// </summary>
+        public Type Processor;
 
         public fsObjectAttribute() { }
         public fsObjectAttribute(string versionString, params Type[] previousModels) {
