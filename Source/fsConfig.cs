@@ -36,6 +36,11 @@ namespace FullSerializer {
         private static fsMemberSerialization _defaultMemberSerialization = fsMemberSerialization.Default;
 
         /// <summary>
+        /// Serialize default values?
+        /// </summary>
+        public static bool SerializeDefaultValues = false;
+
+        /// <summary>
         /// Should the default serialization behaviour include non-auto properties?
         /// </summary>
         public static bool SerializeNonAutoProperties = false;

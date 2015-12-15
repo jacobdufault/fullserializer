@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using FullSerializer.Internal;
 
 namespace FullSerializer {
@@ -50,25 +51,25 @@ namespace FullSerializer {
         /// </summary>
         private const string Key_Content = "$content";
 
-        private static bool IsObjectReference(fsData data) {
+        private static bool IsObjectReference(fsData data, ref fsData refData) {
             if (data.IsDictionary == false) return false;
-            return data.AsDictionary.ContainsKey(Key_ObjectReference);
+            return data.AsDictionary.TryGetValue(Key_ObjectReference, out refData);
         }
-        private static bool IsObjectDefinition(fsData data) {
+        private static bool IsObjectDefinition(fsData data, ref fsData defData) {
             if (data.IsDictionary == false) return false;
-            return data.AsDictionary.ContainsKey(Key_ObjectDefinition);
+            return data.AsDictionary.TryGetValue(Key_ObjectDefinition, out defData);
         }
-        private static bool IsVersioned(fsData data) {
+        private static bool IsVersioned(fsData data, ref fsData versionData) {
             if (data.IsDictionary == false) return false;
-            return data.AsDictionary.ContainsKey(Key_Version);
+            return data.AsDictionary.TryGetValue(Key_Version, out versionData);
         }
-        private static bool IsTypeSpecified(fsData data) {
+        private static bool IsTypeSpecified(fsData data, ref fsData typeNameData) {
             if (data.IsDictionary == false) return false;
-            return data.AsDictionary.ContainsKey(Key_InstanceType);
+            return data.AsDictionary.TryGetValue(Key_InstanceType, out typeNameData);
         }
-        private static bool IsWrappedData(fsData data) {
+        private static bool IsWrappedData(fsData data, ref fsData wrapData) {
             if (data.IsDictionary == false) return false;
-            return data.AsDictionary.ContainsKey(Key_Content);
+            return data.AsDictionary.TryGetValue(Key_Content, out wrapData);
         }
 
         /// <summary>
@@ -319,7 +320,9 @@ namespace FullSerializer {
         /// </summary>
         private List<fsObjectProcessor> GetProcessors(Type type) {
             List<fsObjectProcessor> processors;
-
+            if (_cachedProcessors.TryGetValue(type, out processors)){
+                return processors;
+            }
             // Check to see if the user has defined a custom processor for the type. If they
             // have, then we don't need to scan through all of the processor to check which
             // one can process the type; instead, we directly use the specified processor.
@@ -474,8 +477,60 @@ namespace FullSerializer {
 
             var result = InternalSerialize_1_ProcessCycles(storageType, instance, out data);
             Invoke_OnAfterSerialize(processors, storageType, instance, ref data);
+
+            //remove default values serialization in the end?
+            if (!fsConfig.SerializeDefaultValues){
+                return RemoveDefaultValues(storageType, instance, ref data);
+            }
+
             return result;
         }
+
+        ///Clean up defaults. Is there a better way to do this?
+        private fsResult RemoveDefaultValues(Type storageType, object instance, ref fsData data){
+
+            if (!data.IsDictionary){
+                return fsResult.Success;
+            }
+
+            //if the object is the deafult remove it
+            var type = instance.GetType();
+            if (object.Equals( GetDefault(type), instance )){
+                data = new fsData();
+                return fsResult.Success;
+            }
+
+            //if there is a direct converter dont do anything to it's specific members.
+            if (_availableDirectConverters.ContainsKey(type)){
+                return fsResult.Success;
+            }
+
+            //cleanup object memebers
+            foreach(var entry in data.AsDictionary){
+                if (entry.Value.IsDouble && entry.Value.AsDouble == 0f){
+                    entry.Value.SetNull();
+                }
+                if (entry.Value.IsInt64 && entry.Value.AsInt64 == 0){
+                    entry.Value.SetNull();
+                }
+                if (entry.Value.IsBool && entry.Value.AsBool == false){
+                    entry.Value.SetNull();
+                }
+            }
+
+            //if there is at least one non-default memeber keep the object, otherwise remove it as a whole.
+            if (data.AsDictionary.Values.ToList().Any(d => !d.IsNull)){
+                return fsResult.Success;
+            }
+            
+            data = new fsData();
+            return fsResult.Success;
+        }
+
+        ///Helper methods to get default type values
+        private object GetDefault(Type t){ return this.GetType().GetMethod("GetDefaultGeneric").MakeGenericMethod(t).Invoke(this, null); }
+        public T GetDefaultGeneric<T>(){ return default(T); }
+
 
         private fsResult InternalSerialize_1_ProcessCycles(Type storageType, object instance, out fsData data) {
             // We have an object definition to serialize.
@@ -620,8 +675,9 @@ namespace FullSerializer {
             // time we encounter an object it'll always be the definition. Any times after that
             // it will be a reference. Because of this, if we encounter a reference then we
             // will have *always* already encountered the definition for it.
-            if (IsObjectReference(data)) {
-                int refId = int.Parse(data.AsDictionary[Key_ObjectReference].AsString);
+            fsData refData = null;
+            if (IsObjectReference(data, ref refData)){
+                int refId = int.Parse(refData.AsString);
                 result = _references.GetReferenceObject(refId);
                 processors = GetProcessors(result.GetType());
                 return fsResult.Success;
@@ -631,9 +687,10 @@ namespace FullSerializer {
         }
 
         private fsResult InternalDeserialize_2_Version(fsData data, Type storageType, ref object result, out List<fsObjectProcessor> processors) {
-            if (IsVersioned(data)) {
+            fsData versionData = null;
+            if (IsVersioned(data, ref versionData)) {
                 // data is versioned, but we might not need to do a migration
-                string version = data.AsDictionary[Key_Version].AsString;
+                string version = versionData.AsString;
 
                 fsOption<fsVersionedType> versionedType = fsVersionManager.GetVersionedType(storageType);
                 if (versionedType.HasValue &&
@@ -684,8 +741,8 @@ namespace FullSerializer {
             // If the serialized state contains type information, then we need to make sure to update our
             // objectType and data to the proper values so that when we construct an object instance later
             // and run deserialization we run it on the proper type.
-            if (IsTypeSpecified(data)) {
-                fsData typeNameData = data.AsDictionary[Key_InstanceType];
+            fsData typeNameData = null;
+            if (IsTypeSpecified(data, ref typeNameData)){
 
                 // we wrap everything in a do while false loop so we can break out it
                 do {
@@ -731,7 +788,8 @@ namespace FullSerializer {
         }
 
         private fsResult InternalDeserialize_4_Cycles(fsData data, Type resultType, ref object result) {
-            if (IsObjectDefinition(data)) {
+            fsData defData = null;
+            if (IsObjectDefinition(data, ref defData)){
                 // NOTE: object references are handled at stage 1
 
                 // If this is a definition, then we have a serialization invariant that this is the
@@ -743,7 +801,7 @@ namespace FullSerializer {
                 // this before actually deserializing the object because when deserializing the object
                 // there may be references to itself.
 
-                int sourceId = int.Parse(data.AsDictionary[Key_ObjectDefinition].AsString);
+                int sourceId = int.Parse(defData.AsString);
                 _references.AddReferenceWithId(sourceId, result);
             }
 
@@ -752,8 +810,9 @@ namespace FullSerializer {
         }
 
         private fsResult InternalDeserialize_5_Converter(fsData data, Type resultType, ref object result) {
-            if (IsWrappedData(data)) {
-                data = data.AsDictionary[Key_Content];
+            fsData wrapData = null;
+            if (IsWrappedData(data, ref wrapData)){
+                data = wrapData;
             }
 
             return GetConverter(resultType).TryDeserialize(data, ref result, resultType);
