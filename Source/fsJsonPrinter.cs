@@ -117,6 +117,11 @@ namespace FullSerializer {
                         stream.Write('{');
                         bool comma = false;
                         foreach (var entry in data.AsDictionary) {
+
+                            if (!fsConfig.SerializeDefaultValues && entry.Value.IsNull){
+                                continue;
+                            }
+
                             if (comma) stream.Write(',');
                             comma = true;
                             stream.Write('"');
@@ -177,6 +182,11 @@ namespace FullSerializer {
                         stream.WriteLine();
                         bool comma = false;
                         foreach (var entry in data.AsDictionary) {
+
+                            if (!fsConfig.SerializeDefaultValues && entry.Value.IsNull){
+                                continue;
+                            }
+
                             if (comma) {
                                 stream.Write(',');
                                 stream.WriteLine();

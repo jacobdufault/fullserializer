@@ -82,7 +82,7 @@ namespace FullSerializer {
         /// </summary>
         public static fsData CreateDictionary() {
             return new fsData(new Dictionary<string, fsData>(
-                fsConfig.IsCaseSensitive ? StringComparer.CurrentCulture : StringComparer.CurrentCultureIgnoreCase));
+                fsConfig.IsCaseSensitive ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase));
         }
 
         /// <summary>
@@ -102,6 +102,14 @@ namespace FullSerializer {
         public readonly static fsData True = new fsData(true);
         public readonly static fsData False = new fsData(false);
         public readonly static fsData Null = new fsData();
+
+        /// <summary>
+        /// Sets the value to null which also changes it's the type to Null.
+        /// </summary>
+        public void SetNull(){
+            _value = null;
+        }
+
         #endregion
 
         #region Internal Helper Methods

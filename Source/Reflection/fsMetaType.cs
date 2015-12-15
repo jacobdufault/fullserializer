@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using FullSerializer.Internal;
@@ -35,9 +36,13 @@ namespace FullSerializer {
             List<fsMetaProperty> properties = new List<fsMetaProperty>();
             CollectProperties(properties, reflectedType);
             Properties = properties.ToArray();
+            if (!ReflectedType.Resolve().IsValueType && ReflectedType.GetDeclaredConstructor(fsPortableReflection.EmptyTypes) != null ){
+                Generator = Expression.Lambda<Func<object>>(Expression.New(reflectedType)).Compile();
+            }
         }
 
         public Type ReflectedType;
+        private Func<object> Generator;
 
         private static void CollectProperties(List<fsMetaProperty> properties, Type reflectedType) {
             // do we require a [SerializeField] or [fsProperty] attribute?
@@ -294,6 +299,11 @@ namespace FullSerializer {
             }
 
             try {
+
+                if (Generator != null){
+                    return Generator();
+                }
+
 #if (!UNITY_EDITOR && (UNITY_METRO))
                 // In WinRT/WinStore builds, Activator.CreateInstance(..., true) is broken
                 return Activator.CreateInstance(ReflectedType);
