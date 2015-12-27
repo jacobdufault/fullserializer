@@ -1,4 +1,4 @@
-#/usr/bin/env bash
+#! /bin/sh
 
 # Inspired from https://github.com/JonathanPorta/ci-build
 

@@ -1,4 +1,4 @@
-#/usr/bin/env bash
+#! /bin/sh
 
 # Exit if any (simple) command fails.
 #set -e
