@@ -1,6 +1,22 @@
-*.meta
 *.suo
-.DS_Store
+*.csproj
+*.sln
+*.vscode
+*.DS_Store
+
+Library/
+Temp/
+obj/
+
 create_release_dlls.cmd
-Build Files (DLL)/Build/*
-Build Files (DLL)/obj/*
+
+Assets/Editor
+Assets/Editor.meta
+Assets/Haste
+Assets/Haste.meta
+Assets/VSCode
+Assets/VSCode.meta
+Assets/MyTest.cs
+Assets/MyTest.cs.meta
+Assets/WSATestCertificate.pfx
+Assets/WSATestCertificate.pfx.meta
