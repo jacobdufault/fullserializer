@@ -1,4 +1,6 @@
 *.meta
 *.suo
+.DS_Store
+create_release_dlls.cmd
 Build Files (DLL)/Build/*
 Build Files (DLL)/obj/*
