@@ -1,6 +1,6 @@
-﻿using FullSerializer;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using FullSerializer;
 
 public class PropertiesProvider : TestProvider<object> {
     public struct PublicGetPublicSet {
