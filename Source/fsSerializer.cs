@@ -698,6 +698,15 @@ namespace FullSerializer {
                         result = path[i].Migrate(result);
                     }
 
+                    // Our data contained an object definition ($id) that was added to _references in step 4.
+                    // However, in case we are doing versioning, it will contain the old version.
+                    // To make sure future references to this object end up referencing the migrated version,
+                    // we must update the reference.
+                    if(IsObjectDefinition(data)) {
+                        int sourceId = int.Parse(data.AsDictionary[Key_ObjectDefinition].AsString);
+                        _references.AddReferenceWithId(sourceId, result);
+                    }
+
                     processors = GetProcessors(deserializeResult.GetType());
                     return deserializeResult;
                 }
