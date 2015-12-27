@@ -15,7 +15,7 @@ all_cs_files=$(find $source_dir -name \*.cs)
 echo "Compiling DLLs (dll_file: $dll_file, doc_file: $doc_file)"
 $unity_root/MonoBleedingEdge/bin/mcs \
   /lib:$unity_root/Managed /reference:UnityEngine.dll \
-  /nowarn:CS1591 \
+  /nowarn:1591 \
   /target:library /debug /sdk:2 \
   /out:$dll_file /doc:$doc_file \
   $all_cs_files
