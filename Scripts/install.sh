@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 
 # Inspired from https://github.com/JonathanPorta/ci-build
 
@@ -7,8 +7,8 @@
 # to grab a current link from: http://unity3d.com/get-unity/download/archive
 
 URL=$"http://netstorage.unity3d.com/unity/cc9cbbcc37b4/MacEditorInstaller/Unity-5.3.1f1.pkg"
-echo 'Downloading from $URL'
+echo "Downloading from $URL"
 curl -o Unity.pkg $URL
 
-echo 'Installing Unity.pkg'
+echo "Installing Unity.pkg"
 sudo installer -dumplog -package Unity.pkg -target /

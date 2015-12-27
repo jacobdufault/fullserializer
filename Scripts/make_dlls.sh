@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/sh
 
 # These options are configurable. You can configure them before invoking the
 # script by using environment variables. For example,
