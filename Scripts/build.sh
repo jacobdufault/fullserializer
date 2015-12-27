@@ -17,7 +17,6 @@ mkdir $log_dir
 mkdir $output_dir
 
 # Modify the directory structure so that we have a clean Unity package export.
-pushd ~/Personal/FullSerializer
 mv *.md* Assets/FullSerializer/
 mv Assets/FullSerializer/Testing Assets-FullSerializer-Testing
 mv Assets/FullSerializer/Testing.meta Assets-FullSerializer-Testing.meta
@@ -75,7 +74,6 @@ $unity \
 mv Assets/FullSerializer/*.md* .
 mv Assets-FullSerializer-Testing Assets/FullSerializer/Testing
 mv Assets-FullSerializer-Testing.meta Assets/FullSerializer/Testing.meta
-popd
 
 exit
 
