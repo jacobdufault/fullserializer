@@ -5,7 +5,7 @@ using FullSerializer.Internal;
 
 namespace FullSerializer {
     /// <summary>
-    /// The AOT compilation manager 
+    /// The AOT compilation manager
     /// </summary>
     public class fsAotCompilationManager {
         /// <summary>
@@ -64,6 +64,14 @@ namespace FullSerializer {
             });
         }
 
+        private static string GetConverterString(fsMetaProperty member) {
+            if (member.OverrideConverterType == null)
+                return "null";
+
+            return string.Format("typeof({0})",
+                                 member.OverrideConverterType.CSharpName(/*includeNamespace:*/ true));
+        }
+
         /// <summary>
         /// AOT compiles the object (in C#).
         /// </summary>
@@ -87,7 +95,7 @@ namespace FullSerializer {
             sb.AppendLine("            var result = fsResult.Success;");
             sb.AppendLine();
             foreach (var member in members) {
-                sb.AppendLine("            result += SerializeMember(serialized, \"" + member.JsonName + "\", model." + member.MemberName + ");");
+                sb.AppendLine("            result += SerializeMember(serialized, " + GetConverterString(member) + ", \"" + member.JsonName + "\", model." + member.MemberName + ");");
             }
             sb.AppendLine();
             sb.AppendLine("            return result;");
@@ -99,7 +107,7 @@ namespace FullSerializer {
             for (int i = 0; i < members.Length; ++i) {
                 var member = members[i];
                 sb.AppendLine("            var t" + i + " = model." + member.MemberName + ";");
-                sb.AppendLine("            result += DeserializeMember(data, \"" + member.JsonName + "\", out t" + i + ");");
+                sb.AppendLine("            result += DeserializeMember(data, " + GetConverterString(member) + ", \"" + member.JsonName + "\", out t" + i + ");");
                 sb.AppendLine("            model." + member.MemberName + " = t" + i + ";");
                 sb.AppendLine();
             }

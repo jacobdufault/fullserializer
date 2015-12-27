@@ -96,14 +96,14 @@ namespace FullSerializer {
             return fsResult.Success;
         }
 
-        protected fsResult SerializeMember<T>(Dictionary<string, fsData> data, string name, T value) {
+        protected fsResult SerializeMember<T>(Dictionary<string, fsData> data, Type overrideConverterType, string name, T value) {
             fsData memberData;
-            var result = Serializer.TrySerialize(typeof(T), value, out memberData);
+            var result = Serializer.TrySerialize(typeof(T), overrideConverterType, value, out memberData);
             if (result.Succeeded) data[name] = memberData;
             return result;
         }
 
-        protected fsResult DeserializeMember<T>(Dictionary<string, fsData> data, string name, out T value) {
+        protected fsResult DeserializeMember<T>(Dictionary<string, fsData> data, Type overrideConverterType, string name, out T value) {
             fsData memberData;
             if (data.TryGetValue(name, out memberData) == false) {
                 value = default(T);
@@ -111,7 +111,7 @@ namespace FullSerializer {
             }
 
             object storage = null;
-            var result = Serializer.TryDeserialize(memberData, typeof(T), ref storage);
+            var result = Serializer.TryDeserialize(memberData, typeof(T), overrideConverterType, ref storage);
             value = (T)storage;
             return result;
         }

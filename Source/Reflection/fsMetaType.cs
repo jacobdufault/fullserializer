@@ -200,11 +200,14 @@ namespace FullSerializer {
                 // similar will be used for the derived type instead of our AOT compiled one.
 
                 for (int i = 0; i < Properties.Length; ++i) {
-                    if (Properties[i].IsPublic == false) return false; // cannot do a speedup
+                    // Cannot AOT compile since we need to public member access.
+                    if (Properties[i].IsPublic == false)
+                        return false;
                 }
 
-                // we need a default ctor
-                if (HasDefaultConstructor == false) return false;
+                // Cannot AOT compile since we need a default ctor.
+                if (HasDefaultConstructor == false)
+                    return false;
 
                 fsAotCompilationManager.AddAotCompilation(ReflectedType, Properties, _isDefaultConstructorPublic);
                 return true;

@@ -14,9 +14,9 @@ namespace FullSerializer.Internal.DirectConverters {
         protected override fsResult DoSerialize(AnimationCurve model, Dictionary<string, fsData> serialized) {
             var result = fsResult.Success;
 
-            result += SerializeMember(serialized, "keys", model.keys);
-            result += SerializeMember(serialized, "preWrapMode", model.preWrapMode);
-            result += SerializeMember(serialized, "postWrapMode", model.postWrapMode);
+            result += SerializeMember(serialized, null, "keys", model.keys);
+            result += SerializeMember(serialized, null, "preWrapMode", model.preWrapMode);
+            result += SerializeMember(serialized, null, "postWrapMode", model.postWrapMode);
 
             return result;
         }
@@ -25,15 +25,15 @@ namespace FullSerializer.Internal.DirectConverters {
             var result = fsResult.Success;
 
             var t0 = model.keys;
-            result += DeserializeMember(data, "keys", out t0);
+            result += DeserializeMember(data, null, "keys", out t0);
             model.keys = t0;
 
             var t1 = model.preWrapMode;
-            result += DeserializeMember(data, "preWrapMode", out t1);
+            result += DeserializeMember(data, null, "preWrapMode", out t1);
             model.preWrapMode = t1;
 
             var t2 = model.postWrapMode;
-            result += DeserializeMember(data, "postWrapMode", out t2);
+            result += DeserializeMember(data, null, "postWrapMode", out t2);
             model.postWrapMode = t2;
 
             return result;

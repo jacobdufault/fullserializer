@@ -3,27 +3,41 @@ using System.Reflection;
 
 namespace FullSerializer.Internal {
     /// <summary>
-    /// A property or field on a MetaType.
+    /// A property or field on a MetaType. This unifies the FieldInfo and PropertyInfo classes.
     /// </summary>
     public class fsMetaProperty {
         internal fsMetaProperty(FieldInfo field) {
             _memberInfo = field;
             StorageType = field.FieldType;
-            JsonName = GetJsonName(field);
             MemberName = field.Name;
             IsPublic = field.IsPublic;
             CanRead = true;
             CanWrite = true;
+
+            CommonInitialize();
         }
 
         internal fsMetaProperty(PropertyInfo property) {
             _memberInfo = property;
             StorageType = property.PropertyType;
-            JsonName = GetJsonName(property);
             MemberName = property.Name;
-            IsPublic = (property.GetGetMethod() != null && property.GetGetMethod().IsPublic) && (property.GetSetMethod() != null && property.GetSetMethod().IsPublic);
+            IsPublic = (property.GetGetMethod() != null && property.GetGetMethod().IsPublic) &&
+                       (property.GetSetMethod() != null && property.GetSetMethod().IsPublic);
             CanRead = property.CanRead;
             CanWrite = property.CanWrite;
+
+            CommonInitialize();
+        }
+
+        private void CommonInitialize() {
+            var attr = fsPortableReflection.GetAttribute<fsPropertyAttribute>(_memberInfo);
+            if (attr != null) {
+                JsonName = attr.Name;
+                OverrideConverterType = attr.Converter;
+            }
+
+            if (string.IsNullOrEmpty(JsonName))
+                JsonName = MemberName;
         }
 
         /// <summary>
@@ -36,6 +50,16 @@ namespace FullSerializer.Internal {
         /// StorageType will be typeof(int).
         /// </summary>
         public Type StorageType {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// A custom fsBaseConverter instance to use for this field/property, if requested. This will be
+        /// null if the default converter selection algorithm should be used. This is specified using the
+        /// [fsObject] annotation with the Converter field.
+        /// </summary>
+        public Type OverrideConverterType {
             get;
             private set;
         }
@@ -112,18 +136,6 @@ namespace FullSerializer.Internal {
             else {
                 return ((FieldInfo)_memberInfo).GetValue(context);
             }
-        }
-
-        /// <summary>
-        /// Returns the name the given member wants to use for JSON serialization.
-        /// </summary>
-        private static string GetJsonName(MemberInfo member) {
-            var attr = fsPortableReflection.GetAttribute<fsPropertyAttribute>(member);
-            if (attr != null && string.IsNullOrEmpty(attr.Name) == false) {
-                return attr.Name;
-            }
-
-            return member.Name;
         }
     }
 }

@@ -14,8 +14,8 @@ namespace FullSerializer.Internal.DirectConverters {
         protected override fsResult DoSerialize(Bounds model, Dictionary<string, fsData> serialized) {
             var result = fsResult.Success;
 
-            result += SerializeMember(serialized, "center", model.center);
-            result += SerializeMember(serialized, "size", model.size);
+            result += SerializeMember(serialized, null, "center", model.center);
+            result += SerializeMember(serialized, null, "size", model.size);
 
             return result;
         }
@@ -24,11 +24,11 @@ namespace FullSerializer.Internal.DirectConverters {
             var result = fsResult.Success;
 
             var t0 = model.center;
-            result += DeserializeMember(data, "center", out t0);
+            result += DeserializeMember(data, null, "center", out t0);
             model.center = t0;
 
             var t1 = model.size;
-            result += DeserializeMember(data, "size", out t1);
+            result += DeserializeMember(data, null, "size", out t1);
             model.size = t1;
 
             return result;

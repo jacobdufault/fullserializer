@@ -14,7 +14,7 @@ namespace FullSerializer.Internal.DirectConverters {
         protected override fsResult DoSerialize(LayerMask model, Dictionary<string, fsData> serialized) {
             var result = fsResult.Success;
 
-            result += SerializeMember(serialized, "value", model.value);
+            result += SerializeMember(serialized, null, "value", model.value);
 
             return result;
         }
@@ -23,7 +23,7 @@ namespace FullSerializer.Internal.DirectConverters {
             var result = fsResult.Success;
 
             var t0 = model.value;
-            result += DeserializeMember(data, "value", out t0);
+            result += DeserializeMember(data, null, "value", out t0);
             model.value = t0;
 
             return result;

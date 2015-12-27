@@ -14,11 +14,11 @@ namespace FullSerializer.Internal.DirectConverters {
         protected override fsResult DoSerialize(Keyframe model, Dictionary<string, fsData> serialized) {
             var result = fsResult.Success;
 
-            result += SerializeMember(serialized, "time", model.time);
-            result += SerializeMember(serialized, "value", model.value);
-            result += SerializeMember(serialized, "tangentMode", model.tangentMode);
-            result += SerializeMember(serialized, "inTangent", model.inTangent);
-            result += SerializeMember(serialized, "outTangent", model.outTangent);
+            result += SerializeMember(serialized, null, "time", model.time);
+            result += SerializeMember(serialized, null, "value", model.value);
+            result += SerializeMember(serialized, null, "tangentMode", model.tangentMode);
+            result += SerializeMember(serialized, null, "inTangent", model.inTangent);
+            result += SerializeMember(serialized, null, "outTangent", model.outTangent);
 
             return result;
         }
@@ -27,23 +27,23 @@ namespace FullSerializer.Internal.DirectConverters {
             var result = fsResult.Success;
 
             var t0 = model.time;
-            result += DeserializeMember(data, "time", out t0);
+            result += DeserializeMember(data, null, "time", out t0);
             model.time = t0;
 
             var t1 = model.value;
-            result += DeserializeMember(data, "value", out t1);
+            result += DeserializeMember(data, null, "value", out t1);
             model.value = t1;
 
             var t2 = model.tangentMode;
-            result += DeserializeMember(data, "tangentMode", out t2);
+            result += DeserializeMember(data, null, "tangentMode", out t2);
             model.tangentMode = t2;
 
             var t3 = model.inTangent;
-            result += DeserializeMember(data, "inTangent", out t3);
+            result += DeserializeMember(data, null, "inTangent", out t3);
             model.inTangent = t3;
 
             var t4 = model.outTangent;
-            result += DeserializeMember(data, "outTangent", out t4);
+            result += DeserializeMember(data, null, "outTangent", out t4);
             model.outTangent = t4;
 
             return result;

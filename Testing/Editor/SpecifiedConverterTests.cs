@@ -6,6 +6,11 @@ namespace FullSerializer.Tests {
     public class MyModel {
     }
 
+    public class ModelWithPropertyConverter {
+        [fsProperty(Converter = typeof(MyConverter))]
+        public object a;
+    }
+
     public class MyConverter : fsConverter {
         public static bool DidSerialize = false;
         public static bool DidDeserialize = false;
@@ -31,6 +36,26 @@ namespace FullSerializer.Tests {
     }
 
     public class SpecifiedConverterTests {
+        [Test]
+        public void VerifyPropertyConverter() {
+            MyConverter.DidDeserialize = false;
+            MyConverter.DidSerialize = false;
+
+            var serializer = new fsSerializer();
+
+            // Make sure to set |a| to some value, otherwise we will short-circuit serialize it to null.
+            fsData result;
+            serializer.TrySerialize(new ModelWithPropertyConverter { a = 3 }, out result);
+            Assert.IsTrue(MyConverter.DidSerialize);
+            Assert.IsFalse(MyConverter.DidDeserialize);
+
+            MyConverter.DidSerialize = false;
+            object resultObj = null;
+            serializer.TryDeserialize(result, typeof(ModelWithPropertyConverter), ref resultObj);
+            Assert.IsFalse(MyConverter.DidSerialize);
+            Assert.IsTrue(MyConverter.DidDeserialize);
+        }
+
         [Test]
         public void VerifyConversion() {
             MyConverter.DidDeserialize = false;
