@@ -36,8 +36,9 @@ namespace FullSerializer.Internal {
                 OverrideConverterType = attr.Converter;
             }
 
-            if (string.IsNullOrEmpty(JsonName))
-                JsonName = MemberName;
+            if (string.IsNullOrEmpty(JsonName)) {
+                JsonName = fsConfig.GetJsonNameFromMemberName(MemberName, _memberInfo);
+            }
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 
 namespace FullSerializer {
     /// <summary>
@@ -34,6 +35,16 @@ namespace FullSerializer {
         }
 
         private static fsMemberSerialization _defaultMemberSerialization = fsMemberSerialization.Default;
+
+        /// <summary>
+        /// Convert a C# field/property name into the key used for the JSON object. For example, you could
+        /// force all JSON names to lowercase with:
+        ///
+        ///    fsConfig.GetJsonNameFromMemberName = (name, info) => name.ToLower();
+        ///
+        /// This will only be used when the name is not explicitly specified with fsProperty.
+        /// </summary>
+        public static Func<string, MemberInfo, string> GetJsonNameFromMemberName = (name, info) => name;
 
         /// <summary>
         /// Should the default serialization behaviour include non-auto properties?
