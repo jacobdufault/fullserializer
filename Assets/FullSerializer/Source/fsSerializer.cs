@@ -2,6 +2,11 @@
 using System.Collections.Generic;
 using FullSerializer.Internal;
 
+#if !UNITY_EDITOR && UNITY_WSA
+// For System.Reflection.TypeExtensions
+using System.Reflection;
+#endif
+
 namespace FullSerializer {
     public class fsSerializer {
         #region Keys

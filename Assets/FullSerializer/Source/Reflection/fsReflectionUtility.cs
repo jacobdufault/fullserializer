@@ -1,5 +1,10 @@
 ﻿using System;
 
+#if !UNITY_EDITOR && UNITY_WSA
+// For System.Reflection.TypeExtensions
+using System.Reflection;
+#endif
+
 namespace FullSerializer.Internal {
     public static class fsReflectionUtility {
         /// <summary>

@@ -2,8 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 
-// Needed for WinRT compatibility
+#if !UNITY_EDITOR && UNITY_WSA
+// For System.Reflection.TypeExtensions
+using System.Reflection;
+// For Reflection Extensions in non-win10 builds.
 using FullSerializer.Internal;
+#endif
 
 namespace FullSerializer {
     public static class fsTypeExtensions {

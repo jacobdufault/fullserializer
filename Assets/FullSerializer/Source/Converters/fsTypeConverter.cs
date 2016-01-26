@@ -1,5 +1,10 @@
 ﻿using System;
 
+#if !UNITY_EDITOR && UNITY_WSA
+// For System.Reflection.TypeExtensions
+using System.Reflection;
+#endif
+
 namespace FullSerializer.Internal {
     public class fsTypeConverter : fsConverter {
         public override bool CanProcess(Type type) {

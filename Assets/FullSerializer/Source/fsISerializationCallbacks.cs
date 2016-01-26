@@ -3,6 +3,11 @@ using System;
 using UnityEngine;
 #endif
 
+#if !UNITY_EDITOR && UNITY_WSA
+// For System.Reflection.TypeExtensions
+using System.Reflection;
+#endif
+
 namespace FullSerializer {
     /// <summary>
     /// Extend this interface on your type to receive notifications about serialization/deserialization events. If you don't

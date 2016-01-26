@@ -1,5 +1,8 @@
-﻿#if !UNITY_EDITOR && UNITY_METRO
+﻿#if !UNITY_EDITOR && UNITY_METRO && !ENABLE_IL2CPP
 #define USE_TYPEINFO
+#if !UNITY_WINRT_10_0
+#define USE_TYPEINFO_EXTENSIONS
+#endif
 #endif
 
 using System;
@@ -10,6 +13,7 @@ using System.Reflection;
 #if USE_TYPEINFO
 namespace System {
     public static class AssemblyExtensions {
+#if USE_TYPEINFO_EXTENSIONS
         public static Type[] GetTypes(this Assembly assembly) {
             TypeInfo[] infos = assembly.DefinedTypes.ToArray();
             Type[] types = new Type[infos.Length];
@@ -18,6 +22,7 @@ namespace System {
             }
             return types;
         }
+#endif
 
         public static Type GetType(this Assembly assembly, string name, bool throwOnError) {
             var types = assembly.GetTypes();
@@ -41,7 +46,7 @@ namespace FullSerializer.Internal {
     public static class fsPortableReflection {
         public static Type[] EmptyTypes = { };
 
-        #region Attribute Queries
+#region Attribute Queries
 #if USE_TYPEINFO
         public static TAttribute GetAttribute<TAttribute>(Type type)
             where TAttribute : Attribute {
@@ -50,7 +55,7 @@ namespace FullSerializer.Internal {
         }
 
         public static Attribute GetAttribute(Type type, Type attributeType) {
-            return GetAttribute(type.GetTypeInfo(), attributeType);
+            return GetAttribute(type.GetTypeInfo(), attributeType, /*shouldCache:*/false);
         }
 
         public static bool HasAttribute(Type type, Type attributeType) {
@@ -131,7 +136,7 @@ namespace FullSerializer.Internal {
                     (17 * obj.AttributeType.GetHashCode());
             }
         }
-        #endregion
+#endregion
 
 #if !USE_TYPEINFO
         private static BindingFlags DeclaredFlags =
@@ -338,9 +343,9 @@ namespace FullSerializer.Internal {
 #endif
 
 
-        #region Extensions
+#region Extensions
 
-#if USE_TYPEINFO
+#if USE_TYPEINFO_EXTENSIONS
         public static bool IsAssignableFrom(this Type parent, Type child) {
             return parent.GetTypeInfo().IsAssignableFrom(child.GetTypeInfo());
         }
@@ -375,6 +380,6 @@ namespace FullSerializer.Internal {
             return type.GetTypeInfo().GenericTypeArguments.ToArray();
         }
 #endif
-        #endregion
+#endregion
     }
 }
