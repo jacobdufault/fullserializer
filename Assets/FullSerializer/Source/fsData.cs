@@ -82,7 +82,7 @@ namespace FullSerializer {
         /// </summary>
         public static fsData CreateDictionary() {
             return new fsData(new Dictionary<string, fsData>(
-                fsGlobalConfig.IsCaseSensitive ? StringComparer.CurrentCulture : StringComparer.CurrentCultureIgnoreCase));
+                fsGlobalConfig.IsCaseSensitive ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase));
         }
 
         /// <summary>

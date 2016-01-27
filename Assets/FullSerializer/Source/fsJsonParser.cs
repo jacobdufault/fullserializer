@@ -375,7 +375,7 @@ namespace FullSerializer {
             SkipSpace();
 
             var result = new Dictionary<string, fsData>(
-                fsGlobalConfig.IsCaseSensitive ? StringComparer.CurrentCulture : StringComparer.CurrentCultureIgnoreCase);
+                fsGlobalConfig.IsCaseSensitive ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase);
 
             while (HasValue() && Character() != '}') {
                 fsResult failure;
