@@ -625,6 +625,20 @@ To run automated tests, please also import [Unity Test Tools](https://www.assets
 
 Full Serializer also has a suite of runtime tests to ensure that various platform support actually works when deployed. You can run these tests by opening up the `Testing/test_scene` scene and hitting play.
 
+# Linker Options
+
+If you're getting strange errors when exporting or running (like missing constructors), Unity might be stripping out Full Serializer methods. You can prevent this with a `link.xml` that looks something like
+
+```xml
+<linker>
+    <assembly fullname="FullSerializer">
+        <namespace fullname="FullSerializer" preserve="all"/>
+        <namespace fullname="FullSerializer.Internal" preserve="all"/>
+        <namespace fullname="FullSerializer.Internal.DirectConverters" preserve="all"/>
+    </assembly>
+</linker>
+```
+
 # Using Full Serializer in an Asset Store Package
 
 Feel free to use Full Serializer in your own asset store package. If you do so, please rename the Full Serializer namespace to something like MyPackage.FullSerializer so that there will be no conflict if there are multiple versions of Full Serializer installed.
