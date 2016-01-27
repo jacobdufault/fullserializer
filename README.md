@@ -338,7 +338,7 @@ public class PersonConverter : fsDirectConverter<Person> {
         serialized["Name"] = new fsData(model.FirstName + " " + model.LastName);
 
         // Serialize age using helper methods
-        SerializeMember(serialized, "Age", model.Age);
+        SerializeMember(serialized, null, "Age", model.Age);
 
         return fsResult.Success;
     }
@@ -356,7 +356,7 @@ public class PersonConverter : fsDirectConverter<Person> {
         model.LastName = names[1];
 
         // Deserialize age using basically only helper methods
-        if ((result += DeserializeMember(data, "Age", out model.Age)).Failed) return result;
+        if ((result += DeserializeMember(data, null, "Age", out model.Age)).Failed) return result;
 
         return result;
     }
@@ -391,7 +391,7 @@ public class PersonConverter : fsDirectConverter<Person> {
         serialized["Name"] = new fsData(model.FirstName + " " + model.LastName);
 
         // Serialize age using helper methods
-        SerializeMember(serialized, "Age", model.Age);
+        SerializeMember(serialized, null, "Age", model.Age);
 
         return fsResult.Success;
     }
@@ -409,7 +409,7 @@ public class PersonConverter : fsDirectConverter<Person> {
         model.LastName = names[1];
 
         // Deserialize age using basically only helper methods
-        if ((result += DeserializeMember(data, "Age", out model.Age)).Failed) return result;
+        if ((result += DeserializeMember(data, null, "Age", out model.Age)).Failed) return result;
 
         return result;
     }
