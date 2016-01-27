@@ -1,6 +1,6 @@
-﻿using FullSerializer.Internal;
+﻿using System.Collections.Generic;
+using FullSerializer.Internal;
 using NUnit.Framework;
-using System.Collections.Generic;
 
 namespace FullSerializer.Tests {
     [fsObject("1")]
