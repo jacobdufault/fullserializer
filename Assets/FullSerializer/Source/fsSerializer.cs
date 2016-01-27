@@ -221,6 +221,7 @@ namespace FullSerializer {
 
             public void Clear() {
                 _pendingDefinitions.Clear();
+                _references.Clear();
             }
         }
 

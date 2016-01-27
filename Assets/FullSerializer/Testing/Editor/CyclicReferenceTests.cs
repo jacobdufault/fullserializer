@@ -20,6 +20,9 @@ namespace FullSerializer.Tests.CyclicReference {
     public class Derived2 : Base {
     }
 
+    public struct Holder {
+        public object value;
+    }
 
 
     public class CyclicReferenceTests {
@@ -28,6 +31,31 @@ namespace FullSerializer.Tests.CyclicReference {
             (new fsSerializer()).TrySerialize(obj, out data).AssertSuccessWithoutWarnings();
             (new fsSerializer()).TryDeserialize(data, ref obj).AssertSuccessWithoutWarnings();
             return obj;
+        }
+
+        [Test]
+        public void SharedReferenceAcrossDifferentSerializationsAreNotKept() {
+            var obj = new object();
+            var holder = new Holder { value = obj };
+
+            fsData data;
+            var serializer = new fsSerializer();
+
+            // Try serializing once.
+            serializer.TrySerialize(holder, out data).AssertSuccessWithoutWarnings();
+            Assert.AreEqual("{\"value\":{}}", fsJsonPrinter.CompressedJson(data));
+
+            // Serialize the same thing again to verify we don't preseve the reference.
+            serializer.TrySerialize(holder, out data).AssertSuccessWithoutWarnings();
+            Assert.AreEqual("{\"value\":{}}", fsJsonPrinter.CompressedJson(data));
+
+            // Serialize an array of Holders to verify references are maintained across an array.
+            var arrayOfHolders = new Holder[] {
+                new Holder { value = obj },
+                new Holder { value = obj }
+            };
+            serializer.TrySerialize(arrayOfHolders, out data).AssertSuccessWithoutWarnings();
+            Assert.AreEqual("[{\"value\":{\"$id\":\"0\"}},{\"value\":{\"$ref\":\"0\"}}]", fsJsonPrinter.CompressedJson(data));
         }
 
         [Test]
