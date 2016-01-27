@@ -301,6 +301,7 @@ namespace FullSerializer {
 #endif
 
             Context = new fsContext();
+            Config = new fsConfig();
 
             // Register the converters from the registrar
             foreach (var converterType in fsConverterRegistrar.Converters) {
@@ -312,6 +313,11 @@ namespace FullSerializer {
         /// A context object that fsConverters can use to customize how they operate.
         /// </summary>
         public fsContext Context;
+
+        /// <summary>
+        /// Configuration options. Also see fsGlobalConfig.
+        /// </summary>
+        public fsConfig Config;
 
         /// <summary>
         /// Add a new processor to the serializer. Multiple processors can run at the same time in the

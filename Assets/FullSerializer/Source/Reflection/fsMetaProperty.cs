@@ -6,7 +6,7 @@ namespace FullSerializer.Internal {
     /// A property or field on a MetaType. This unifies the FieldInfo and PropertyInfo classes.
     /// </summary>
     public class fsMetaProperty {
-        internal fsMetaProperty(FieldInfo field) {
+        internal fsMetaProperty(fsConfig config, FieldInfo field) {
             _memberInfo = field;
             StorageType = field.FieldType;
             MemberName = field.Name;
@@ -14,10 +14,10 @@ namespace FullSerializer.Internal {
             CanRead = true;
             CanWrite = true;
 
-            CommonInitialize();
+            CommonInitialize(config);
         }
 
-        internal fsMetaProperty(PropertyInfo property) {
+        internal fsMetaProperty(fsConfig config, PropertyInfo property) {
             _memberInfo = property;
             StorageType = property.PropertyType;
             MemberName = property.Name;
@@ -26,10 +26,10 @@ namespace FullSerializer.Internal {
             CanRead = property.CanRead;
             CanWrite = property.CanWrite;
 
-            CommonInitialize();
+            CommonInitialize(config);
         }
 
-        private void CommonInitialize() {
+        private void CommonInitialize(fsConfig config) {
             var attr = fsPortableReflection.GetAttribute<fsPropertyAttribute>(_memberInfo);
             if (attr != null) {
                 JsonName = attr.Name;
@@ -37,7 +37,7 @@ namespace FullSerializer.Internal {
             }
 
             if (string.IsNullOrEmpty(JsonName)) {
-                JsonName = fsConfig.GetJsonNameFromMemberName(MemberName, _memberInfo);
+                JsonName = config.GetJsonNameFromMemberName(MemberName, _memberInfo);
             }
         }
 

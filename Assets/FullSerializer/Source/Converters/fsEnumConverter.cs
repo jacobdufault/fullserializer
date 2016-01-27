@@ -26,7 +26,7 @@ namespace FullSerializer.Internal {
         }
 
         public override fsResult TrySerialize(object instance, out fsData serialized, Type storageType) {
-            if (fsConfig.SerializeEnumsAsInteger) {
+            if (Serializer.Config.SerializeEnumsAsInteger) {
                 serialized = new fsData(Convert.ToInt64(instance));
             }
             else if (fsPortableReflection.GetAttribute<FlagsAttribute>(storageType) != null) {

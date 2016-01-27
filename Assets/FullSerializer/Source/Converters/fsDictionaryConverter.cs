@@ -13,7 +13,7 @@ namespace FullSerializer.Internal {
         }
 
         public override object CreateInstance(fsData data, Type storageType) {
-            return fsMetaType.Get(storageType).CreateInstance();
+            return fsMetaType.Get(Serializer.Config, storageType).CreateInstance();
         }
 
         public override fsResult TryDeserialize(fsData data, ref object instance_, Type storageType) {
@@ -117,7 +117,7 @@ namespace FullSerializer.Internal {
 
         private fsResult AddItemToDictionary(IDictionary dictionary, object key, object value) {
             // Because we're operating through the IDictionary interface by default (and not the
-            // generic one), we normally send items through IDictionary.Add(object, object). This 
+            // generic one), we normally send items through IDictionary.Add(object, object). This
             // works fine in the general case, except that the add method verifies that it's
             // parameter types are proper types. However, mono is buggy and these type checks do
             // not consider null a subtype of the parameter types, and exceptions get thrown. So,

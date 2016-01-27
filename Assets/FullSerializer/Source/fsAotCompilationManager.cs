@@ -38,11 +38,12 @@ namespace FullSerializer {
         /// <summary>
         /// This is a helper method that makes it simple to run an AOT compilation on the given type.
         /// </summary>
+        /// <param name="config">The configuration to use when running AOT compilation.</param>
         /// <param name="type">The type to perform the AOT compilation on.</param>
         /// <param name="aotCompiledClassInCSharp">The AOT class. Add this C# code to your project.</param>
         /// <returns>True if AOT compilation was successful.</returns>
-        public static bool TryToPerformAotCompilation(Type type, out string aotCompiledClassInCSharp) {
-            if (fsMetaType.Get(type).EmitAotData()) {
+        public static bool TryToPerformAotCompilation(fsConfig config, Type type, out string aotCompiledClassInCSharp) {
+            if (fsMetaType.Get(config, type).EmitAotData()) {
                 aotCompiledClassInCSharp = AvailableAotCompilations[type];
                 return true;
             }

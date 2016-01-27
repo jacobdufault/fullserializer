@@ -12,7 +12,7 @@ namespace FullSerializer.Internal {
 
         private string DateTimeFormatString {
             get {
-                return fsConfig.CustomDateTimeFormatString ?? DefaultDateTimeFormatString;
+                return Serializer.Config.CustomDateTimeFormatString ?? DefaultDateTimeFormatString;
             }
         }
 

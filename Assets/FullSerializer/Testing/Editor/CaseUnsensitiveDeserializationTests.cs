@@ -16,7 +16,7 @@ namespace FullSerializer.Tests.CaseUnsensitiveDeserializationTests {
         [Test]
         public void TestCaseUnsensitiveDeserialization() {
             try {
-                fsConfig.IsCaseSensitive = false;
+                fsGlobalConfig.IsCaseSensitive = false;
 
                 DoTest(new Model());
                 DoTest(new Model {
@@ -25,7 +25,7 @@ namespace FullSerializer.Tests.CaseUnsensitiveDeserializationTests {
                 });
             }
             finally {
-                fsConfig.IsCaseSensitive = true;
+                fsGlobalConfig.IsCaseSensitive = true;
             }
         }
 

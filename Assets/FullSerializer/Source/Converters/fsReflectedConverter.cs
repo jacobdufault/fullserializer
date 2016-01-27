@@ -22,7 +22,7 @@ namespace FullSerializer.Internal {
             serialized = fsData.CreateDictionary();
             var result = fsResult.Success;
 
-            fsMetaType metaType = fsMetaType.Get(instance.GetType());
+            fsMetaType metaType = fsMetaType.Get(Serializer.Config, instance.GetType());
             metaType.EmitAotData();
 
             for (int i = 0; i < metaType.Properties.Length; ++i) {
@@ -52,7 +52,7 @@ namespace FullSerializer.Internal {
                 return result;
             }
 
-            fsMetaType metaType = fsMetaType.Get(storageType);
+            fsMetaType metaType = fsMetaType.Get(Serializer.Config, storageType);
             metaType.EmitAotData();
 
             for (int i = 0; i < metaType.Properties.Length; ++i) {
@@ -86,7 +86,7 @@ namespace FullSerializer.Internal {
         }
 
         public override object CreateInstance(fsData data, Type storageType) {
-            fsMetaType metaType = fsMetaType.Get(storageType);
+            fsMetaType metaType = fsMetaType.Get(Serializer.Config, storageType);
             return metaType.CreateInstance();
         }
     }

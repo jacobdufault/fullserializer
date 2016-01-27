@@ -10,12 +10,18 @@ namespace FullSerializer {
     /// MetaType contains metadata about a type. This is used by the reflection serializer.
     /// </summary>
     public class fsMetaType {
-        private static Dictionary<Type, fsMetaType> _metaTypes = new Dictionary<Type, fsMetaType>();
-        public static fsMetaType Get(Type type) {
+        private static Dictionary<fsConfig, Dictionary<Type, fsMetaType>> _configMetaTypes =
+            new Dictionary<fsConfig, Dictionary<Type, fsMetaType>>();
+
+        public static fsMetaType Get(fsConfig config, Type type) {
+            Dictionary<Type, fsMetaType> metaTypes;
+            if (_configMetaTypes.TryGetValue(config, out metaTypes) == false)
+                metaTypes = _configMetaTypes[config] = new Dictionary<Type, fsMetaType>();
+
             fsMetaType metaType;
-            if (_metaTypes.TryGetValue(type, out metaType) == false) {
-                metaType = new fsMetaType(type);
-                _metaTypes[type] = metaType;
+            if (metaTypes.TryGetValue(type, out metaType) == false) {
+                metaType = new fsMetaType(config, type);
+                metaTypes[type] = metaType;
             }
 
             return metaType;
@@ -26,23 +32,23 @@ namespace FullSerializer {
         /// serialization mode.
         /// </summary>
         public static void ClearCache() {
-            _metaTypes = new Dictionary<Type, fsMetaType>();
+            _configMetaTypes = new Dictionary<fsConfig, Dictionary<Type, fsMetaType>>();
         }
 
-        private fsMetaType(Type reflectedType) {
+        private fsMetaType(fsConfig config, Type reflectedType) {
             ReflectedType = reflectedType;
 
             List<fsMetaProperty> properties = new List<fsMetaProperty>();
-            CollectProperties(properties, reflectedType);
+            CollectProperties(config, properties, reflectedType);
             Properties = properties.ToArray();
         }
 
         public Type ReflectedType;
 
-        private static void CollectProperties(List<fsMetaProperty> properties, Type reflectedType) {
+        private static void CollectProperties(fsConfig config, List<fsMetaProperty> properties, Type reflectedType) {
             // do we require a [SerializeField] or [fsProperty] attribute?
-            bool requireOptIn = fsConfig.DefaultMemberSerialization == fsMemberSerialization.OptIn;
-            bool requireOptOut = fsConfig.DefaultMemberSerialization == fsMemberSerialization.OptOut;
+            bool requireOptIn = config.DefaultMemberSerialization == fsMemberSerialization.OptIn;
+            bool requireOptOut = config.DefaultMemberSerialization == fsMemberSerialization.OptOut;
 
             fsObjectAttribute attr = fsPortableReflection.GetAttribute<fsObjectAttribute>(reflectedType);
             if (attr != null) {
@@ -53,7 +59,7 @@ namespace FullSerializer {
             MemberInfo[] members = reflectedType.GetDeclaredMembers();
             foreach (var member in members) {
                 // We don't serialize members annotated with any of the ignore serialize attributes
-                if (fsConfig.IgnoreSerializeAttributes.Any(t => fsPortableReflection.HasAttribute(member, t))) {
+                if (config.IgnoreSerializeAttributes.Any(t => fsPortableReflection.HasAttribute(member, t))) {
                     continue;
                 }
 
@@ -63,7 +69,7 @@ namespace FullSerializer {
                 // If an opt-in annotation is required, then skip the property if it doesn't have one
                 // of the serialize attributes
                 if (requireOptIn &&
-                    !fsConfig.SerializeAttributes.Any(t => fsPortableReflection.HasAttribute(member, t))) {
+                    !config.SerializeAttributes.Any(t => fsPortableReflection.HasAttribute(member, t))) {
 
                     continue;
                 }
@@ -71,25 +77,25 @@ namespace FullSerializer {
                 // If an opt-out annotation is required, then skip the property *only if* it has one of
                 // the not serialize attributes
                 if (requireOptOut &&
-                    fsConfig.IgnoreSerializeAttributes.Any(t => fsPortableReflection.HasAttribute(member, t))) {
+                    config.IgnoreSerializeAttributes.Any(t => fsPortableReflection.HasAttribute(member, t))) {
 
                     continue;
                 }
 
                 if (property != null) {
-                    if (CanSerializeProperty(property, members, requireOptOut)) {
-                        properties.Add(new fsMetaProperty(property));
+                    if (CanSerializeProperty(config, property, members, requireOptOut)) {
+                        properties.Add(new fsMetaProperty(config, property));
                     }
                 }
                 else if (field != null) {
-                    if (CanSerializeField(field, requireOptOut)) {
-                        properties.Add(new fsMetaProperty(field));
+                    if (CanSerializeField(config, field, requireOptOut)) {
+                        properties.Add(new fsMetaProperty(config, field));
                     }
                 }
             }
 
             if (reflectedType.Resolve().BaseType != null) {
-                CollectProperties(properties, reflectedType.Resolve().BaseType);
+                CollectProperties(config, properties, reflectedType.Resolve().BaseType);
             }
         }
 
@@ -112,7 +118,7 @@ namespace FullSerializer {
         /// Returns if the given property should be serialized.
         /// </summary>
         /// <param name="annotationFreeValue">Should a property without any annotations be serialized?</param>
-        private static bool CanSerializeProperty(PropertyInfo property, MemberInfo[] members, bool annotationFreeValue) {
+        private static bool CanSerializeProperty(fsConfig config, PropertyInfo property, MemberInfo[] members, bool annotationFreeValue) {
             // We don't serialize delegates
             if (typeof(Delegate).IsAssignableFrom(property.PropertyType)) {
                 return false;
@@ -132,7 +138,7 @@ namespace FullSerializer {
             //
             // NOTE: We place this override check *after* the static check, because we *never*
             //       allow statics to be serialized.
-            if (fsConfig.SerializeAttributes.Any(t => fsPortableReflection.HasAttribute(property, t))) {
+            if (config.SerializeAttributes.Any(t => fsPortableReflection.HasAttribute(property, t))) {
                 return true;
             }
 
@@ -144,8 +150,8 @@ namespace FullSerializer {
 
             // Depending on the configuration options, check whether the property is automatic
             // and if it has a public setter to determine whether it should be serialized
-            if ((fsConfig.SerializeNonAutoProperties || IsAutoProperty(property, members)) &&
-                (publicGetMethod != null && (fsConfig.SerializeNonPublicSetProperties || publicSetMethod != null))) {
+            if ((config.SerializeNonAutoProperties || IsAutoProperty(property, members)) &&
+                (publicGetMethod != null && (config.SerializeNonPublicSetProperties || publicSetMethod != null))) {
                 return true;
             }
 
@@ -154,7 +160,7 @@ namespace FullSerializer {
             return annotationFreeValue;
         }
 
-        private static bool CanSerializeField(FieldInfo field, bool annotationFreeValue) {
+        private static bool CanSerializeField(fsConfig config, FieldInfo field, bool annotationFreeValue) {
             // We don't serialize delegates
             if (typeof(Delegate).IsAssignableFrom(field.FieldType)) {
                 return false;
@@ -174,7 +180,7 @@ namespace FullSerializer {
             //
             // NOTE: This occurs *after* the static check, because we *never* want to serialize
             //       static fields.
-            if (fsConfig.SerializeAttributes.Any(t => fsPortableReflection.HasAttribute(field, t))) {
+            if (config.SerializeAttributes.Any(t => fsPortableReflection.HasAttribute(field, t))) {
                 return true;
             }
 

@@ -74,7 +74,7 @@ namespace FullSerializer.Internal {
         }
 
         public override object CreateInstance(fsData data, Type storageType) {
-            return fsMetaType.Get(storageType).CreateInstance();
+            return fsMetaType.Get(Serializer.Config, storageType).CreateInstance();
         }
     }
 }

@@ -3,12 +3,12 @@
 namespace FullSerializer {
     /// <summary>
     /// This allows you to forward serialization of an object to one of its members. For example,
-    /// 
+    ///
     /// [fsForward("Values")]
     /// struct Wrapper {
     ///   public int[] Values;
     /// }
-    /// 
+    ///
     /// Then `Wrapper` will be serialized into a JSON array of integers. It will be as if `Wrapper`
     /// doesn't exist.
     /// </summary>
@@ -42,7 +42,7 @@ namespace FullSerializer.Internal {
         }
 
         private fsResult GetProperty(object instance, out fsMetaProperty property) {
-            var properties = fsMetaType.Get(instance.GetType()).Properties;
+            var properties = fsMetaType.Get(Serializer.Config, instance.GetType()).Properties;
             for (int i = 0; i < properties.Length; ++i) {
                 if (properties[i].MemberName == _memberName) {
                     property = properties[i];
@@ -80,7 +80,7 @@ namespace FullSerializer.Internal {
         }
 
         public override object CreateInstance(fsData data, Type storageType) {
-            return fsMetaType.Get(storageType).CreateInstance();
+            return fsMetaType.Get(Serializer.Config, storageType).CreateInstance();
         }
     }
 }

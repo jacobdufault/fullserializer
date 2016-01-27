@@ -42,7 +42,7 @@ namespace FullSerializer.Internal {
         public override fsResult TrySerialize(object instance, out fsData serialized, Type storageType) {
             var instanceType = instance.GetType();
 
-            if (fsConfig.Serialize64BitIntegerAsString && (instanceType == typeof(Int64) || instanceType == typeof(UInt64))) {
+            if (Serializer.Config.Serialize64BitIntegerAsString && (instanceType == typeof(Int64) || instanceType == typeof(UInt64))) {
                 serialized = new fsData((string)Convert.ChangeType(instance, typeof(string)));
                 return fsResult.Success;
             }
@@ -88,7 +88,7 @@ namespace FullSerializer.Internal {
                 else if (storage.IsInt64) {
                     instance = Convert.ChangeType(storage.AsInt64, storageType);
                 }
-                else if (fsConfig.Serialize64BitIntegerAsString && storage.IsString &&
+                else if (Serializer.Config.Serialize64BitIntegerAsString && storage.IsString &&
                     (storageType == typeof(Int64) || storageType == typeof(UInt64))) {
                     instance = Convert.ChangeType(storage.AsString, storageType);
                 }
