@@ -121,10 +121,10 @@ namespace FullSerializer.Tests {
                 A = 3
             };
             fsData serialized;
-            Assert.IsTrue(serializer.TrySerialize(model_v1, out serialized).Succeeded);
+            serializer.TrySerialize(model_v1, out serialized).AssertSuccessWithoutWarnings();
 
             var model_v2 = new VersionedModel_v2();
-            Assert.IsTrue(serializer.TryDeserialize(serialized, ref model_v2).Succeeded);
+            serializer.TryDeserialize(serialized, ref model_v2).AssertSuccessWithoutWarnings();
             Assert.AreEqual(model_v1.A, model_v2.B);
         }
     }

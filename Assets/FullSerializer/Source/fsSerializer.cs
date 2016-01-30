@@ -714,7 +714,7 @@ namespace FullSerializer {
                     // However, in case we are doing versioning, it will contain the old version.
                     // To make sure future references to this object end up referencing the migrated version,
                     // we must update the reference.
-                    if(IsObjectDefinition(data)) {
+                    if (IsObjectDefinition(data)) {
                         int sourceId = int.Parse(data.AsDictionary[Key_ObjectDefinition].AsString);
                         _references.AddReferenceWithId(sourceId, result);
                     }
