@@ -9,6 +9,13 @@ namespace FullSerializer {
         /// same keys only separated by case, then this results in undefined behavior.
         /// </summary>
         public static bool IsCaseSensitive = true;
+
+        /// <summary>
+        /// If exceptions are allowed internally, then additional date formats can be deserialized.
+        /// Note that the Full Serializer public API will *not* throw exceptions with this enabled;
+        /// errors will still be returned in a fsResult instance.
+        /// </summary>
+        public static bool AllowInternalExceptions = true;
     }
 
     /// <summary>

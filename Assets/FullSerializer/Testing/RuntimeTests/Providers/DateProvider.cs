@@ -15,6 +15,7 @@ public class DateTimeProvider : TestProvider<DateTime> {
         yield return new DateTime();
         yield return DateTime.UtcNow;
         yield return DateTime.Now.AddDays(5).AddHours(3).AddTicks(1);
+        yield return Convert.ToDateTime("2016-01-22T12:06:57.503005Z");
     }
 }
 

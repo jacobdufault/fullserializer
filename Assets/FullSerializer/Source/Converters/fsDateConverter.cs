@@ -57,6 +57,16 @@ namespace FullSerializer.Internal {
                     return fsResult.Success;
                 }
 
+                // DateTime.TryParse can fail for some valid DateTime instances. Try to use Convert.ToDateTime.
+                if (fsGlobalConfig.AllowInternalExceptions) {
+                    try {
+                        instance = Convert.ToDateTime(data.AsString);
+                        return fsResult.Success;
+                    } catch (Exception e) {
+                        return fsResult.Fail("Unable to parse " + data.AsString + " into a DateTime; got exception " + e);
+                    }
+                }
+
                 return fsResult.Fail("Unable to parse " + data.AsString + " into a DateTime");
             }
 
