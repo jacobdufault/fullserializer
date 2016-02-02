@@ -730,16 +730,6 @@ namespace FullSerializer {
         private fsResult InternalDeserialize_3_Inheritance(Type overrideConverterType, fsData data, Type storageType, ref object result, out List<fsObjectProcessor> processors) {
             var deserializeResult = fsResult.Success;
 
-            // We wait until here to actually Invoke_OnBeforeDeserialize because we do not
-            // have the correct set of processors to invoke until *after* we have resolved
-            // the proper type to use for deserialization.
-            // TODO: Consider if we want to use the objectType for fetching processors instead
-            //       the type that the user passed in. If we move this check to also consider
-            //       the object type, then we have to handle the scenario where a processor is
-            //       recovering stale data and the object type lookup fails.
-            processors = GetProcessors(storageType);
-            Invoke_OnBeforeDeserialize(processors, storageType, ref data);
-
             Type objectType = storageType;
 
             // If the serialized state contains type information, then we need to make sure to update our
@@ -770,6 +760,12 @@ namespace FullSerializer {
                     objectType = type;
                 } while (false);
             }
+
+            // We wait until here to actually Invoke_OnBeforeDeserialize because we do not
+            // have the correct set of processors to invoke until *after* we have resolved
+            // the proper type to use for deserialization.
+            processors = GetProcessors(objectType);
+            Invoke_OnBeforeDeserialize(processors, storageType, ref data);
 
             // Construct an object instance if we don't have one already. We also need to construct
             // an instance if the result type is of the wrong type, which may be the case when we
