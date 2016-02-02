@@ -1,5 +1,5 @@
 *.suo
-*.csproj
+Assembly*.csproj
 *.sln
 *.vscode
 *.DS_Store
