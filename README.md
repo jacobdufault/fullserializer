@@ -643,6 +643,13 @@ If you're getting strange errors when exporting or running (like missing constru
 
 Feel free to use Full Serializer in your own asset store package. If you do so, please rename the Full Serializer namespace to something like MyPackage.FullSerializer so that there will be no conflict if there are multiple versions of Full Serializer installed.
 
+# NPM Support
+
+This project can be installed directly into the `Assets/packages/` folder from github using [npm](https://docs.npmjs.com/getting-started/what-is-npm) via:
+
+    npm init
+    npm install jacobdufault/fullserializer --save
+
 # License
 
 Full Serializer is freely available under the MIT license. If you make any improvements, it would be greatly appreciated if you would submit a pull request with them (please match the existing code style).
