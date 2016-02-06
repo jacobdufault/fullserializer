@@ -76,6 +76,9 @@ namespace FullSerializer.Internal {
         }
 
         public override void OnBeforeSerialize(Type storageType, object instance) {
+            if (instance == null)
+                return;
+
             ((ISerializationCallbackReceiver)instance).OnBeforeSerialize();
         }
 
