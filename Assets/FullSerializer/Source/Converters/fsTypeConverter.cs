@@ -30,7 +30,7 @@ namespace FullSerializer.Internal {
                 return fsResult.Fail("Type converter requires a string");
             }
 
-            instance = fsTypeLookup.GetType(data.AsString);
+            instance = fsTypeCache.GetType(data.AsString);
             if (instance == null) {
                 return fsResult.Fail("Unable to find type " + data.AsString);
             }

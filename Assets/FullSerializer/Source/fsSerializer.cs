@@ -746,7 +746,7 @@ namespace FullSerializer {
                     }
 
                     string typeName = typeNameData.AsString;
-                    Type type = fsTypeLookup.GetType(typeName);
+                    Type type = fsTypeCache.GetType(typeName);
                     if (type == null) {
                         deserializeResult.AddMessage("Unable to locate specified type \"" + typeName + "\"");
                         break;
