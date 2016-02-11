@@ -66,6 +66,11 @@ namespace FullSerializer {
                 PropertyInfo property = member as PropertyInfo;
                 FieldInfo field = member as FieldInfo;
 
+                // Early out if it's neither a field or a property, since we don't serialize anything else.
+                if (property == null && field == null) {
+                    continue;
+                }
+
                 // If an opt-in annotation is required, then skip the property if it doesn't have one
                 // of the serialize attributes
                 if (requireOptIn &&
