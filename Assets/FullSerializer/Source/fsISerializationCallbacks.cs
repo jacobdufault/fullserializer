@@ -49,10 +49,14 @@ namespace FullSerializer.Internal {
         }
 
         public override void OnBeforeSerialize(Type storageType, object instance) {
+            // Don't call the callback on null instances.
+            if(instance == null) return;
             ((fsISerializationCallbacks)instance).OnBeforeSerialize(storageType);
         }
 
         public override void OnAfterSerialize(Type storageType, object instance, ref fsData data) {
+            // Don't call the callback on null instances.
+            if(instance == null) return;
             ((fsISerializationCallbacks)instance).OnAfterSerialize(storageType, ref data);
         }
 
@@ -65,6 +69,8 @@ namespace FullSerializer.Internal {
         }
 
         public override void OnAfterDeserialize(Type storageType, object instance) {
+            // Don't call the callback on null instances.
+            if(instance == null) return;
             ((fsISerializationCallbacks)instance).OnAfterDeserialize(storageType);
         }
     }
@@ -76,13 +82,14 @@ namespace FullSerializer.Internal {
         }
 
         public override void OnBeforeSerialize(Type storageType, object instance) {
-            if (instance == null)
-                return;
-
+            // Don't call the callback on null instances.
+            if(instance == null) return;
             ((ISerializationCallbackReceiver)instance).OnBeforeSerialize();
         }
 
         public override void OnAfterDeserialize(Type storageType, object instance) {
+            // Don't call the callback on null instances.
+            if(instance == null) return;
             ((ISerializationCallbackReceiver)instance).OnAfterDeserialize();
         }
     }

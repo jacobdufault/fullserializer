@@ -36,25 +36,31 @@ namespace FullSerializer.Tests.CallbackTests {
 
     public class CallbackTests {
         [Test]
-        public void TestSerializationCallbacks() {
-            {
-                var original = new StructModel();
-                var dup = Clone(original);
-                // not possible since we don't box original
-                //Assert.AreEqual(1, original.beforeSerialize);
-                //Assert.AreEqual(1, original.afterSerialize);
-                Assert.AreEqual(1, dup.beforeDeserialize);
-                Assert.AreEqual(1, dup.afterDeserialize);
-            }
+        public void TestSerializationCallbacksOnStruct() {
+            var original = new StructModel();
+            var dup = Clone(original);
+            // not possible since we don't box original
+            //Assert.AreEqual(1, original.beforeSerialize);
+            //Assert.AreEqual(1, original.afterSerialize);
+            Assert.AreEqual(1, dup.beforeDeserialize);
+            Assert.AreEqual(1, dup.afterDeserialize);
+        }
 
-            {
-                var original = new ClassModel();
-                var dup = Clone(original);
-                Assert.AreEqual(1, original.beforeSerialize);
-                Assert.AreEqual(1, original.afterSerialize);
-                Assert.AreEqual(1, dup.beforeDeserialize);
-                Assert.AreEqual(1, dup.afterDeserialize);
-            }
+        [Test]
+        public void TestSerializationCallbacksOnClass() {
+            var original = new ClassModel();
+            var dup = Clone(original);
+            Assert.AreEqual(1, original.beforeSerialize);
+            Assert.AreEqual(1, original.afterSerialize);
+            Assert.AreEqual(1, dup.beforeDeserialize);
+            Assert.AreEqual(1, dup.afterDeserialize);
+        }
+
+        [Test]
+        public void TestSerializationCallbacksOnNullInstances() {
+            ClassModel original = null;
+            var dup = Clone( original );
+            Assert.AreEqual( original, dup );
         }
 
         private T Clone<T>(T expected) {
