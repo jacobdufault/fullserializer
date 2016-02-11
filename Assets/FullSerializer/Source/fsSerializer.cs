@@ -322,6 +322,7 @@ namespace FullSerializer {
                 new fsEnumConverter { Serializer = this },
                 new fsPrimitiveConverter { Serializer = this },
                 new fsArrayConverter { Serializer = this },
+                new fs2DArrayConverter { Serializer = this },
                 new fsDictionaryConverter { Serializer = this },
                 new fsIEnumerableConverter { Serializer = this },
                 new fsKeyValuePairConverter { Serializer = this },
