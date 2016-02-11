@@ -11,14 +11,34 @@ namespace FullSerializer.Tests.EnumTest {
     }
 
     [Flags]
+    public enum DefinedFlagsUint : uint {
+        A = 1 << 0,
+        B = 1 << 1,
+        C = 1 << 5
+    }
+
+    [Flags]
     public enum RegularFlags {
         A,
         B,
         C
     }
 
+    [Flags]
+    public enum RegularFlagsUint : uint {
+        A,
+        B,
+        C
+    }
 
     public enum NotFlags {
+        A = 10,
+        B = 0,
+        C = 1,
+        D = 20
+    }
+
+    public enum NotFlagsUint : uint {
         A = 10,
         B = 0,
         C = 1,
@@ -53,6 +73,35 @@ namespace FullSerializer.Tests.EnumTest {
             DoTest(NotFlags.C);
             DoTest(NotFlags.D);
             DoTest(NotFlags.A & NotFlags.B);
+        }
+
+        [Test]
+        public void TestDefinedFlagsEnumUint() {
+            DoTest(DefinedFlagsUint.A);
+            DoTest(DefinedFlagsUint.B);
+            DoTest(DefinedFlagsUint.C);
+            DoTest(DefinedFlagsUint.A | DefinedFlagsUint.B);
+            DoTest(DefinedFlagsUint.A | DefinedFlagsUint.C);
+            DoTest(DefinedFlagsUint.A | DefinedFlagsUint.B | DefinedFlagsUint.C);
+        }
+
+        [Test]
+        public void TestRegularFlagsEnumUint() {
+            DoTest(RegularFlagsUint.A);
+            DoTest(RegularFlagsUint.B);
+            DoTest(RegularFlagsUint.C);
+            DoTest(RegularFlagsUint.A | RegularFlagsUint.B);
+            DoTest(RegularFlagsUint.A | RegularFlagsUint.C);
+            DoTest(RegularFlagsUint.A | RegularFlagsUint.B | RegularFlagsUint.C);
+        }
+
+        [Test]
+        public void TestEnumUint() {
+            DoTest(NotFlagsUint.A);
+            DoTest(NotFlagsUint.B);
+            DoTest(NotFlagsUint.C);
+            DoTest(NotFlagsUint.D);
+            DoTest(NotFlagsUint.A & NotFlagsUint.B);
         }
 
         private void DoTest<T>(T expected) {

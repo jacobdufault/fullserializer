@@ -35,7 +35,7 @@ namespace FullSerializer.Internal {
 
                 bool first = true;
                 foreach (var value in Enum.GetValues(storageType)) {
-                    int integralValue = (int)value;
+                    long integralValue = Convert.ToInt64(value);
                     bool isSet = (instanceValue & integralValue) != 0;
 
                     if (isSet) {
