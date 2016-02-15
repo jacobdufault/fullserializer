@@ -133,6 +133,11 @@ namespace FullSerializer {
                 return false;
             }
 
+            // Never serialize indexers. I can't think of a sane way to serialize/deserialize them, and they're normally wrappers around other fields anyway...
+            if (property.GetIndexParameters().Length > 0) {
+                return false;
+            }
+
             // If a property is annotated with one of the serializable attributes, then it should
             // it should definitely be serialized.
             //
