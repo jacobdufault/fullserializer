@@ -335,6 +335,26 @@ namespace FullSerializer {
         }
 
         /// <summary>
+        /// Remove all processors which derive from TProcessor.
+        /// </summary>
+        public void RemoveProcessor<TProcessor>() {
+            int i = 0;
+            while (i < _processors.Count) {
+                if (_processors[i] is TProcessor) {
+                    _processors.RemoveAt(i);
+                }
+                else {
+                    ++i;
+                }
+            }
+
+            // We need to reset our cached processor set, as it could be invalid with the new
+            // processor. Ideally, _cachedProcessors should be empty (as the user should fully setup
+            // the serializer before actually using it), but there is no guarantee.
+            _cachedProcessors = new Dictionary<Type, List<fsObjectProcessor>>();
+        }
+
+        /// <summary>
         /// Fetches all of the processors for the given type.
         /// </summary>
         private List<fsObjectProcessor> GetProcessors(Type type) {
