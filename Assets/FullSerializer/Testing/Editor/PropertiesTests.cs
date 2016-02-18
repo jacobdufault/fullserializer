@@ -40,5 +40,19 @@ namespace FullSerializer.Tests.PropertiesTests {
 
             Assert.AreEqual(222, model._setValue);
         }
+
+        [Test]
+        public void TestOptOutOfProperties() {
+            var model = new Model();
+
+            fsData data;
+
+            var serializer = new fsSerializer();
+            serializer.Config.EnablePropertySerialization = false;
+            Assert.IsTrue( serializer.TrySerialize( model, out data ).Succeeded );
+
+            var expected = fsData.CreateDictionary(); // Should just be empty dictionary.
+            Assert.AreEqual( expected, data );
+        }
     }
 }
