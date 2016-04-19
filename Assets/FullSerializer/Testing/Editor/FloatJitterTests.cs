@@ -58,6 +58,22 @@ namespace FullSerializer.Tests {
         }
 
         [Test]
+        public void VerifyLargeDoubleRoundTrips() {
+            double valueToTest = 500000000000000000.0;
+
+            var serializer = new fsSerializer();
+
+            fsData data;
+            serializer.TrySerialize(valueToTest, out data).AssertSuccessWithoutWarnings();
+
+            Assert.AreEqual(valueToTest.ToString(System.Globalization.CultureInfo.InvariantCulture), fsJsonPrinter.PrettyJson(data));
+
+            double deserialized = 0f;
+            serializer.TryDeserialize(data, ref deserialized).AssertSuccessWithoutWarnings();
+            Assert.AreEqual(valueToTest, deserialized);
+        }
+
+        [Test]
         public void VerifyMaxValueRoundTrips() {
             var serializer = new fsSerializer();
 

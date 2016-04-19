@@ -272,9 +272,13 @@ namespace FullSerializer {
 
             string doubledString = d.ToString(CultureInfo.InvariantCulture);
 
-            // NOTE/HACK: If we don't serialize with a period, then the number will be deserialized as an Int64, not a double.
-            if (doubledString.Contains(".") == false)
+            // NOTE/HACK: If we don't serialize with a period or an exponent,
+            // then the number will be deserialized as an Int64, not a double.
+            if (doubledString.Contains(".") == false &&
+                doubledString.Contains("e") == false &&
+                doubledString.Contains("E") == false) {
                 doubledString += ".0";
+            }
 
             return doubledString;
         }
