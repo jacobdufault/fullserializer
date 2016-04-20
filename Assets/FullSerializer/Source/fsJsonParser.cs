@@ -241,7 +241,8 @@ namespace FullSerializer {
             string numberString = _input.Substring(start, _start - start);
 
             // double -- includes a .
-            if (numberString.Contains(".") || numberString == "Infinity" || numberString == "-Infinity" || numberString == "NaN") {
+            if (numberString.Contains(".") || numberString.Contains("e") || numberString.Contains("E") ||
+                numberString == "Infinity" || numberString == "-Infinity" || numberString == "NaN") {
                 double doubleValue;
                 if (double.TryParse(numberString, NumberStyles.Any, CultureInfo.InvariantCulture, out doubleValue) == false) {
                     data = null;
