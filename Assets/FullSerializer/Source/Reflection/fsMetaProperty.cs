@@ -11,6 +11,7 @@ namespace FullSerializer.Internal {
             StorageType = field.FieldType;
             MemberName = field.Name;
             IsPublic = field.IsPublic;
+            IsReadOnly = field.IsInitOnly;
             CanRead = true;
             CanWrite = true;
 
@@ -23,6 +24,7 @@ namespace FullSerializer.Internal {
             MemberName = property.Name;
             IsPublic = (property.GetGetMethod() != null && property.GetGetMethod().IsPublic) &&
                        (property.GetSetMethod() != null && property.GetSetMethod().IsPublic);
+            IsReadOnly = false;
             CanRead = property.CanRead;
             CanWrite = property.CanWrite;
 
@@ -103,6 +105,14 @@ namespace FullSerializer.Internal {
         public bool IsPublic {
             get;
             private set;
+        }
+
+        /// <summary>
+        /// Is this type readonly? We can modify readonly properties using reflection, but not
+        /// using generated C#.
+        /// </summary>
+        public bool IsReadOnly {
+            get; private set;
         }
 
         /// <summary>

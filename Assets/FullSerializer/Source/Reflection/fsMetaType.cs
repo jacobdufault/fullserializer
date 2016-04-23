@@ -219,6 +219,9 @@ namespace FullSerializer {
                     // Cannot AOT compile since we need to public member access.
                     if (Properties[i].IsPublic == false)
                         return false;
+                    // Cannot AOT compile since readonly members can only be modified using reflection.
+                    if (Properties[i].IsReadOnly)
+                        return false;
                 }
 
                 // Cannot AOT compile since we need a default ctor.
