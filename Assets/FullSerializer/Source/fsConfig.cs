@@ -53,6 +53,15 @@ namespace FullSerializer {
         public Func<string, MemberInfo, string> GetJsonNameFromMemberName = (name, info) => name;
 
         /// <summary>
+        /// If false, then *all* property serialization support will be disabled - even properties
+        /// explicitly annotated with fsProperty or any other opt-in annotation.
+        ///
+        /// Setting this to false means that SerializeNonAutoProperties and
+        /// SerializeNonPublicSetProperties will be completely ignored.
+        /// </summary>
+        public bool EnablePropertySerialization = true;
+
+        /// <summary>
         /// Should the default serialization behaviour include non-auto properties?
         /// </summary>
         public bool SerializeNonAutoProperties = false;

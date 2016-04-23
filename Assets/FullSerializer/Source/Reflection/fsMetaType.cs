@@ -71,6 +71,11 @@ namespace FullSerializer {
                     continue;
                 }
 
+                // Skip properties if we don't want them, to avoid the cost of checking attributes.
+                if (property != null && !config.EnablePropertySerialization) {
+                    continue;
+                }
+
                 // If an opt-in annotation is required, then skip the property if it doesn't have one
                 // of the serialize attributes
                 if (requireOptIn &&
