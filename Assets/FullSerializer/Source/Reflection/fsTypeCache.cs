@@ -31,7 +31,7 @@ namespace FullSerializer.Internal {
 #if (!UNITY_EDITOR && UNITY_METRO && !ENABLE_IL2CPP) // no AppDomain on WinRT
             var assembly = typeof(object).GetTypeInfo().Assembly;
             _assembliesByName[assembly.FullName] = assembly;
-            _assembliesByIndex[0] = assembly;
+            _assembliesByIndex.Add(assembly);
 #else
             foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies()) {
                 _assembliesByName[assembly.FullName] = assembly;
