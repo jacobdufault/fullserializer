@@ -16,6 +16,11 @@ namespace FullSerializer {
         /// errors will still be returned in a fsResult instance.
         /// </summary>
         public static bool AllowInternalExceptions = true;
+
+        /// <summary>
+        /// This string will be used to prefix fields used internally by FullSerializer.
+        /// </summary>
+        public static string InternalFieldPrefix = "$";
     }
 
     /// <summary>
