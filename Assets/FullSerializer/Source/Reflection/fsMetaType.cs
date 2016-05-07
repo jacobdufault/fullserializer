@@ -110,18 +110,10 @@ namespace FullSerializer {
         }
 
         private static bool IsAutoProperty(PropertyInfo property, MemberInfo[] members) {
-            if (!property.CanWrite || !property.CanRead) {
-                return false;
-            }
-
-            string backingFieldName = "<" + property.Name + ">k__BackingField";
-            for (int i = 0; i < members.Length; ++i) {
-                if (members[i].Name == backingFieldName) {
-                    return true;
-                }
-            }
-
-            return false;
+            return
+                property.CanWrite && property.CanRead &&
+                fsPortableReflection.HasAttribute(
+                        property.GetGetMethod(), typeof(CompilerGeneratedAttribute), /*shouldCache:*/false);
         }
 
         /// <summary>

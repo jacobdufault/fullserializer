@@ -29,7 +29,7 @@ namespace System {
             for (int i = 0; i < types.Length; ++i) {
                 if (types[i].Name == name) {
                     return types[i];
-                }   
+                }
             }
 
             if (throwOnError) throw new Exception("Type " + name + " was not found");
@@ -66,15 +66,29 @@ namespace FullSerializer.Internal {
         /// <summary>
         /// Returns true if the given attribute is defined on the given element.
         /// </summary>
-        public static bool HasAttribute(MemberInfo element, Type attributeType) {
-            return GetAttribute(element, attributeType, true) != null;
+        public static bool HasAttribute<TAttribute>(MemberInfo element) {
+            return HasAttribute(element, typeof(TAttribute));
         }
 
         /// <summary>
         /// Returns true if the given attribute is defined on the given element.
         /// </summary>
-        public static bool HasAttribute<TAttribute>(MemberInfo element) {
-            return HasAttribute(element, typeof(TAttribute));
+        public static bool HasAttribute<TAttribute>(MemberInfo element, bool shouldCache) {
+            return HasAttribute(element, typeof(TAttribute), shouldCache);
+        }
+
+        /// <summary>
+        /// Returns true if the given attribute is defined on the given element.
+        /// </summary>
+        public static bool HasAttribute(MemberInfo element, Type attributeType) {
+            return HasAttribute(element, attributeType, true);
+        }
+
+        /// <summary>
+        /// Returns true if the given attribute is defined on the given element.
+        /// </summary>
+        public static bool HasAttribute(MemberInfo element, Type attributeType, bool shouldCache) {
+            return element.IsDefined(attributeType, true);
         }
 
         /// <summary>
@@ -93,7 +107,8 @@ namespace FullSerializer.Internal {
             Attribute attribute;
             if (_cachedAttributeQueries.TryGetValue(query, out attribute) == false) {
                 var attributes = element.GetCustomAttributes(attributeType, /*inherit:*/ true);
-                attribute = (Attribute)attributes.FirstOrDefault();
+                if (attributes.Length > 0)
+                    attribute = (Attribute)attributes[0];
                 if (shouldCache)
                     _cachedAttributeQueries[query] = attribute;
             }
