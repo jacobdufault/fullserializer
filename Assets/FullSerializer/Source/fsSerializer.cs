@@ -31,59 +31,29 @@ namespace FullSerializer {
         /// <summary>
         /// This is an object reference in part of a cyclic graph.
         /// </summary>
-        private static string Key_ObjectReference
-        {
-            get
-            {
-                return string.Format("{0}ref", fsGlobalConfig.InternalFieldPrefix);
-            }
-        }
+        private static readonly string Key_ObjectReference = string.Format("{0}ref", fsGlobalConfig.InternalFieldPrefix);
 
         /// <summary>
         /// This is an object definition, as part of a cyclic graph.
         /// </summary>
-        private static string Key_ObjectDefinition
-        {
-            get
-            {
-                return string.Format("{0}id", fsGlobalConfig.InternalFieldPrefix);
-            }
-        }
+        private static readonly string Key_ObjectDefinition = string.Format("{0}id", fsGlobalConfig.InternalFieldPrefix);
 
         /// <summary>
         /// This specifies the actual type of an object (the instance type was different from
         /// the field type).
         /// </summary>
-        private static string Key_InstanceType
-        {
-            get
-            {
-                return string.Format("{0}type", fsGlobalConfig.InternalFieldPrefix);
-            }
-        }
+        private static readonly string Key_InstanceType = string.Format("{0}type", fsGlobalConfig.InternalFieldPrefix);
 
         /// <summary>
         /// The version string for the serialized data.
         /// </summary>
-        private static string Key_Version
-        {
-            get
-            {
-                return string.Format("{0}version", fsGlobalConfig.InternalFieldPrefix);
-            }
-        }
+        private static readonly string Key_Version = string.Format("{0}version", fsGlobalConfig.InternalFieldPrefix);
 
         /// <summary>
         /// If we have to add metadata but the original serialized state was not a dictionary,
         /// then this will contain the original data.
         /// </summary>
-        private static string Key_Content
-        {
-            get
-            {
-                return string.Format("{0}content", fsGlobalConfig.InternalFieldPrefix);
-            }
-        }
+        private static readonly string Key_Content = string.Format("{0}content", fsGlobalConfig.InternalFieldPrefix);
 
         private static bool IsObjectReference(fsData data) {
             if (data.IsDictionary == false) return false;
