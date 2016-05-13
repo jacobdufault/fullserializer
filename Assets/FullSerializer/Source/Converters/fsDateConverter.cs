@@ -27,19 +27,28 @@ namespace FullSerializer.Internal {
         public override fsResult TrySerialize(object instance, out fsData serialized, Type storageType) {
             if (instance is DateTime) {
                 var dateTime = (DateTime)instance;
-                serialized = new fsData(dateTime.ToString(DateTimeFormatString));
+                if(Serializer.Config.SerializeDateTimeAsInteger) {
+                    serialized = new fsData(dateTime.Ticks);
+                } else {
+                    serialized = new fsData(dateTime.ToString(DateTimeFormatString));
+                    return fsResult.Success;
+                }
                 return fsResult.Success;
             }
 
             if (instance is DateTimeOffset) {
                 var dateTimeOffset = (DateTimeOffset)instance;
-                serialized = new fsData(dateTimeOffset.ToString(DateTimeOffsetFormatString));
+                serialized = new fsData(dateTimeOffset.Ticks);
                 return fsResult.Success;
             }
 
             if (instance is TimeSpan) {
                 var timeSpan = (TimeSpan)instance;
-                serialized = new fsData(timeSpan.ToString());
+                if(Serializer.Config.SerializeDateTimeAsInteger) {
+                    serialized = new fsData(timeSpan.Ticks);
+                } else {
+                    serialized = new fsData(timeSpan.ToString());
+                }
                 return fsResult.Success;
             }
 
@@ -47,11 +56,16 @@ namespace FullSerializer.Internal {
         }
 
         public override fsResult TryDeserialize(fsData data, ref object instance, Type storageType) {
-            if (data.IsString == false) {
-                return fsResult.Fail("Date deserialization requires a string, not " + data.Type);
+            if (data.IsString == false && (data.IsInt64 == false || Serializer.Config.SerializeDateTimeAsInteger == false || instance is DateTimeOffset)) {
+                return fsResult.Fail("Date deserialization requires a string or int, not " + data.Type);
             }
 
             if (storageType == typeof(DateTime)) {
+                if (Serializer.Config.SerializeDateTimeAsInteger && data.IsInt64) {
+                    instance = new DateTime(data.AsInt64);
+                    return fsResult.Success;
+                }
+
                 DateTime result;
                 if (DateTime.TryParse(data.AsString, null, DateTimeStyles.RoundtripKind, out result)) {
                     instance = result;
@@ -84,6 +98,11 @@ namespace FullSerializer.Internal {
             }
 
             if (storageType == typeof(TimeSpan)) {
+                if (Serializer.Config.SerializeDateTimeAsInteger && data.IsInt64) {
+                    instance = new TimeSpan(data.AsInt64);
+                    return fsResult.Success;
+                }
+
                 TimeSpan result;
                 if (TimeSpan.TryParse(data.AsString, out result)) {
                     instance = result;
