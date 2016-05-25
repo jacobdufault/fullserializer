@@ -768,7 +768,7 @@ namespace FullSerializer {
                     string typeName = typeNameData.AsString;
                     Type type = fsTypeCache.GetType(typeName);
                     if (type == null) {
-                        deserializeResult.AddMessage("Unable to locate specified type \"" + typeName + "\"");
+                        deserializeResult += fsResult.Fail("Unable to locate specified type \"" + typeName + "\"");
                         break;
                     }
 
@@ -785,6 +785,10 @@ namespace FullSerializer {
             // have the correct set of processors to invoke until *after* we have resolved
             // the proper type to use for deserialization.
             processors = GetProcessors(objectType);
+
+            if (deserializeResult.Failed)
+                return deserializeResult;
+
             Invoke_OnBeforeDeserialize(processors, storageType, ref data);
 
             // Construct an object instance if we don't have one already. We also need to construct
