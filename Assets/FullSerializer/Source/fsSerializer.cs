@@ -31,29 +31,29 @@ namespace FullSerializer {
         /// <summary>
         /// This is an object reference in part of a cyclic graph.
         /// </summary>
-        private const string Key_ObjectReference = "$ref";
+        private static readonly string Key_ObjectReference = string.Format("{0}ref", fsGlobalConfig.InternalFieldPrefix);
 
         /// <summary>
         /// This is an object definition, as part of a cyclic graph.
         /// </summary>
-        private const string Key_ObjectDefinition = "$id";
+        private static readonly string Key_ObjectDefinition = string.Format("{0}id", fsGlobalConfig.InternalFieldPrefix);
 
         /// <summary>
         /// This specifies the actual type of an object (the instance type was different from
         /// the field type).
         /// </summary>
-        private const string Key_InstanceType = "$type";
+        private static readonly string Key_InstanceType = string.Format("{0}type", fsGlobalConfig.InternalFieldPrefix);
 
         /// <summary>
         /// The version string for the serialized data.
         /// </summary>
-        private const string Key_Version = "$version";
+        private static readonly string Key_Version = string.Format("{0}version", fsGlobalConfig.InternalFieldPrefix);
 
         /// <summary>
         /// If we have to add metadata but the original serialized state was not a dictionary,
         /// then this will contain the original data.
         /// </summary>
-        private const string Key_Content = "$content";
+        private static readonly string Key_Content = string.Format("{0}content", fsGlobalConfig.InternalFieldPrefix);
 
         private static bool IsObjectReference(fsData data) {
             if (data.IsDictionary == false) return false;
