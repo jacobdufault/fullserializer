@@ -1,8 +1,10 @@
 *.suo
-Assembly*.csproj
-*.sln
 *.vscode
 *.DS_Store
+
+# Ignore Unity-specific csproj files.
+/*.csproj
+/*.sln
 
 Library/
 Temp/
