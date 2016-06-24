@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="CommonData.csproj" />
+
+  <!-- We need to overwrite a few of the properties because portable class
+       libraries are only available for .NET 3.5 -->
+  <PropertyGroup>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Profile32</TargetFrameworkProfile>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
+  <!-- <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" /> -->
+
+  <PropertyGroup>
+    <ProjectGuid>{71A89EEC-36B9-49ED-8431-D6A7DBDD9EA7}</ProjectGuid>
+    <AssemblyName>FullSerializer-Unity-WinRT</AssemblyName>
+    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+
+    <DefineConstants>UNITY_METRO</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Source Code -->
+  <ItemGroup>
+    <Compile Include="@(ExternalCompile)" />
+  </ItemGroup>
+
+  <!-- References -->
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="UnityEngine" />
+    <Reference Include="WinRTLegacy" />
+  </ItemGroup>
+</Project>
