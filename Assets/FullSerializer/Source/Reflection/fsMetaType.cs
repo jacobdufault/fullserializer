@@ -157,8 +157,8 @@ namespace FullSerializer {
 
             // Depending on the configuration options, check whether the property is automatic
             // and if it has a public setter to determine whether it should be serialized
-			if ((publicGetMethod != null && (config.SerializeNonPublicSetProperties || publicSetMethod != null)) &&
-				(config.SerializeNonAutoProperties || IsAutoProperty(property, members))) {
+            if ((publicGetMethod != null && (config.SerializeNonPublicSetProperties || publicSetMethod != null)) &&
+                (config.SerializeNonAutoProperties || IsAutoProperty(property, members))) {
                 return true;
             }
 
