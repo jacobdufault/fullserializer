@@ -98,6 +98,13 @@ namespace FullSerializer.Internal {
                 if (type != null) {
                     return true;
                 }
+                ++i;
+            }
+
+            i = 0;
+            // This code here is slow and is just here as a fallback
+            while (i < _assembliesByIndex.Count) {
+                Assembly assembly = _assembliesByIndex[i];
 
                 // private type or similar; go through the slow path and check every type's full
                 // name
@@ -107,7 +114,6 @@ namespace FullSerializer.Internal {
                         return true;
                     }
                 }
-
                 ++i;
             }
 
