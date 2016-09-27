@@ -1,15 +1,16 @@
-language: objective-c
-install:
-- ./Scripts/install.sh
+sudo: false
+language: csharp
+before_install:
+- git submodule update --init --recursive
 script:
-- ./Scripts/build.sh
+- ./Automation/compile.sh
 deploy:
   provider: releases
   api_key:
     secure: PF8i4NWyg01RYa9ThMTviLpl96HYDDd7AHWKytg9XWKMy0T8pzhqL3NnjwDBk1QhcG69MaGSL1tU8BtxJPJQrBKGUtMHwZqb33oaaLNZ9lAbcm1J/oKywpCkBE+1eTCodwlYOl3U9htzacIhXt60HTO1bPVOboq0iBOdt5YGJ0Q+5D2CeBVr7QblVf7RbHGHmM28WArmmsCfEgyiQ+e8od9xyxijPSW5o6Jkg4/HYBUFV69G1TWIL61nbZLqlhrMu+YflAiL4Wt3/UyLKTICU5DP8LuBnabZYqKoXBxiR+262wytyM/jrLJ3CQQiU+0a0D5rxQMJiqdj2tGgHLqws/Xw+hiOkbolEZZGCugTVJOvkHeU92KuNd3aUtUkM2qURPnT2uhs/2oNa22JDR3rsI40kRttbTSFaO7cobOm1tFXGTAhkvCbBJvdOaQRIglrXxSTCjvBBctCD4oyaL1H3McXo2fUKpsl9HVh/BoTeze8dPZmIluPqxHBVoMXZ/qhXe4jDZBy/PSsruDKysXP6sxEKV3yvX9AmI5mlGPy+90vIl+IdTr6hXkMdJtbWJmNoSYS4iOSUFpq6jBQPpr7MkeywM8mOrj+9h1YrInCT5Jp1B7tGbbmJOFi54o/F4Ioxd5H0sI1YqN5OnFa4JqJ3hENjsoLPEfbwD+xIPKhsqI=
   file:
-  - Output/FullSerializer-DLLs.unitypackage
-  - Output/FullSerializer-Source.unitypackage
+  - Output/FullSerializer-DLLs.zip
+  - Output/FullSerializer-Source.zip
   on:
     repo: jacobdufault/fullserializer
     tags: true
