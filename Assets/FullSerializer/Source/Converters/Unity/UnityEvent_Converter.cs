@@ -5,7 +5,10 @@ using UnityEngine.Events;
 
 namespace FullSerializer {
     partial class fsConverterRegistrar {
-        public static Internal.Converters.UnityEvent_Converter Register_UnityEvent_Converter;
+        // Disable the converter for the time being. Unity's JsonUtility API cannot be called from
+        // within a C# ISerializationCallbackReceiver callback.
+
+        // public static Internal.Converters.UnityEvent_Converter Register_UnityEvent_Converter;
     }
 }
 
