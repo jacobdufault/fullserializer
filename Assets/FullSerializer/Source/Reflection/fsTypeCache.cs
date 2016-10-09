@@ -24,34 +24,37 @@ namespace FullSerializer.Internal {
         private static List<Assembly> _assembliesByIndex;
 
         static fsTypeCache() {
-            // Setup assembly references so searching and the like resolves correctly.
-            _assembliesByName = new Dictionary<string, Assembly>();
-            _assembliesByIndex = new List<Assembly>();
+            lock (typeof(fsTypeCache)) {
+                // Setup assembly references so searching and the like resolves correctly.
+                _assembliesByName = new Dictionary<string, Assembly>();
+                _assembliesByIndex = new List<Assembly>();
 
 #if (!UNITY_EDITOR && UNITY_METRO && !ENABLE_IL2CPP) // no AppDomain on WinRT
-            var assembly = typeof(object).GetTypeInfo().Assembly;
-            _assembliesByName[assembly.FullName] = assembly;
-            _assembliesByIndex.Add(assembly);
-#else
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+                var assembly = typeof(object).GetTypeInfo().Assembly;
                 _assembliesByName[assembly.FullName] = assembly;
                 _assembliesByIndex.Add(assembly);
-            }
+#else
+                foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+                    _assembliesByName[assembly.FullName] = assembly;
+                    _assembliesByIndex.Add(assembly);
+                }
 #endif
-
-            _cachedTypes = new Dictionary<string, Type>();
+                _cachedTypes = new Dictionary<string, Type>();
 
 #if !(UNITY_WP8  || UNITY_METRO) // AssemblyLoad events are not supported on these platforms
-            AppDomain.CurrentDomain.AssemblyLoad += OnAssemblyLoaded;
+                AppDomain.CurrentDomain.AssemblyLoad += OnAssemblyLoaded;
 #endif
+            }
         }
 
 #if !(UNITY_WP8 || UNITY_METRO) // AssemblyLoad events are not supported on these platforms
         private static void OnAssemblyLoaded(object sender, AssemblyLoadEventArgs args) {
-            _assembliesByName[args.LoadedAssembly.FullName] = args.LoadedAssembly;
-            _assembliesByIndex.Add(args.LoadedAssembly);
+            lock (typeof(fsTypeCache)) {
+                _assembliesByName[args.LoadedAssembly.FullName] = args.LoadedAssembly;
+                _assembliesByIndex.Add(args.LoadedAssembly);
 
-            _cachedTypes = new Dictionary<string, Type>();
+                _cachedTypes = new Dictionary<string, Type>();
+            }
         }
 #endif
 
@@ -150,17 +153,19 @@ namespace FullSerializer.Internal {
                 return null;
             }
 
-            Type type;
-            if (_cachedTypes.TryGetValue(name, out type) == false) {
-                // if both the direct and indirect type lookups fail, then throw an exception
-                if (TryDirectTypeLookup(assemblyHint, name, out type) == false &&
-                    TryIndirectTypeLookup(name, out type) == false) {
+            lock (typeof(fsTypeCache)) {
+                Type type;
+                if (_cachedTypes.TryGetValue(name, out type) == false) {
+                    // if both the direct and indirect type lookups fail, then throw an exception
+                    if (TryDirectTypeLookup(assemblyHint, name, out type) == false &&
+                        TryIndirectTypeLookup(name, out type) == false) {
+                    }
+
+                    _cachedTypes[name] = type;
                 }
 
-                _cachedTypes[name] = type;
+                return type;
             }
-
-            return type;
         }
     }
 }

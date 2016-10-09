@@ -15,8 +15,10 @@ namespace FullSerializer {
 
         public static fsMetaType Get(fsConfig config, Type type) {
             Dictionary<Type, fsMetaType> metaTypes;
-            if (_configMetaTypes.TryGetValue(config, out metaTypes) == false)
-                metaTypes = _configMetaTypes[config] = new Dictionary<Type, fsMetaType>();
+            lock (typeof(fsMetaType)) {
+                if (_configMetaTypes.TryGetValue(config, out metaTypes) == false)
+                    metaTypes = _configMetaTypes[config] = new Dictionary<Type, fsMetaType>();
+            }
 
             fsMetaType metaType;
             if (metaTypes.TryGetValue(type, out metaType) == false) {
@@ -32,7 +34,9 @@ namespace FullSerializer {
         /// serialization mode.
         /// </summary>
         public static void ClearCache() {
-            _configMetaTypes = new Dictionary<fsConfig, Dictionary<Type, fsMetaType>>();
+            lock (typeof(fsMetaType)) {
+                _configMetaTypes = new Dictionary<fsConfig, Dictionary<Type, fsMetaType>>();
+            }
         }
 
         private fsMetaType(fsConfig config, Type reflectedType) {
