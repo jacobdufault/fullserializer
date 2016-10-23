@@ -2,15 +2,16 @@
 
 namespace FullSerializer {
     /// <summary>
-    /// This allows you to forward serialization of an object to one of its members. For example,
+    /// This allows you to forward serialization of an object to one of its
+    /// members. For example,
     ///
     /// [fsForward("Values")]
     /// struct Wrapper {
-    ///   public int[] Values;
+    ///     public int[] Values;
     /// }
     ///
-    /// Then `Wrapper` will be serialized into a JSON array of integers. It will be as if `Wrapper`
-    /// doesn't exist.
+    /// Then `Wrapper` will be serialized into a JSON array of integers. It will
+    /// be as if `Wrapper` doesn't exist.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Struct)]
     public sealed class fsForwardAttribute : Attribute {
@@ -20,9 +21,12 @@ namespace FullSerializer {
         public string MemberName;
 
         /// <summary>
-        /// Forward object serialization to an instance member. See class comment.
+        /// Forward object serialization to an instance member. See class
+        /// comment.
         /// </summary>
-        /// <param name="memberName">The name of the member that we should serialize this object as.</param>
+        /// <param name="memberName">
+        /// The name of the member that we should serialize this object as.
+        /// </param>
         public fsForwardAttribute(string memberName) {
             MemberName = memberName;
         }

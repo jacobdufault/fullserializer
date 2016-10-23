@@ -20,8 +20,9 @@ namespace FullSerializer.Internal {
         }
 
         public override object CreateInstance(fsData data, Type storageType) {
-            // In .NET compact, Enum.ToObject(Type, Object) is defined but the overloads like
-            // Enum.ToObject(Type, int) are not -- so we get around this by boxing the value.
+            // In .NET compact, Enum.ToObject(Type, Object) is defined but the
+            // overloads like Enum.ToObject(Type, int) are not -- so we get
+            // around this by boxing the value.
             return Enum.ToObject(storageType, (object)0);
         }
 
@@ -61,8 +62,8 @@ namespace FullSerializer.Internal {
                 for (int i = 0; i < enumValues.Length; ++i) {
                     string enumValue = enumValues[i];
 
-                    // Verify that the enum name exists; Enum.TryParse is only available in .NET 4.0
-                    // and above :(.
+                    // Verify that the enum name exists; Enum.TryParse is only
+                    // available in .NET 4.0 and above :(.
                     if (ArrayContains(Enum.GetNames(storageType), enumValue) == false) {
                         return fsResult.Fail("Cannot find enum name " + enumValue + " on type " + storageType);
                     }
@@ -74,12 +75,12 @@ namespace FullSerializer.Internal {
                 instance = Enum.ToObject(storageType, (object)instanceValue);
                 return fsResult.Success;
             }
-
             else if (data.IsInt64) {
                 int enumValue = (int)data.AsInt64;
 
-                // In .NET compact, Enum.ToObject(Type, Object) is defined but the overloads like
-                // Enum.ToObject(Type, int) are not -- so we get around this by boxing the value.
+                // In .NET compact, Enum.ToObject(Type, Object) is defined but
+                // the overloads like Enum.ToObject(Type, int) are not -- so we
+                // get around this by boxing the value.
                 instance = Enum.ToObject(storageType, (object)enumValue);
 
                 return fsResult.Success;
@@ -89,7 +90,8 @@ namespace FullSerializer.Internal {
         }
 
         /// <summary>
-        /// Returns true if the given value is contained within the specified array.
+        /// Returns true if the given value is contained within the specified
+        /// array.
         /// </summary>
         private static bool ArrayContains<T>(T[] values, T value) {
             // note: We don't use LINQ because this function will *not* allocate

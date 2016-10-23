@@ -18,7 +18,8 @@ namespace FullSerializer {
         /// Escapes a string.
         /// </summary>
         private static string EscapeString(string str) {
-            // Escaping a string is pretty allocation heavy, so we try hard to not do it.
+            // Escaping a string is pretty allocation heavy, so we try hard to
+            // not do it.
 
             bool needsEscape = false;
             for (int i = 0; i < str.Length; ++i) {
@@ -54,7 +55,6 @@ namespace FullSerializer {
             if (needsEscape == false) {
                 return str;
             }
-
 
             StringBuilder result = new StringBuilder();
 
@@ -165,7 +165,6 @@ namespace FullSerializer {
                     stream.Write(data.AsInt64);
                     break;
 
-
                 case fsDataType.String:
                     stream.Write('"');
                     stream.Write(EscapeString(data.AsString));
@@ -196,11 +195,11 @@ namespace FullSerializer {
                     }
 
                 case fsDataType.Array:
-                    // special case for empty lists; we don't put an empty line between the brackets
+                    // special case for empty lists; we don't put an empty line
+                    // between the brackets
                     if (data.AsList.Count == 0) {
                         stream.Write("[]");
                     }
-
                     else {
                         bool comma = false;
 
@@ -282,6 +281,5 @@ namespace FullSerializer {
 
             return doubledString;
         }
-
     }
 }

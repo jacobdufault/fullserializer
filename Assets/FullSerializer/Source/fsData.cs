@@ -17,13 +17,15 @@ namespace FullSerializer {
     }
 
     /// <summary>
-    /// A union type that stores a serialized value. The stored type can be one of six different
+    /// A union type that stores a serialized value. The stored type can be one
+    /// of six different
     /// types: null, boolean, double, Int64, string, Dictionary, or List.
     /// </summary>
     public sealed class fsData {
         /// <summary>
-        /// The raw value that this serialized data stores. It can be one of six different types; a
-        /// boolean, a double, Int64, a string, a Dictionary, or a List.
+        /// The raw value that this serialized data stores. It can be one of six
+        /// different types; a boolean, a double, Int64, a string, a Dictionary,
+        /// or a List.
         /// </summary>
         private object _value;
 
@@ -93,7 +95,8 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Helper method to create a fsData instance that holds a list with the initial capacity.
+        /// Helper method to create a fsData instance that holds a list with the
+        /// initial capacity.
         /// </summary>
         public static fsData CreateList(int capacity) {
             return new fsData(new List<fsData>(capacity));
@@ -102,7 +105,7 @@ namespace FullSerializer {
         public readonly static fsData True = new fsData(true);
         public readonly static fsData False = new fsData(false);
         public readonly static fsData Null = new fsData();
-        #endregion
+        #endregion Constructors
 
         #region Internal Helper Methods
         /// <summary>
@@ -120,7 +123,7 @@ namespace FullSerializer {
             clone._value = _value;
             return clone;
         }
-        #endregion
+        #endregion Internal Helper Methods
 
         #region Casting Predicates
         public fsDataType Type {
@@ -199,11 +202,12 @@ namespace FullSerializer {
                 return _value is List<fsData>;
             }
         }
-        #endregion
+        #endregion Casting Predicates
 
         #region Casts
         /// <summary>
-        /// Casts this fsData to a double. Throws an exception if it is not a double.
+        /// Casts this fsData to a double. Throws an exception if it is not a
+        /// double.
         /// </summary>
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public double AsDouble {
@@ -213,7 +217,8 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Casts this fsData to an Int64. Throws an exception if it is not an Int64.
+        /// Casts this fsData to an Int64. Throws an exception if it is not an
+        /// Int64.
         /// </summary>
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public Int64 AsInt64 {
@@ -222,9 +227,9 @@ namespace FullSerializer {
             }
         }
 
-
         /// <summary>
-        /// Casts this fsData to a boolean. Throws an exception if it is not a boolean.
+        /// Casts this fsData to a boolean. Throws an exception if it is not a
+        /// boolean.
         /// </summary>
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public bool AsBool {
@@ -234,7 +239,8 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Casts this fsData to a string. Throws an exception if it is not a string.
+        /// Casts this fsData to a string. Throws an exception if it is not a
+        /// string.
         /// </summary>
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public string AsString {
@@ -265,8 +271,8 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Internal helper method to cast the underlying storage to the given type or throw a
-        /// pretty printed exception on failure.
+        /// Internal helper method to cast the underlying storage to the given
+        /// type or throw a pretty printed exception on failure.
         /// </summary>
         private T Cast<T>() {
             if (_value is T) {
@@ -276,24 +282,26 @@ namespace FullSerializer {
             throw new InvalidCastException("Unable to cast <" + this + "> (with type = " +
                 _value.GetType() + ") to type " + typeof(T));
         }
-        #endregion
+        #endregion Casts
 
         #region ToString Implementation
         public override string ToString() {
             return fsJsonPrinter.CompressedJson(this);
         }
-        #endregion
+        #endregion ToString Implementation
 
         #region Equality Comparisons
         /// <summary>
-        /// Determines whether the specified object is equal to the current object.
+        /// Determines whether the specified object is equal to the current
+        /// object.
         /// </summary>
         public override bool Equals(object obj) {
             return Equals(obj as fsData);
         }
 
         /// <summary>
-        /// Determines whether the specified object is equal to the current object.
+        /// Determines whether the specified object is equal to the current
+        /// object.
         /// </summary>
         public bool Equals(fsData other) {
             if (other == null || Type != other.Type) {
@@ -383,12 +391,13 @@ namespace FullSerializer {
         /// <summary>
         /// Returns a hash code for this instance.
         /// </summary>
-        /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data
-        /// structures like a hash table.</returns>
+        /// <returns>
+        /// A hash code for this instance, suitable for use in hashing algorithms
+        /// and data structures like a hash table.
+        /// </returns>
         public override int GetHashCode() {
             return _value.GetHashCode();
         }
-        #endregion
+        #endregion Equality Comparisons
     }
-
 }

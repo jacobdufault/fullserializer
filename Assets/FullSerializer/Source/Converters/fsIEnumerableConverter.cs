@@ -5,7 +5,8 @@ using System.Reflection;
 
 namespace FullSerializer.Internal {
     /// <summary>
-    /// Provides serialization support for anything which extends from `IEnumerable` and has an `Add` method.
+    /// Provides serialization support for anything which extends from
+    /// `IEnumerable` and has an `Add` method.
     /// </summary>
     public class fsIEnumerableConverter : fsConverter {
         public override bool CanProcess(Type type) {
@@ -29,7 +30,8 @@ namespace FullSerializer.Internal {
             foreach (object item in instance) {
                 fsData itemData;
 
-                // note: We don't fail the entire deserialization even if the item failed
+                // note: We don't fail the entire deserialization even if the
+                //       item failed
                 var itemResult = Serializer.TrySerialize(elementType, item, out itemData);
                 result.AddMessages(itemResult);
                 if (itemResult.Failed) continue;
@@ -37,8 +39,9 @@ namespace FullSerializer.Internal {
                 serializedList.Add(itemData);
             }
 
-            // Stacks iterate from back to front, which means when we deserialize we will deserialize
-            // the items in the wrong order, so the stack will get reversed.
+            // Stacks iterate from back to front, which means when we deserialize
+            // we will deserialize the items in the wrong order, so the stack
+            // will get reversed.
             if (IsStack(instance.GetType())) {
                 serializedList.Reverse();
             }
@@ -57,8 +60,8 @@ namespace FullSerializer.Internal {
 
             if ((result += CheckType(data, fsDataType.Array)).Failed) return result;
 
-            // For general strategy, instance may already have items in it. We will try to deserialize into
-            // the existing element.
+            // For general strategy, instance may already have items in it. We
+            // will try to deserialize into the existing element.
             var elementStorageType = GetElementType(storageType);
             var addMethod = GetAddMethod(storageType);
             var getMethod = storageType.GetFlattenedMethod("get_Item");
@@ -74,7 +77,8 @@ namespace FullSerializer.Internal {
                     itemInstance = getMethod.Invoke(instance, new object[] { i });
                 }
 
-                // note: We don't fail the entire deserialization even if the item failed
+                // note: We don't fail the entire deserialization even if the
+                //       item failed
                 var itemResult = Serializer.TryDeserialize(itemData, elementStorageType, ref itemInstance);
                 result.AddMessages(itemResult);
                 if (itemResult.Failed) continue;
@@ -125,10 +129,11 @@ namespace FullSerializer.Internal {
         }
 
         private static MethodInfo GetAddMethod(Type type) {
-            // There is a really good chance the type will extend ICollection{}, which will contain
-            // the add method we want. Just doing type.GetFlattenedMethod() may return the incorrect one --
-            // for example, with dictionaries, it'll return Add(TKey, TValue), and we want
-            // Add(KeyValuePair<TKey, TValue>).
+            // There is a really good chance the type will extend ICollection{},
+            // which will contain the add method we want. Just doing
+            // type.GetFlattenedMethod() may return the incorrect one -- for
+            // example, with dictionaries, it'll return Add(TKey, TValue), and we
+            // want Add(KeyValuePair<TKey, TValue>).
             Type collectionInterface = fsReflectionUtility.GetInterface(type, typeof(ICollection<>));
             if (collectionInterface != null) {
                 MethodInfo add = collectionInterface.GetDeclaredMethod("Add");

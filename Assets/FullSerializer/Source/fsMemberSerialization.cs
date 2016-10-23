@@ -4,12 +4,14 @@
     /// </summary>
     public enum fsMemberSerialization {
         /// <summary>
-        /// Only members with [SerializeField] or [fsProperty] attributes are serialized.
+        /// Only members with [SerializeField] or [fsProperty] attributes are
+        /// serialized.
         /// </summary>
         OptIn,
 
         /// <summary>
-        /// Only members with [NotSerialized] or [fsIgnore] will not be serialized.
+        /// Only members with [NotSerialized] or [fsIgnore] will not be
+        /// serialized.
         /// </summary>
         OptOut,
 

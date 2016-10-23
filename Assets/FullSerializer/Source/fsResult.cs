@@ -4,24 +4,28 @@ using System.Linq;
 
 namespace FullSerializer {
     /// <summary>
-    /// The result of some sort of operation. A result is either successful or not, but if it
-    /// is successful then there may be a set of warnings/messages associated with it. These
-    /// warnings describe the performed error recovery operations.
+    /// The result of some sort of operation. A result is either successful or
+    /// not, but if it is successful then there may be a set of warnings/messages
+    /// associated with it. These warnings describe the performed error recovery
+    /// operations.
     /// </summary>
     public struct fsResult {
-        // We cache the empty string array so we can unify some collections processing code.
+        // We cache the empty string array so we can unify some collections
+        // processing code.
         private static readonly string[] EmptyStringArray = { };
 
         /// <summary>
         /// Is this result successful?
         /// </summary>
-        /// <remarks>This is intentionally a `success` state so that when the object
-        /// is default constructed it defaults to a failure state.</remarks>
+        /// <remarks>
+        /// This is intentionally a `success` state so that when the object is
+        /// default constructed it defaults to a failure state.
+        /// </remarks>
         private bool _success;
 
         /// <summary>
-        /// The warning or error messages associated with the result. This may be null if
-        /// there are no messages.
+        /// The warning or error messages associated with the result. This may be
+        /// null if there are no messages.
         /// </summary>
         private List<string> _messages;
 
@@ -38,8 +42,8 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Adds only the messages from the other result into this result, ignoring
-        /// the success/failure status of the other result.
+        /// Adds only the messages from the other result into this result,
+        /// ignoring the success/failure status of the other result.
         /// </summary>
         public void AddMessages(fsResult result) {
             if (result._messages == null) {
@@ -54,12 +58,12 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Merges the other result into this one. If the other result failed, then
-        /// this one too will have failed.
+        /// Merges the other result into this one. If the other result failed,
+        /// then this one too will have failed.
         /// </summary>
         /// <remarks>
-        /// Note that you can use += instead of this method so that you don't bury
-        /// the actual method call that is generating the other fsResult.
+        /// Note that you can use += instead of this method so that you don't
+        /// bury the actual method call that is generating the other fsResult.
         /// </remarks>
         public fsResult Merge(fsResult other) {
             // Copy success over
@@ -82,7 +86,8 @@ namespace FullSerializer {
         };
 
         /// <summary>
-        /// Create a result that is successful but contains the given warning message.
+        /// Create a result that is successful but contains the given warning
+        /// message.
         /// </summary>
         public static fsResult Warn(string warning) {
             return new fsResult {
@@ -111,7 +116,8 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Did this result fail? If so, you can see the reasons why in `RawMessages`.
+        /// Did this result fail? If so, you can see the reasons why in
+        /// `RawMessages`.
         /// </summary>
         public bool Failed {
             get {
@@ -120,8 +126,8 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Was the result a success? Note that even successful operations may have
-        /// warning messages (`RawMessages`) associated with them.
+        /// Was the result a success? Note that even successful operations may
+        /// have warning messages (`RawMessages`) associated with them.
         /// </summary>
         public bool Succeeded {
             get {
@@ -130,8 +136,9 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Does this result have any warnings? This says nothing about if it failed
-        /// or succeeded, just if it has warning messages associated with it.
+        /// Does this result have any warnings? This says nothing about if it
+        /// failed or succeeded, just if it has warning messages associated with
+        /// it.
         /// </summary>
         public bool HasWarnings {
             get {
@@ -140,8 +147,8 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// A simply utility method that will assert that this result is successful. If it
-        /// is not, then an exception is thrown.
+        /// A simply utility method that will assert that this result is
+        /// successful. If it is not, then an exception is thrown.
         /// </summary>
         public fsResult AssertSuccess() {
             if (Failed) throw AsException;
@@ -149,9 +156,9 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// A simple utility method that will assert that this result is successful and that
-        /// there are no warning messages. This throws an exception if either of those
-        /// asserts are false.
+        /// A simple utility method that will assert that this result is
+        /// successful and that there are no warning messages. This throws an
+        /// exception if either of those asserts are false.
         /// </summary>
         public fsResult AssertSuccessWithoutWarnings() {
             if (Failed || RawMessages.Any()) throw AsException;
@@ -159,8 +166,8 @@ namespace FullSerializer {
         }
 
         /// <summary>
-        /// Utility method to convert the result to an exception. This method is only defined
-        /// is `Failed` returns true.
+        /// Utility method to convert the result to an exception. This method is
+        /// only defined is `Failed` returns true.
         /// </summary>
         public Exception AsException {
             get {

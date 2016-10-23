@@ -5,19 +5,22 @@ using UnityEngine.Events;
 
 namespace FullSerializer {
     partial class fsConverterRegistrar {
-        // Disable the converter for the time being. Unity's JsonUtility API cannot be called from
-        // within a C# ISerializationCallbackReceiver callback.
+        // Disable the converter for the time being. Unity's JsonUtility API
+        // cannot be called from within a C# ISerializationCallbackReceiver
+        // callback.
 
-        // public static Internal.Converters.UnityEvent_Converter Register_UnityEvent_Converter;
+        // public static Internal.Converters.UnityEvent_Converter
+        // Register_UnityEvent_Converter;
     }
 }
 
 namespace FullSerializer.Internal.Converters {
-    // The standard FS reflection converter has started causing Unity to crash when processing
-    // UnityEvent. We can send the serialization through JsonUtility which appears to work correctly
-    // instead.
+    // The standard FS reflection converter has started causing Unity to crash
+    // when processing UnityEvent. We can send the serialization through
+    // JsonUtility which appears to work correctly instead.
     //
-    // We have to support legacy serialization formats so importing works as expected.
+    // We have to support legacy serialization formats so importing works as
+    // expected.
     public class UnityEvent_Converter : fsConverter {
         public override bool CanProcess(Type type) {
             return typeof(UnityEvent).Resolve().IsAssignableFrom(type) && type.IsGenericType == false;

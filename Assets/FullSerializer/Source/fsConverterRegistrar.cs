@@ -4,10 +4,11 @@ using FullSerializer.Internal;
 
 namespace FullSerializer {
     /// <summary>
-    /// This class allows arbitrary code to easily register global converters. To add a converter,
-    /// simply declare a new field called "Register_*" that stores the type of converter you would
-    /// like to add. Alternatively, you can do the same with a method called "Register_*"; just add
-    /// the converter type to the `Converters` list.
+    /// This class allows arbitrary code to easily register global converters. To
+    /// add a converter, simply declare a new field called "Register_*" that
+    /// stores the type of converter you would like to add. Alternatively, you
+    /// can do the same with a method called "Register_*"; just add the converter
+    /// type to the `Converters` list.
     /// </summary>
     public partial class fsConverterRegistrar {
         static fsConverterRegistrar() {
@@ -20,7 +21,6 @@ namespace FullSerializer {
             foreach (var method in typeof(fsConverterRegistrar).GetDeclaredMethods()) {
                 if (method.Name.StartsWith("Register_")) method.Invoke(null, null);
             }
-
         }
 
         public static List<Type> Converters;

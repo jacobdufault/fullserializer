@@ -9,11 +9,14 @@ namespace FullSerializer {
     /// </summary>
     public class fsAotCompilationManager {
         /// <summary>
-        /// Ahead of time compilations that are available. The type maps to the object type the generated converter
-        /// will serialize/deserialize, and the string is the text content for a converter that will do the serialization.
-        /// <para />
-        /// The generated serializer is completely independent and you don't need to do anything. Simply add the file to
-        /// your project and it'll get used instead of the reflection based one.
+        /// Ahead of time compilations that are available. The type maps to the
+        /// object type the generated converter will serialize/deserialize, and
+        /// the string is the text content for a converter that will do the
+        /// serialization.
+        /// <para/>
+        /// The generated serializer is completely independent and you don't need
+        /// to do anything. Simply add the file to your project and it'll get
+        /// used instead of the reflection based one.
         /// </summary>
         public static Dictionary<Type, string> AvailableAotCompilations {
             get {
@@ -36,11 +39,18 @@ namespace FullSerializer {
         private static List<AotCompilation> _uncomputedAotCompilations = new List<AotCompilation>();
 
         /// <summary>
-        /// This is a helper method that makes it simple to run an AOT compilation on the given type.
+        /// This is a helper method that makes it simple to run an AOT
+        /// compilation on the given type.
         /// </summary>
-        /// <param name="config">The configuration to use when running AOT compilation.</param>
-        /// <param name="type">The type to perform the AOT compilation on.</param>
-        /// <param name="aotCompiledClassInCSharp">The AOT class. Add this C# code to your project.</param>
+        /// <param name="config">
+        /// The configuration to use when running AOT compilation.
+        /// </param>
+        /// <param name="type">
+        /// The type to perform the AOT compilation on.
+        /// </param>
+        /// <param name="aotCompiledClassInCSharp">
+        /// The AOT class. Add this C# code to your project.
+        /// </param>
         /// <returns>True if AOT compilation was successful.</returns>
         public static bool TryToPerformAotCompilation(fsConfig config, Type type, out string aotCompiledClassInCSharp) {
             if (fsMetaType.Get(config, type).EmitAotData()) {
@@ -56,7 +66,9 @@ namespace FullSerializer {
         /// Adds a new AOT compilation unit.
         /// </summary>
         /// <param name="type">The type of object we are AOT compiling.</param>
-        /// <param name="members">The members on the object which will be serialized/deserialized.</param>
+        /// <param name="members">
+        /// The members on the object which will be serialized/deserialized.
+        /// </param>
         public static void AddAotCompilation(Type type, fsMetaProperty[] members, bool isConstructorPublic) {
             _uncomputedAotCompilations.Add(new AotCompilation {
                 Type = type,

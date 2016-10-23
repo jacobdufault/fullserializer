@@ -23,7 +23,6 @@ namespace FullSerializer.Internal {
 
                 if (ancestor.VersionString == currentVersion ||
                     GetVersionImportPathRecursive(path, currentVersion, ancestor)) {
-
                     path.Add(ancestor);
                     return true;
                 }
@@ -62,7 +61,8 @@ namespace FullSerializer.Internal {
                             ModelType = type
                         };
 
-                        // finally, verify that the versioned type passes some sanity checks
+                        // finally, verify that the versioned type passes some
+                        // sanity checks
                         VerifyUniqueVersionStrings(versionedType);
                         VerifyConstructors(versionedType);
 
@@ -77,7 +77,8 @@ namespace FullSerializer.Internal {
         }
 
         /// <summary>
-        /// Verifies that the given type has constructors to migrate from all ancestor types.
+        /// Verifies that the given type has constructors to migrate from all
+        /// ancestor types.
         /// </summary>
         private static void VerifyConstructors(fsVersionedType type) {
             ConstructorInfo[] publicConstructors = type.ModelType.GetDeclaredConstructors();
@@ -114,9 +115,10 @@ namespace FullSerializer.Internal {
             while (remaining.Count > 0) {
                 fsVersionedType item = remaining.Dequeue();
 
-                // Verify we do not already have the version string. Take into account that we're not just
-                // comparing the same model twice, since we can have a valid import graph that has the same
-                // model multiple times.
+                // Verify we do not already have the version string. Take into
+                // account that we're not just comparing the same model twice,
+                // since we can have a valid import graph that has the same model
+                // multiple times.
                 if (found.ContainsKey(item.VersionString) && found[item.VersionString] != item.ModelType) {
                     throw new fsDuplicateVersionNameException(found[item.VersionString], item.ModelType, item.VersionString);
                 }

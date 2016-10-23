@@ -7,7 +7,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 
 #if USE_TYPEINFO
@@ -41,16 +40,16 @@ namespace System {
 
 namespace FullSerializer.Internal {
     /// <summary>
-    /// This wraps reflection types so that it is portable across different Unity runtimes.
+    /// This wraps reflection types so that it is portable across different Unity
+    /// runtimes.
     /// </summary>
     public static class fsPortableReflection {
         public static Type[] EmptyTypes = { };
 
-#region Attribute Queries
+        #region Attribute Queries
 #if USE_TYPEINFO
         public static TAttribute GetAttribute<TAttribute>(Type type)
             where TAttribute : Attribute {
-
             return GetAttribute<TAttribute>(type.GetTypeInfo());
         }
 
@@ -92,10 +91,13 @@ namespace FullSerializer.Internal {
         }
 
         /// <summary>
-        /// Fetches the given attribute from the given MemberInfo. This method applies caching
-        /// and is allocation free (after caching has been performed).
+        /// Fetches the given attribute from the given MemberInfo. This method
+        /// applies caching and is allocation free (after caching has been
+        /// performed).
         /// </summary>
-        /// <param name="element">The MemberInfo the get the attribute from.</param>
+        /// <param name="element">
+        /// The MemberInfo the get the attribute from.
+        /// </param>
         /// <param name="attributeType">The type of attribute to fetch.</param>
         /// <returns>The attribute or null.</returns>
         public static Attribute GetAttribute(MemberInfo element, Type attributeType, bool shouldCache) {
@@ -119,13 +121,19 @@ namespace FullSerializer.Internal {
         /// <summary>
         /// Fetches the given attribute from the given MemberInfo.
         /// </summary>
-        /// <typeparam name="TAttribute">The type of attribute to fetch.</typeparam>
-        /// <param name="element">The MemberInfo to get the attribute from.</param>
-        /// <param name="shouldCache">Should this computation be cached? If this is the only time it will ever be done, don't bother caching.</param>
+        /// <typeparam name="TAttribute">
+        /// The type of attribute to fetch.
+        /// </typeparam>
+        /// <param name="element">
+        /// The MemberInfo to get the attribute from.
+        /// </param>
+        /// <param name="shouldCache">
+        /// Should this computation be cached? If this is the only time it will
+        /// ever be done, don't bother caching.
+        /// </param>
         /// <returns>The attribute or null.</returns>
         public static TAttribute GetAttribute<TAttribute>(MemberInfo element, bool shouldCache)
             where TAttribute : Attribute {
-
             return (TAttribute)GetAttribute(element, typeof(TAttribute), shouldCache);
         }
         public static TAttribute GetAttribute<TAttribute>(MemberInfo element)
@@ -151,7 +159,7 @@ namespace FullSerializer.Internal {
                     (17 * obj.AttributeType.GetHashCode());
             }
         }
-#endregion
+        #endregion Attribute Queries
 
 #if !USE_TYPEINFO
         private static BindingFlags DeclaredFlags =
@@ -185,7 +193,6 @@ namespace FullSerializer.Internal {
 
             return null;
         }
-
 
         public static ConstructorInfo GetDeclaredConstructor(this Type type, Type[] parameters) {
             var ctors = GetDeclaredConstructors(type);
@@ -357,8 +364,7 @@ namespace FullSerializer.Internal {
         }
 #endif
 
-
-#region Extensions
+        #region Extensions
 
 #if USE_TYPEINFO_EXTENSIONS
         public static bool IsAssignableFrom(this Type parent, Type child) {
@@ -395,6 +401,6 @@ namespace FullSerializer.Internal {
             return type.GetTypeInfo().GenericTypeArguments.ToArray();
         }
 #endif
-#endregion
+        #endregion Extensions
     }
 }

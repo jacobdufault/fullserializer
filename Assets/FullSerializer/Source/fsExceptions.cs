@@ -1,5 +1,6 @@
-﻿// note: This file contains exceptions used by FullSerializer. Exceptions are never used at runtime
-//       in FullSerializer; they are only used when validating annotations and code-based models.
+﻿// note: This file contains exceptions used by FullSerializer. Exceptions are
+//       never used at runtime in FullSerializer; they are only used when
+//       validating annotations and code-based models.
 
 using System;
 

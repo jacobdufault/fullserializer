@@ -3,8 +3,8 @@ using System.Collections.Generic;
 
 namespace FullSerializer {
     /// <summary>
-    /// fsContext stores global metadata that can be used to customize how fsConverters operate
-    /// during serialization.
+    /// fsContext stores global metadata that can be used to customize how
+    /// fsConverters operate during serialization.
     /// </summary>
     public sealed class fsContext {
         /// <summary>

@@ -3,12 +3,16 @@ using System.Collections.Generic;
 
 namespace FullSerializer {
     /// <summary>
-    /// The direct converter is similar to a regular converter, except that it targets specifically only one type.
-    /// This means that it can be used without performance impact when discovering converters. It is strongly
+    /// The direct converter is similar to a regular converter, except that it
+    /// targets specifically only one type. This means that it can be used
+    /// without performance impact when discovering converters. It is strongly
     /// recommended that you derive from fsDirectConverter{TModel}.
     /// </summary>
-    /// <remarks>Due to the way that direct converters operate, inheritance is *not* supported. Direct converters
-    /// will only be used with the exact ModelType object.</remarks>
+    /// <remarks>
+    /// Due to the way that direct converters operate, inheritance is *not*
+    /// supported. Direct converters will only be used with the exact ModelType
+    /// object.
+    /// </remarks>
     public abstract class fsDirectConverter : fsBaseConverter {
         public abstract Type ModelType { get; }
     }

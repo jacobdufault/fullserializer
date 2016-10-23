@@ -3,7 +3,8 @@ using System.Reflection;
 
 namespace FullSerializer.Internal {
     /// <summary>
-    /// A property or field on a MetaType. This unifies the FieldInfo and PropertyInfo classes.
+    /// A property or field on a MetaType. This unifies the FieldInfo and
+    /// PropertyInfo classes.
     /// </summary>
     public class fsMetaProperty {
         internal fsMetaProperty(fsConfig config, FieldInfo field) {
@@ -49,8 +50,8 @@ namespace FullSerializer.Internal {
         private MemberInfo _memberInfo;
 
         /// <summary>
-        /// The type of value that is stored inside of the property. For example, for an int field,
-        /// StorageType will be typeof(int).
+        /// The type of value that is stored inside of the property. For example,
+        /// for an int field, StorageType will be typeof(int).
         /// </summary>
         public Type StorageType {
             get;
@@ -58,9 +59,10 @@ namespace FullSerializer.Internal {
         }
 
         /// <summary>
-        /// A custom fsBaseConverter instance to use for this field/property, if requested. This will be
-        /// null if the default converter selection algorithm should be used. This is specified using the
-        /// [fsObject] annotation with the Converter field.
+        /// A custom fsBaseConverter instance to use for this field/property, if
+        /// requested. This will be null if the default converter selection
+        /// algorithm should be used. This is specified using the [fsObject]
+        /// annotation with the Converter field.
         /// </summary>
         public Type OverrideConverterType {
             get;
@@ -108,16 +110,16 @@ namespace FullSerializer.Internal {
         }
 
         /// <summary>
-        /// Is this type readonly? We can modify readonly properties using reflection, but not
-        /// using generated C#.
+        /// Is this type readonly? We can modify readonly properties using
+        /// reflection, but not using generated C#.
         /// </summary>
         public bool IsReadOnly {
             get; private set;
         }
 
         /// <summary>
-        /// Writes a value to the property that this MetaProperty represents, using given object
-        /// instance as the context.
+        /// Writes a value to the property that this MetaProperty represents,
+        /// using given object instance as the context.
         /// </summary>
         public void Write(object context, object value) {
             FieldInfo field = _memberInfo as FieldInfo;
@@ -126,7 +128,6 @@ namespace FullSerializer.Internal {
             if (field != null) {
                 field.SetValue(context, value);
             }
-
             else if (property != null) {
                 MethodInfo setMethod = property.GetSetMethod(/*nonPublic:*/ true);
                 if (setMethod != null) {
@@ -136,14 +137,13 @@ namespace FullSerializer.Internal {
         }
 
         /// <summary>
-        /// Reads a value from the property that this MetaProperty represents, using the given
-        /// object instance as the context.
+        /// Reads a value from the property that this MetaProperty represents,
+        /// using the given object instance as the context.
         /// </summary>
         public object Read(object context) {
             if (_memberInfo is PropertyInfo) {
                 return ((PropertyInfo)_memberInfo).GetValue(context, new object[] { });
             }
-
             else {
                 return ((FieldInfo)_memberInfo).GetValue(context);
             }
