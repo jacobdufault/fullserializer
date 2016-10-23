@@ -41,7 +41,7 @@ namespace FullSerializer.Internal {
 
             if (_depth < 0) {
                 _depth = 0;
-                throw new InvalidOperationException("Internal Error - Mismatched Enter/Exit");
+                throw new InvalidOperationException("Internal Error - Mismatched Enter/Exit. Please report a bug at https://github.com/jacobdufault/fullserializer/issues with the serialization data.");
             }
 
             return _depth == 0;
