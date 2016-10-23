@@ -1,4 +1,4 @@
-#if !NO_UNITY
+#if !NO_UNITY && UNITY_5_3_OR_NEWER
 using System;
 using UnityEngine;
 using UnityEngine.Events;
