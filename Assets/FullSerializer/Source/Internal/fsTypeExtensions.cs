@@ -70,7 +70,10 @@ namespace FullSerializer {
                 name += type.Name;
             }
             else {
-                name += type.Name.Substring(0, type.Name.IndexOf('`'));
+                var genericsTic = type.Name.IndexOf('`');
+                if (genericsTic > 0) {
+                    name += type.Name.Substring(0, genericsTic);
+                }
                 name += "<" + String.Join(",", genericArguments.Select(t => CSharpName(t, includeNamespace)).ToArray()) + ">";
             }
 
