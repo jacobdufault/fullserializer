@@ -7,7 +7,7 @@
   	<UnityInstallFolder>C:\Program Files\Unity 5.0.0f4\Editor</UnityInstallFolder>
 
     <!-- This is the path, relative to this file, of the FullSerializer folder containing the "Source" directory -->
-    <FullSerializerFolder>..</FullSerializerFolder>
+    <FullSerializerFolder>..\..\Assets\FullSerializer</FullSerializerFolder>
   </PropertyGroup>
 
   <PropertyGroup>
