@@ -1,7 +1,7 @@
 ﻿using System;
 using NUnit.Framework;
 
-namespace FullSerializer.Tests.EnumTest {
+namespace FullSerializer.Tests {
 
     [Flags]
     public enum DefinedFlags {

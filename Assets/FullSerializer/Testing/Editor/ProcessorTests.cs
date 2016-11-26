@@ -1,7 +1,7 @@
 ﻿using System;
 using NUnit.Framework;
 
-namespace FullSerializer.Tests.ProcessorTests {
+namespace FullSerializer.Tests {
     public class OrderedProcessor : fsObjectProcessor {
         public override bool CanProcess(Type type) {
             return true;

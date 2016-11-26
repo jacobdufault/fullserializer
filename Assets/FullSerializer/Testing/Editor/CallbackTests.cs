@@ -1,7 +1,7 @@
 ﻿using System;
 using NUnit.Framework;
 
-namespace FullSerializer.Tests.CallbackTests {
+namespace FullSerializer.Tests {
     public class ClassModel : fsISerializationCallbacks {
         [fsIgnore]
         public int beforeSerialize;

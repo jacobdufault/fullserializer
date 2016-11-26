@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 
-namespace FullSerializer.Tests.MinimalMetadataTests {
+namespace FullSerializer.Tests {
     public class MinimalMetadata {
         [fsObject(MemberSerialization = fsMemberSerialization.OptIn)]
         public class TestContents {

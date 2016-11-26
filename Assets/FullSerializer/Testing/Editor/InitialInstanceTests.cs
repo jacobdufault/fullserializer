@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using NUnit.Framework;
 
-namespace FullSerializer.Tests.InitialInstance {
+namespace FullSerializer.Tests {
     public class SimpleModel {
         public int A;
         public List<int> B;

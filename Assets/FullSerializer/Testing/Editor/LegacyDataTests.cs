@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace FullSerializer.Tests.LegacyData {
+namespace FullSerializer.Tests {
     public class LegacyDataTests {
         [Test]
         public void ImportLegacyInheritance() {

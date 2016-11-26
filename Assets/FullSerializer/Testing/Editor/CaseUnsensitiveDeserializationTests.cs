@@ -2,7 +2,7 @@
 using NUnit.Framework;
 using UnityEngine;
 
-namespace FullSerializer.Tests.CaseUnsensitiveDeserializationTests {
+namespace FullSerializer.Tests {
     public struct Model {
         public int aaaAAA;
         public int bbbBBB;

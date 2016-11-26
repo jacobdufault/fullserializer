@@ -1,19 +1,18 @@
 ﻿using NUnit.Framework;
 
-namespace FullSerializer.Tests.PropertiesTests {
-    public class Model {
-        [fsProperty]
-        public int Getter { get { return 3; } }
+namespace FullSerializer.Tests {
+    public class PropertiesTests {
+        public class Model {
+            [fsProperty]
+            public int Getter { get { return 3; } }
 
-        [fsIgnore]
-        public int _setValue;
+            [fsIgnore]
+            public int _setValue;
 
-        [fsProperty]
-        public int Setter { set { _setValue = value; } }
-    }
+            [fsProperty]
+            public int Setter { set { _setValue = value; } }
+        }
 
-
-    public class MemberSerializationTests {
         [Test]
         public void TestSerializeReadOnlyProperty() {
             var model = new Model();

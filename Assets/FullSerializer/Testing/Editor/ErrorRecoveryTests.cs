@@ -5,16 +5,15 @@ using NUnit.Framework;
 using UnityEngine;
 
 namespace FullSerializer.Tests {
-
-    public struct Model {
-        public int a, b, c;
-
-        public override string ToString() {
-            return string.Format("A: {0}, B: {1}, C: {2}", a, b, c);
-        }
-    }
-
     public class ErrorRecoveryTests {
+        public struct Model {
+            public int a, b, c;
+
+            public override string ToString() {
+                return string.Format("A: {0}, B: {1}, C: {2}", a, b, c);
+            }
+        }
+
         [Test]
         public void TestObjectDeserializeNotAllData() {
             var data = fsData.CreateDictionary();

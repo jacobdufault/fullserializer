@@ -1,22 +1,22 @@
 ﻿using NUnit.Framework;
 using UnityEngine;
 
-namespace FullSerializer.Tests.MemberSerialization {
-    public class Base {
-        public int Serialized0;
-    }
-
-    [fsObject(MemberSerialization = fsMemberSerialization.OptIn)]
-    public class SimpleModel : Base {
-        public int NotSerialized0;
-
-        [fsProperty]
-        public int Serialized1;
-        [SerializeField]
-        public int Serialized2;
-    }
-
+namespace FullSerializer.Tests {
     public class MemberSerializationTests {
+        public class Base {
+            public int Serialized0;
+        }
+
+        [fsObject(MemberSerialization = fsMemberSerialization.OptIn)]
+        public class SimpleModel : Base {
+            public int NotSerialized0;
+
+            [fsProperty]
+            public int Serialized1;
+            [SerializeField]
+            public int Serialized2;
+        }
+
         [Test]
         public void TestOptIn() {
             var model1 = new SimpleModel {

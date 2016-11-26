@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using NUnit.Framework;
 
-namespace FullSerializer.Tests.Dictionary {
+namespace FullSerializer.Tests {
 
     public class DictionaryTests {
         [Test]

@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace FullSerializer.Tests.CyclicReference {
+namespace FullSerializer.Tests {
     public class Base {
         public int id;
         public Base reference;

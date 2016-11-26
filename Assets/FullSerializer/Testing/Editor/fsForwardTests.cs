@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 
-namespace FullSerializer.Tests.fsForwardTesting {
+namespace FullSerializer.Tests {
     [fsForward("a")]
     struct ForwardInt {
         public int a;

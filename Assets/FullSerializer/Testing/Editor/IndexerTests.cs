@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace FullSerializer.Tests.IndexerTest {
+namespace FullSerializer.Tests {
     public class IndexerTests {
         class IndexerType {
             private int[] arr = new int[2];
