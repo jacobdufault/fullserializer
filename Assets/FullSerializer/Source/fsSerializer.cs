@@ -274,6 +274,35 @@ namespace FullSerializer {
         private readonly fsCyclicReferenceManager _references;
         private readonly fsLazyCycleDefinitionWriter _lazyReferenceWriter;
 
+        /// <summary>
+        /// Allow the user to provide default storage types for interfaces and abstract
+        /// classes. For example, a model could have IList{int} as a parameter, but the
+        /// serialization data does not specify a List{int} type. A IList{} -> List{}
+        /// remapping will cause List{} to be used as the default storage type. see
+        /// https://github.com/jacobdufault/fullserializer/issues/120 for additional
+        /// context.
+        /// </summary>
+        private readonly Dictionary<Type, Type> _abstractTypeRemap;
+
+        private void RemapAbstractStorageTypeToDefaultType(ref Type storageType) {
+            if ((storageType.IsInterface || storageType.IsAbstract) == false)
+                return;
+
+            if (storageType.IsGenericType) {
+                Type remappedGenericType;
+                if (_abstractTypeRemap.TryGetValue(storageType.GetGenericTypeDefinition(), out remappedGenericType)) {
+                    Type[] genericArguments = storageType.GetGenericArguments();
+                    storageType = remappedGenericType.MakeGenericType(genericArguments);
+                }
+            }
+
+            else {
+                Type remappedType;
+                if (_abstractTypeRemap.TryGetValue(storageType, out remappedType))
+                    storageType = remappedType;
+            }
+        }
+
         public fsSerializer() {
             _cachedConverterTypeInstances = new Dictionary<Type, fsBaseConverter>();
             _cachedConverters = new Dictionary<Type, fsBaseConverter>();
@@ -308,6 +337,11 @@ namespace FullSerializer {
 #if !NO_UNITY
             _processors.Add(new fsSerializationCallbackReceiverProcessor());
 #endif
+
+            _abstractTypeRemap = new Dictionary<Type, Type>();
+            SetDefaultStorageType(typeof(ICollection<>), typeof(List<>));
+            SetDefaultStorageType(typeof(IList<>), typeof(List<>));
+            SetDefaultStorageType(typeof(IDictionary<,>), typeof(Dictionary<,>));
 
             Context = new fsContext();
             Config = new fsConfig();
@@ -363,6 +397,18 @@ namespace FullSerializer {
             // (as the user should fully setup the serializer before actually
             // using it), but there is no guarantee.
             _cachedProcessors = new Dictionary<Type, List<fsObjectProcessor>>();
+        }
+
+        /// <summary>
+        /// Provide a default storage type for the given abstract or interface type. If
+        /// a type is deserialized which contains an interface/abstract field type and a
+        /// mapping is provided, the mapped type will be used by default. For example,
+        /// IList{T} => List{T} or IDictionary{TKey, TValue} => Dictionary{TKey, TValue}.
+        /// </summary>
+        public void SetDefaultStorageType(Type abstractType, Type defaultStorageType) {
+            if ((abstractType.IsInterface || abstractType.IsAbstract) == false)
+                throw new ArgumentException("|abstractType| must be an interface or abstract type");
+            _abstractTypeRemap[abstractType] = defaultStorageType;
         }
 
         /// <summary>
@@ -824,6 +870,7 @@ namespace FullSerializer {
                     objectType = type;
                 } while (false);
             }
+            RemapAbstractStorageTypeToDefaultType(ref objectType);
 
             // We wait until here to actually Invoke_OnBeforeDeserialize because
             // we do not have the correct set of processors to invoke until
