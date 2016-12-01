@@ -8,6 +8,35 @@ namespace FullSerializer {
     /// The AOT compilation manager
     /// </summary>
     public class fsAotCompilationManager {
+        private static bool HasMember(fsAotVersionInfo versionInfo, fsAotVersionInfo.Member member) {
+            foreach (fsAotVersionInfo.Member foundMember in versionInfo.Members) {
+                if (foundMember == member)
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Returns true if the given aotModel can be used. Returns false if it needs to
+        /// be recompiled.
+        /// </summary>
+        public static bool IsAotModelUpToDate(fsMetaType currentModel, fsIAotConverter aotModel) {
+            if (currentModel.IsDefaultConstructorPublic != aotModel.VersionInfo.IsConstructorPublic)
+                return false;
+
+            if (currentModel.Properties.Length != aotModel.VersionInfo.Members.Length)
+                return false;
+
+            foreach (fsMetaProperty property in currentModel.Properties) {
+                if (HasMember(aotModel.VersionInfo, new fsAotVersionInfo.Member(property)) == false) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         /// <summary>
         /// Ahead of time compilations that are available. The type maps to the
         /// object type the generated converter will serialize/deserialize, and
@@ -18,63 +47,37 @@ namespace FullSerializer {
         /// to do anything. Simply add the file to your project and it'll get
         /// used instead of the reflection based one.
         /// </summary>
-        public static Dictionary<Type, string> AvailableAotCompilations {
-            get {
-                for (int i = 0; i < _uncomputedAotCompilations.Count; ++i) {
-                    var item = _uncomputedAotCompilations[i];
-                    _computedAotCompilations[item.Type] = GenerateDirectConverterForTypeInCSharp(item.Type, item.Members, item.IsConstructorPublic);
-                }
-                _uncomputedAotCompilations.Clear();
-
-                return _computedAotCompilations;
-            }
-        }
-        private static Dictionary<Type, string> _computedAotCompilations = new Dictionary<Type, string>();
-
-        private struct AotCompilation {
-            public Type Type;
-            public fsMetaProperty[] Members;
-            public bool IsConstructorPublic;
-        }
-        private static List<AotCompilation> _uncomputedAotCompilations = new List<AotCompilation>();
-
-        /// <summary>
-        /// This is a helper method that makes it simple to run an AOT
-        /// compilation on the given type.
-        /// </summary>
-        /// <param name="config">
-        /// The configuration to use when running AOT compilation.
-        /// </param>
-        /// <param name="type">
-        /// The type to perform the AOT compilation on.
-        /// </param>
-        /// <param name="aotCompiledClassInCSharp">
-        /// The AOT class. Add this C# code to your project.
-        /// </param>
-        /// <returns>True if AOT compilation was successful.</returns>
-        public static bool TryToPerformAotCompilation(fsConfig config, Type type, out string aotCompiledClassInCSharp) {
-            if (fsMetaType.Get(config, type).EmitAotData()) {
-                aotCompiledClassInCSharp = AvailableAotCompilations[type];
-                return true;
-            }
-
-            aotCompiledClassInCSharp = default(string);
-            return false;
+        public static string RunAotCompilationForType(fsConfig config, Type type) {
+            fsMetaType metatype = fsMetaType.Get(config, type);
+            metatype.EmitAotData(/*throwException:*/ true);
+            return GenerateDirectConverterForTypeInCSharp(type, metatype.Properties, metatype.IsDefaultConstructorPublic);
         }
 
         /// <summary>
-        /// Adds a new AOT compilation unit.
+        /// A set of types which should be considered for AOT compilation. This
+        /// set is populated by the reflected converter.
         /// </summary>
-        /// <param name="type">The type of object we are AOT compiling.</param>
-        /// <param name="members">
-        /// The members on the object which will be serialized/deserialized.
-        /// </param>
-        public static void AddAotCompilation(Type type, fsMetaProperty[] members, bool isConstructorPublic) {
-            _uncomputedAotCompilations.Add(new AotCompilation {
-                Type = type,
-                Members = members,
-                IsConstructorPublic = isConstructorPublic
-            });
+        public static HashSet<Type> AotCandidateTypes = new HashSet<Type>();
+
+        private static string EmitVersionInfo(string prefix, Type type, fsMetaProperty[] members, bool isConstructorPublic) {
+            var sb = new StringBuilder();
+
+            sb.AppendLine("new fsAotVersionInfo {");
+            sb.AppendLine(prefix + "    IsConstructorPublic = " + (isConstructorPublic ? "true" : "false") + ",");
+            sb.AppendLine(prefix + "    Members = new fsAotVersionInfo.Member[] {");
+            foreach (fsMetaProperty member in members) {
+                sb.AppendLine(prefix + "        new fsAotVersionInfo.Member {");
+                sb.AppendLine(prefix + "            MemberName = \"" + member.MemberName + "\",");
+                sb.AppendLine(prefix + "            JsonName = \"" + member.JsonName + "\",");
+                sb.AppendLine(prefix + "            StorageType = \"" + member.StorageType.CSharpName(true) + "\",");
+                if (member.OverrideConverterType != null)
+                    sb.AppendLine(prefix + "            OverrideConverterType = \"" + member.OverrideConverterType.CSharpName(true) + "\",");
+                sb.AppendLine(prefix + "        },");
+            }
+            sb.AppendLine(prefix + "    }");
+            sb.Append(prefix + "}");
+
+            return sb.ToString();
         }
 
         private static string GetConverterString(fsMetaProperty member) {
@@ -83,6 +86,10 @@ namespace FullSerializer {
 
             return string.Format("typeof({0})",
                                  member.OverrideConverterType.CSharpName(/*includeNamespace:*/ true));
+        }
+
+        public static string GetQualifiedConverterNameForType(Type type) {
+            return "FullSerializer.Speedup." + type.CSharpName(true, true) + "_DirectConverter";
         }
 
         /// <summary>
@@ -103,7 +110,10 @@ namespace FullSerializer {
             sb.AppendLine("}");
             sb.AppendLine();
             sb.AppendLine("namespace FullSerializer.Speedup {");
-            sb.AppendLine("    public class " + typeNameSafeDecl + "_DirectConverter : fsDirectConverter<" + typeName + "> {");
+            sb.AppendLine("    public class " + typeNameSafeDecl + "_DirectConverter : fsDirectConverter<" + typeName + ">, fsIAotConverter {");
+            sb.AppendLine("        private fsAotVersionInfo _versionInfo = " + EmitVersionInfo("        ", type, members, isConstructorPublic) + ";");
+            sb.AppendLine("        fsAotVersionInfo fsIAotConverter.VersionInfo { get { return _versionInfo; } }");
+            sb.AppendLine();
             sb.AppendLine("        protected override fsResult DoSerialize(" + typeName + " model, Dictionary<string, fsData> serialized) {");
             sb.AppendLine("            var result = fsResult.Success;");
             sb.AppendLine();

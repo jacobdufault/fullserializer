@@ -22,7 +22,7 @@ namespace FullSerializer.Internal {
             var result = fsResult.Success;
 
             fsMetaType metaType = fsMetaType.Get(Serializer.Config, instance.GetType());
-            metaType.EmitAotData();
+            metaType.EmitAotData(/*throwException:*/ false);
 
             for (int i = 0; i < metaType.Properties.Length; ++i) {
                 fsMetaProperty property = metaType.Properties[i];
@@ -52,7 +52,7 @@ namespace FullSerializer.Internal {
             }
 
             fsMetaType metaType = fsMetaType.Get(Serializer.Config, storageType);
-            metaType.EmitAotData();
+            metaType.EmitAotData(/*throwException:*/ false);
 
             for (int i = 0; i < metaType.Properties.Length; ++i) {
                 fsMetaProperty property = metaType.Properties[i];

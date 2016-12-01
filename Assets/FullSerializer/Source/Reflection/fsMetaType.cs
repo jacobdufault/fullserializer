@@ -211,41 +211,39 @@ namespace FullSerializer {
             return true;
         }
 
+        public class AotFailureException : Exception {
+            public AotFailureException(string reason) : base(reason) {}
+        }
+
         /// <summary>
         /// Attempt to emit an AOT compiled direct converter for this type.
         /// </summary>
         /// <returns>True if AOT data was emitted, false otherwise.</returns>
-        public bool EmitAotData() {
-            if (_hasEmittedAotData == false) {
-                _hasEmittedAotData = true;
+        public void EmitAotData(bool throwException) {
+            fsAotCompilationManager.AotCandidateTypes.Add(ReflectedType);
+            if (!throwException)
+                return;
 
-                // NOTE: Even if the type has derived types, we can still
-                // generate a direct converter for it. Direct converters are not
-                // used for inherited types, so the reflected converter or
-                // something similar will be used for the derived type instead of
-                // our AOT compiled one.
+            // NOTE: Even if the type has derived types, we can still
+            // generate a direct converter for it. Direct converters are not
+            // used for inherited types, so the reflected converter or
+            // something similar will be used for the derived type instead of
+            // our AOT compiled one.
 
-                for (int i = 0; i < Properties.Length; ++i) {
-                    // Cannot AOT compile since we need to public member access.
-                    if (Properties[i].IsPublic == false)
-                        return false;
-                    // Cannot AOT compile since readonly members can only be
-                    // modified using reflection.
-                    if (Properties[i].IsReadOnly)
-                        return false;
-                }
-
-                // Cannot AOT compile since we need a default ctor.
-                if (HasDefaultConstructor == false)
-                    return false;
-
-                fsAotCompilationManager.AddAotCompilation(ReflectedType, Properties, _isDefaultConstructorPublic);
-                return true;
+            for (int i = 0; i < Properties.Length; ++i) {
+                // Cannot AOT compile since we need to public member access.
+                if (Properties[i].IsPublic == false)
+                    throw new AotFailureException(ReflectedType.CSharpName(true) + "::" + Properties[i].MemberName + " is not public");
+                // Cannot AOT compile since readonly members can only be
+                // modified using reflection.
+                if (Properties[i].IsReadOnly)
+                    throw new AotFailureException(ReflectedType.CSharpName(true) + "::" + Properties[i].MemberName + " is readonly");
             }
 
-            return false;
+            // Cannot AOT compile since we need a default ctor.
+            if (HasDefaultConstructor == false)
+                throw new AotFailureException(ReflectedType.CSharpName(true) + " does not have a default constructor");
         }
-        private bool _hasEmittedAotData;
 
         public fsMetaProperty[] Properties {
             get;
@@ -262,21 +260,21 @@ namespace FullSerializer {
                     // arrays are considered to have a default constructor
                     if (ReflectedType.Resolve().IsArray) {
                         _hasDefaultConstructorCache = true;
-                        _isDefaultConstructorPublic = true;
+                        _isDefaultConstructorPublicCache = true;
                     }
 
                     // value types (ie, structs) always have a default
                     // constructor
                     else if (ReflectedType.Resolve().IsValueType) {
                         _hasDefaultConstructorCache = true;
-                        _isDefaultConstructorPublic = true;
+                        _isDefaultConstructorPublicCache = true;
                     }
                     else {
                         // consider private constructors as well
                         var ctor = ReflectedType.GetDeclaredConstructor(fsPortableReflection.EmptyTypes);
                         _hasDefaultConstructorCache = ctor != null;
                         if (ctor != null) {
-                            _isDefaultConstructorPublic = ctor.IsPublic;
+                            _isDefaultConstructorPublicCache = ctor.IsPublic;
                         }
                     }
                 }
@@ -284,8 +282,16 @@ namespace FullSerializer {
                 return _hasDefaultConstructorCache.Value;
             }
         }
+        public bool IsDefaultConstructorPublic {
+            get {
+                if (_isDefaultConstructorPublicCache.HasValue == false) {
+                    var t = HasDefaultConstructor;
+                }
+                return _isDefaultConstructorPublicCache.Value;
+            }
+        }
         private bool? _hasDefaultConstructorCache;
-        private bool _isDefaultConstructorPublic;
+        private bool? _isDefaultConstructorPublicCache;
 
         /// <summary>
         /// Creates a new instance of the type that this metadata points back to.

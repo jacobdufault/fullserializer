@@ -15,12 +15,32 @@ namespace FullSerializer {
             Converters = new List<Type>();
 
             foreach (var field in typeof(fsConverterRegistrar).GetDeclaredFields()) {
-                if (field.Name.StartsWith("Register_")) Converters.Add(field.FieldType);
+                if (field.Name.StartsWith("Register_"))
+                    Converters.Add(field.FieldType);
             }
 
             foreach (var method in typeof(fsConverterRegistrar).GetDeclaredMethods()) {
-                if (method.Name.StartsWith("Register_")) method.Invoke(null, null);
+                if (method.Name.StartsWith("Register_"))
+                    method.Invoke(null, null);
             }
+
+            // Make sure we do not use any AOT Models which are out of date.
+            var finalResult = new List<Type>(Converters);
+            foreach (Type t in Converters) {
+                object instance = null;
+                try {
+                    instance = Activator.CreateInstance(t);
+                } catch (Exception) {}
+
+                var aotConverter = instance as fsIAotConverter;
+                if (aotConverter != null) {
+                    var modelMetaType = fsMetaType.Get(new fsConfig(), aotConverter.ModelType);
+                    if (fsAotCompilationManager.IsAotModelUpToDate(modelMetaType, aotConverter) == false) {
+                        finalResult.Remove(t);
+                    }
+                }
+            }
+            Converters = finalResult;
         }
 
         public static List<Type> Converters;
