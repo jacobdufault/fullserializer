@@ -21,7 +21,8 @@ namespace FullSerializer {
 
         public static string CSharpName(this Type type, bool includeNamespace, bool ensureSafeDeclarationName) {
             var name = CSharpName(type, includeNamespace);
-            if (ensureSafeDeclarationName) name = name.Replace('>', '_').Replace('<', '_').Replace('.', '_');
+            if (ensureSafeDeclarationName)
+                name = name.Replace('>', '_').Replace('<', '_').Replace('.', '_').Replace(',', '_');
             return name;
         }
 
