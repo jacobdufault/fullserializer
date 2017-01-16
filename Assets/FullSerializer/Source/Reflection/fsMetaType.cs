@@ -150,6 +150,11 @@ namespace FullSerializer {
                 return false;
             }
 
+            // Don't serialize members of types that themselves aren't to be serialized.
+            if (config.IgnoreSerializeTypeAttributes.Any(t => fsPortableReflection.HasAttribute(property.PropertyType, t))) {
+                return false;
+            }
+
             // If a property is annotated with one of the serializable
             // attributes, then it should it should definitely be serialized.
             //
@@ -190,6 +195,11 @@ namespace FullSerializer {
 
             // We don't serialize static fields
             if (field.IsStatic) {
+                return false;
+            }
+
+            // Don't serialize members of types that themselves aren't to be serialized.
+            if (config.IgnoreSerializeTypeAttributes.Any(t => fsPortableReflection.HasAttribute(field.FieldType, t))) {
                 return false;
             }
 

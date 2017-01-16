@@ -47,6 +47,12 @@ namespace FullSerializer {
         public Type[] IgnoreSerializeAttributes = { typeof(NonSerializedAttribute), typeof(fsIgnoreAttribute) };
 
         /// <summary>
+        /// The attributes on a type that will force any fields or properties
+		/// of that type to *not* be serialized.
+        /// </summary>
+        public Type[] IgnoreSerializeTypeAttributes = { typeof(fsIgnoreAttribute) };
+
+        /// <summary>
         /// The default member serialization.
         /// </summary>
         public fsMemberSerialization DefaultMemberSerialization = fsMemberSerialization.Default;
