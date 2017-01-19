@@ -199,6 +199,9 @@ namespace FullSerializer.Internal {
 
             for (int i = 0; i < ctors.Length; ++i) {
                 var ctor = ctors[i];
+
+                if (ctor.IsStatic) continue; // Ignore static constructors.
+
                 var ctorParams = ctor.GetParameters();
 
                 if (parameters.Length != ctorParams.Length) continue;
