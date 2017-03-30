@@ -115,7 +115,7 @@ namespace FullSerializer.Internal {
                 // every type's full name
                 foreach (var foundType in assembly.GetTypes()) {
                     if (foundType.FullName == typeName) {
-                        type = foundType;
+                        type = foundType.GetType();
                         return true;
                     }
                 }
