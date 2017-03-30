@@ -285,10 +285,10 @@ namespace FullSerializer {
         private readonly Dictionary<Type, Type> _abstractTypeRemap;
 
         private void RemapAbstractStorageTypeToDefaultType(ref Type storageType) {
-            if ((storageType.IsInterface || storageType.IsAbstract) == false)
+            if ((storageType.IsInterface() || storageType.IsAbstract()) == false)
                 return;
 
-            if (storageType.IsGenericType) {
+            if (storageType.IsGenericType()) {
                 Type remappedGenericType;
                 if (_abstractTypeRemap.TryGetValue(storageType.GetGenericTypeDefinition(), out remappedGenericType)) {
                     Type[] genericArguments = storageType.GetGenericArguments();
@@ -406,7 +406,7 @@ namespace FullSerializer {
         /// IList{T} => List{T} or IDictionary{TKey, TValue} => Dictionary{TKey, TValue}.
         /// </summary>
         public void SetDefaultStorageType(Type abstractType, Type defaultStorageType) {
-            if ((abstractType.IsInterface || abstractType.IsAbstract) == false)
+            if ((abstractType.IsInterface() || abstractType.IsAbstract()) == false)
                 throw new ArgumentException("|abstractType| must be an interface or abstract type");
             _abstractTypeRemap[abstractType] = defaultStorageType;
         }

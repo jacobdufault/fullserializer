@@ -23,7 +23,7 @@ namespace FullSerializer.Internal.Converters {
     // expected.
     public class UnityEvent_Converter : fsConverter {
         public override bool CanProcess(Type type) {
-            return typeof(UnityEvent).Resolve().IsAssignableFrom(type) && type.IsGenericType == false;
+            return typeof(UnityEvent).Resolve().IsAssignableFrom(type.Resolve()) && type.IsGenericType() == false;
         }
 
         public override bool RequestCycleSupport(Type storageType) {

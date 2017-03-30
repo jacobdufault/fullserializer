@@ -84,5 +84,32 @@ namespace FullSerializer {
 
             return name;
         }
+
+        public static bool IsInterface(this Type type)
+        {
+#if NETFX_CORE
+            return type.GetTypeInfo().IsInterface;
+#else
+            return type.IsInterface;
+#endif
+        }
+
+        public static bool IsAbstract(this Type type)
+        {
+#if NETFX_CORE
+            return type.GetTypeInfo().IsAbstract;
+#else
+            return type.IsAbstract;
+#endif
+        }
+
+        public static bool IsGenericType(this Type type)
+        {
+#if NETFX_CORE
+            return type.GetTypeInfo().IsGenericType;
+#else
+            return type.IsGenericType;
+#endif
+        }
     }
 }

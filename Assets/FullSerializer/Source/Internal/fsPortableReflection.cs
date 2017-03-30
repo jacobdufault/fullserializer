@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
 
 #if USE_TYPEINFO
 namespace System {
@@ -25,9 +26,9 @@ namespace System {
 
         public static Type GetType(this Assembly assembly, string name, bool throwOnError) {
             var types = assembly.GetTypes();
-            for (int i = 0; i < types.Length; ++i) {
-                if (types[i].Name == name) {
-                    return types[i];
+            foreach (var type in types) {
+                if (type.Name == name) {
+                    return type.GetType();
                 }
             }
 
@@ -109,8 +110,8 @@ namespace FullSerializer.Internal {
             Attribute attribute;
             if (_cachedAttributeQueries.TryGetValue(query, out attribute) == false) {
                 var attributes = element.GetCustomAttributes(attributeType, /*inherit:*/ true);
-                if (attributes.Length > 0)
-                    attribute = (Attribute)attributes[0];
+                if (attributes.Any())
+                    attribute = (Attribute)attributes.First();
                 if (shouldCache)
                     _cachedAttributeQueries[query] = attribute;
             }
