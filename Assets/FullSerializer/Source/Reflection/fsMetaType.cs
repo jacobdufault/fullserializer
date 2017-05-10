@@ -346,8 +346,8 @@ namespace FullSerializer {
             }
 
             try {
-#if (!UNITY_EDITOR && (UNITY_METRO))
-                // In WinRT/WinStore builds, Activator.CreateInstance(..., true)
+#if (!UNITY_EDITOR && ((UNITY_METRO) || (UNITY_PS4)))
+                // In WinRT/WinStore & PS4 builds, Activator.CreateInstance(..., true)
                 // is broken
                 return Activator.CreateInstance(ReflectedType);
 #else
