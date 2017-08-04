@@ -105,6 +105,12 @@ namespace FullSerializer {
         public bool Serialize64BitIntegerAsString = false;
 
         /// <summary>
+        /// Strings will be converted to numbers if nessesary
+        /// compatibility
+        /// </summary>
+        public bool CoerceStringsToNumbers = false;
+
+        /// <summary>
         /// Enums are serialized using their names by default. Setting this to
         /// true will serialize them as integers instead.
         /// </summary>

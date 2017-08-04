@@ -104,8 +104,10 @@ namespace FullSerializer.Internal {
                 else if (storage.IsInt64) {
                     instance = Convert.ChangeType(storage.AsInt64, storageType);
                 }
-                else if (Serializer.Config.Serialize64BitIntegerAsString && storage.IsString &&
-                    (storageType == typeof(Int64) || storageType == typeof(UInt64))) {
+                else if (storage.IsString &&
+                    (Serializer.Config.Serialize64BitIntegerAsString && (storageType == typeof(Int64) || storageType == typeof(UInt64)) ||
+                    Serializer.Config.CoerceStringsToNumbers))
+                {
                     instance = Convert.ChangeType(storage.AsString, storageType);
                 }
                 else {
