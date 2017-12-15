@@ -1,4 +1,12 @@
-﻿using System;
+﻿/// <summary>
+/// This project is forked from https://github.com/jacobdufault/fullserializer.git
+/// Full Serializer is JSON serializer.
+/// It is used for every serialization in the application
+/// some of the main components that use this are EventAggregator, InjectableConverter, PropertyStoreConverter
+/// games that use json format also uses the serializer this project provides
+/// </summary>
+
+using System;
 using System.Collections.Generic;
 using FullSerializer.Internal;
 
