@@ -1,3 +1,8 @@
+# Looking for maintainer
+
+Please see [#154](https://github.com/jacobdufault/fullserializer/issues/154).
+
+
 # Full Serializer
 
 Full Serializer is an easy to use and robust JSON serializer that *just works*. It'll serialize pretty much anything you can throw at it and work on every major Unity platform, including consoles. Full Serializer doesn't use exceptions, so you can activate more stripping options on iOS.
