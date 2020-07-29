@@ -99,6 +99,12 @@ namespace FullSerializer {
         public string CustomDateTimeFormatString = null;
 
         /// <summary>
+        /// If true, DateTime and TimeSpan will be saved as 64 bit integers
+        /// rather than strings. DateTimeOffset will still be saved as string.
+        /// </summary>
+        public bool SerializeDateTimeAsInteger = false;
+
+        /// <summary>
         /// Int64 and UInt64 will be serialized and deserialized as string for
         /// compatibility
         /// </summary>
