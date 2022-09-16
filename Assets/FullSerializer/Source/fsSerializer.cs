@@ -935,7 +935,22 @@ namespace FullSerializer {
                 data = data.AsDictionary[Key_Content];
             }
 
-            return GetConverter(resultType, overrideConverterType).TryDeserialize(data, ref result, resultType);
+            var converter = GetConverter(resultType, overrideConverterType);
+            if (converter.RequestCycleSupport(resultType)) {
+                object startResult = result; // This would cause a copy for value types, so only do it if RequestCycleSupport() cause then we know it's a reference type
+                var deserializeResult = converter.TryDeserialize(data, ref result, resultType);
+                if (!ReferenceEquals(startResult, result)) {
+                    // If you get here, don't do this in TryDeserialize():
+                    //   instance = new Thing();
+                    // Rather do something like this:
+                    //   ((Thing)instance).Update(newData);
+                    return fsResult.Fail("TryDeserialize() for " + resultType + " has changed instance reference after CreateInstance(). You must update the instance without changing the reference, or cyclic references will break!");
+                }
+                return deserializeResult;
+
+            } else {
+                return converter.TryDeserialize(data, ref result, resultType);
+            }
         }
     }
 }
