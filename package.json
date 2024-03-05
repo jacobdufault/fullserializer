@@ -1,5 +1,5 @@
 {
-  "name": "unity-fullserializer",
+  "name": "com.jacobdufault.unity.fullserializer",
   "version": "1.1.0",
   "description": "Full Serializer is an easy to use and robust JSON serializer that just works.",
   "main": "index.js",
